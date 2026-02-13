@@ -346,6 +346,8 @@
         };
 
         const SafetyDashboard = () => {
+            // [DEBUG] 렌더링 확인용
+
             const [currentDate, setCurrentDate] = useState('');
             const queryParams = new URLSearchParams(window.location.search);
             // [수정됨] 기본값을 'siteB'(수원 노유자시설)로 설정
@@ -396,14 +398,29 @@
             const [showInspectionModal, setShowInspectionModal] = useState(false);
             const [inspectionType, setInspectionType] = useState('');
             const [showSettingsModal, setShowSettingsModal] = useState(false);
-            const [selectedNotice, setSelectedNotice] = useState(null);
+            // [NEW] 알림 관련 State
+            const [showNotifications, setShowNotifications] = useState(false);
+            const [notifications, setNotifications] = useState([]);
+            const [notificationCount, setNotificationCount] = useState(0);
 
             // [NEW] 공지사항 작성 모달 State
             const [showNoticeWriteModal, setShowNoticeWriteModal] = useState(false);
             const [noticeFile, setNoticeFile] = useState(null);
+            const [selectedNotice, setSelectedNotice] = useState(null); // 선택된 공지사항
+
 
             // [수정됨] 점검 이미지 상태 - 다중 이미지 지원을 위해 배열로 변경
             const [inspectionImages, setInspectionImages] = useState([]);
+
+            // [NEW] 파일 미리보기 상태 (Lightbox용)
+            const [previewFile, setPreviewFile] = useState(null);
+
+            // [NEW] 알림 토글 핸들러
+            const handleToggleNotifications = (e) => {
+                e.stopPropagation();
+                console.log("Toggle Notifications clicked");
+                setShowNotifications(prev => !prev);
+            };
 
             // 1. 날짜 및 무재해 일수 계산 (startDate 변경 시 실행)
             useEffect(() => {
@@ -466,6 +483,77 @@
                 }
             }, [siteId]);
 
+            // [NEW] 데이터 변경 시 알림 목록 갱신 (통합 알림 로직)
+            useEffect(() => {
+                // 오늘 날짜 문자열 (MM-DD)
+                const today = new Date();
+                const todayMMDD = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+                // 1. 공지사항 알림 변환
+                const noticeNotis = noticeData.map(n => ({
+                    id: `notice-${n.id}`,
+                    source: 'notice',
+                    label: '📢 공지사항',
+                    message: n.title,
+                    date: n.date, // MM-DD
+                    timestamp: n.createdAt || (n.id.includes('_') ? parseInt(n.id.split('_')[0]) : 0) // createdAt 우선
+                }));
+
+                // 2. 부적합 조치 알림 변환 (신규만)
+                const issueNotis = issueList
+                    // .filter(i => i.status === 'new') // 전체 다 보여주기로 변경 (최근 활동)
+                    .map(i => ({
+                        id: `issue-${i.id}`,
+                        source: 'issue',
+                        label: '🚨 안전 부적합',
+                        message: `${i.loc} - ${i.desc}`,
+                        date: i.date ? i.date.substring(5) : '', // YYYY-MM-DD -> MM-DD
+                        timestamp: i.createdAt || (parseInt(i.id) || 0) // createdAt 우선
+                    }));
+
+                // 3. 반입 점검 알림 변환
+                const inspectNotis = inspectionLog.map(i => ({
+                    id: `insp-${i.id}`,
+                    source: 'inspection',
+                    label: '🏗️ 반입 점검',
+                    message: `${i.item} (${i.status})`,
+                    date: i.date, // MM.DD or MM-DD
+                    timestamp: i.createdAt || (parseInt(i.id) || 0) // createdAt 우선
+                }));
+
+                // 4. 고위험 작업 알림 (오늘 등록된 것 가정) -> createdAt 필요
+                const riskNotis = riskWorks.filter(w => w.createdAt).map(w => ({
+                    id: `risk-${w.id}`,
+                    source: 'risk',
+                    label: '⚠️ 고위험 작업',
+                    message: `${w.team} - ${w.task}`,
+                    date: todayMMDD,
+                    timestamp: w.createdAt
+                }));
+
+                // 통합 및 정렬 (최신순)
+                const allNotis = [...noticeNotis, ...issueNotis, ...inspectNotis, ...riskNotis]
+                    .sort((a, b) => b.timestamp - a.timestamp) // 타임스탬프 기준 정렬
+                    .slice(0, 10); // 최신 10개만
+
+                setNotifications(allNotis);
+
+                // 배지 카운트: 오늘(00:00:00 이후) 등록된 항목 수
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0); // 오늘 자정
+                const todayTimestamp = todayStart.getTime();
+
+                const todayCount = allNotis.filter(n => {
+                    // timestamp가 오늘 00:00:00 이후인 항목만 카운트
+                    return n.timestamp && n.timestamp >= todayTimestamp;
+                }).length;
+
+                setNotificationCount(todayCount);
+
+
+            }, [noticeData, issueList, inspectionLog, riskWorks]);
+
+
             const issueCounts = {
                 new: issueList.filter(i => i.status === 'new').length,
                 processing: issueList.filter(i => i.status === 'processing').length,
@@ -493,7 +581,17 @@
             };
 
             const handleAddWork = () => {
-                const newWork = { team: '', task: '', risk: '중', manager: '', status: '예정', workerCount: 0, eduCompleted: 0, assessment: '' };
+                const newWork = {
+                    team: '',
+                    task: '',
+                    risk: '중',
+                    manager: '',
+                    status: '예정',
+                    workerCount: 0,
+                    eduCompleted: 0,
+                    assessment: '',
+                    createdAt: Date.now() // [NEW] 생성 시간 추가
+                };
                 if (db) db.collection('sites').doc(siteId).collection('riskWorks').add(newWork);
             };
 
@@ -550,7 +648,8 @@
                     status: 'new',
                     beforeImg: null,
                     afterImg: null,
-                    date: new Date().toISOString().slice(0, 10)
+                    date: new Date().toISOString().slice(0, 10),
+                    createdAt: Date.now() // [NEW]
                 };
                 if (db) {
                     db.collection('sites').doc(siteId).collection('issues').add(newIssue);
@@ -691,7 +790,8 @@
                         content,
                         author: '관리자',
                         date: new Date().toISOString().slice(5, 10),
-                        attachment: fileUrl ? { url: fileUrl, type: fileType, name: fileName } : null
+                        attachment: fileUrl ? { url: fileUrl, type: fileType, name: fileName } : null,
+                        createdAt: Date.now() // [NEW]
                     });
 
                     setShowNoticeWriteModal(false);
@@ -764,7 +864,8 @@
                         item: e.target.item.value,
                         date: new Date().toISOString().slice(5, 10),
                         status: e.target.result.value,
-                        images: inspectionImages || [] // 이미지 배열 저장
+                        images: inspectionImages || [], // 이미지 배열 저장
+                        createdAt: Date.now() // [NEW]
                     });
                 }
                 setShowInspectionModal(false);
@@ -811,7 +912,53 @@
                                 </div>
                                 <div className="flex items-center justify-end space-x-6 w-1/4">
                                     <span className="text-sm font-medium text-gray-500 flex items-center hidden sm:flex"><CalendarIcon className="mr-2" size={16} /> {currentDate}</span>
-                                    <div className="relative cursor-pointer"><Bell className="text-gray-400 hover:text-gray-600" /><span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">3</span></div>
+
+                                    {/* [NEW] 알림 드롭다운 (클릭 시 토글) */}
+                                    <div className="relative cursor-pointer z-[105]" onClick={handleToggleNotifications}>
+                                        <Bell className={`hover:text-gray-600 transition ${showNotifications ? 'text-blue-500' : 'text-gray-400'}`} />
+                                        {notificationCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-bounce">
+                                                {notificationCount}
+                                            </span>
+                                        )}
+
+                                        {/* 알림 드롭다운 메뉴 */}
+                                        {showNotifications && (
+                                            <div className="absolute top-10 right-0 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-[110] overflow-hidden animate-fade-in" onClick={e => e.stopPropagation()}>
+                                                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                                                    <h3 className="font-bold text-sm text-gray-800">최근 활동 알림</h3>
+                                                    <span className="text-xs text-gray-500">{notifications.length}건</span>
+                                                </div>
+                                                <div className="max-h-64 overflow-y-auto">
+                                                    {notifications.length > 0 ? (
+                                                        notifications.map((noti, idx) => (
+                                                            <div key={noti.id || idx} className="px-4 py-3 border-b border-gray-50 hover:bg-blue-50 transition flex items-start gap-3">
+                                                                <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${noti.source === 'notice' ? 'bg-purple-500' :
+                                                                    noti.source === 'issue' ? 'bg-red-500' :
+                                                                        noti.source === 'risk' ? 'bg-yellow-500' : 'bg-blue-500'
+                                                                    }`}></div>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-gray-500 mb-0.5">{noti.label}</p>
+                                                                    <p className="text-sm text-gray-800 font-medium line-clamp-2">{noti.message}</p>
+                                                                    <p className="text-[10px] text-gray-400 mt-1">{noti.time || noti.date}</p>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="p-8 text-center text-gray-400 text-xs">
+                                                            최근 알림이 없습니다.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {notifications.length > 0 && (
+                                                    <div className="bg-gray-50 px-4 py-2 text-center border-t border-gray-100">
+                                                        <button onClick={() => setNotifications([])} className="text-xs text-gray-500 hover:text-gray-800">모두 지우기</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {/* 관리 아이콘 색상 동적 적용 */}
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white cursor-pointer ${currentSiteInfo.bg}`}>관리</div>
                                 </div>
@@ -956,7 +1103,21 @@
                                         <ul className="space-y-3 mt-4">
                                             {inspectionLog.slice(0, 5).map(log => (
                                                 <li key={log.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 text-sm">
-                                                    <div className="flex flex-col"><span className="font-medium text-gray-700">{log.item}</span><span className="text-xs text-gray-500">{log.type} | {log.date}</span></div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-gray-700">{log.item}</span>
+                                                        <span className="text-xs text-gray-500">{log.type} | {log.date}</span>
+                                                        {/* [NEW] 리스트에 첨부파일 미리보기 아이콘 추가 */}
+                                                        {log.images && log.images.length > 0 && (
+                                                            <div className="flex gap-1 mt-1">
+                                                                {log.images.map((img, idx) => (
+                                                                    <div key={idx} onClick={(e) => { e.stopPropagation(); setPreviewFile(typeof img === 'string' ? { url: img, name: '이미지' } : img); }} className="cursor-pointer text-xs border rounded px-1 py-0.5 bg-white hover:bg-gray-100 flex items-center gap-1 text-gray-600 transition">
+                                                                        {typeof img === 'string' || (img.type && img.type.includes('image')) ? <span className="text-[10px]">📷</span> : <span className="text-[10px]">📄</span>}
+                                                                        <span className="max-w-[80px] truncate">{typeof img === 'string' ? '이미지' : img.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <span className={`text-xs px-2 py-1 rounded font-bold ${getStatusColor(log.status)}`}>{log.status}</span>
                                                 </li>
                                             ))}
@@ -1149,7 +1310,7 @@
                                             {/* 미리보기 영역 (그리드 형태) */}
                                             <div className="flex flex-wrap gap-2 mb-2">
                                                 {inspectionImages.map((img, idx) => (
-                                                    <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group bg-gray-50 flex items-center justify-center">
+                                                    <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group bg-gray-50 flex items-center justify-center cursor-pointer" onClick={() => setPreviewFile(typeof img === 'string' ? { url: img, name: '이미지' } : img)}>
                                                         {typeof img === 'string' ? (
                                                             <img src={img} className="w-full h-full object-cover" />
                                                         ) : img.type === 'pdf' ? (
@@ -1160,10 +1321,13 @@
                                                         ) : (
                                                             <img src={img.url} className="w-full h-full object-cover" />
                                                         )}
+                                                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                                            <span className="text-xs text-white bg-black/50 px-1 rounded">보기</span>
+                                                        </div>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleRemoveInspectionImage(idx)}
-                                                            className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                            onClick={(e) => { e.stopPropagation(); handleRemoveInspectionImage(idx); }}
+                                                            className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-auto"
                                                         >
                                                             <X size={12} />
                                                         </button>
@@ -1226,6 +1390,27 @@
                                         </div>
                                         <button type="submit" className="w-full bg-purple-600 text-white py-2.5 rounded-lg font-bold hover:bg-purple-700">등록하기</button>
                                     </form>
+                                </div>
+                            </div>
+                        )}
+                        {/* [NEW] 파일 미리보기 모달 (Lightbox) */}
+                        {previewFile && (
+                            <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4 animate-fade-in" onClick={() => setPreviewFile(null)}>
+                                <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col relative" onClick={e => e.stopPropagation()}>
+                                    <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                                        <h3 className="font-bold text-gray-800 truncate px-2">{previewFile.name || '미리보기'}</h3>
+                                        <div className="flex gap-2">
+                                            <a href={previewFile.url} target="_blank" download className="p-2 hover:bg-gray-200 rounded text-gray-600" title="다운로드/새창"><Upload className="rotate-180" size={20} /></a>
+                                            <button onClick={() => setPreviewFile(null)} className="p-2 hover:bg-red-100 text-gray-500 hover:text-red-500 rounded transition"><X size={24} /></button>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 bg-gray-900 overflow-hidden flex items-center justify-center p-1">
+                                        {(previewFile.type === 'pdf' || (previewFile.url && previewFile.url.toLowerCase().includes('.pdf'))) ? (
+                                            <iframe src={previewFile.url} className="w-full h-full bg-white rounded" title="PDF Preview"></iframe>
+                                        ) : (
+                                            <img src={previewFile.url} className="max-w-full max-h-full object-contain rounded" />
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
