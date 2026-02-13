@@ -1,0 +1,360 @@
+                                    {/* 1. 고위험 작업 현황 */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{animationDelay: '0.1s'}}>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-bold text-gray-800 flex items-center"><AlertOctagon className="text-red-500 mr-2" size={20} /> 금일 고위험 작업 현황</h3>
+                                            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded font-bold animate-pulse">● 실시간 동기화 중</span>
+                                        </div>
+                                        <div className="overflow-x-auto mb-2">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-gray-50 text-gray-500"><tr><th className="px-3 py-3 rounded-l-lg">작업팀</th><th className="px-3 py-3">작업 내용</th><th className="px-3 py-3">위험도</th><th className="px-3 py-3">투입 인원</th><th className="px-3 py-3">감독자</th><th className="px-3 py-3">상태</th><th className="px-3 py-3 rounded-r-lg w-16">관리</th></tr></thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {riskWorks.map((work) => (
+                                                        <tr key={work.id} className="hover:bg-gray-50">
+                                                            {editingWorkId === work.id ? (
+                                                                <>
+                                                                    <td className="px-3 py-2"><input className="border rounded px-1 w-full" value={work.team} onChange={(e) => handleWorkChange(work.id, 'team', e.target.value)} /></td>
+                                                                    <td className="px-3 py-2"><input className="border rounded px-1 w-full" value={work.task} onChange={(e) => handleWorkChange(work.id, 'task', e.target.value)} /></td>
+                                                                    <td className="px-3 py-2"><select className="border rounded px-1" value={work.risk} onChange={(e) => handleWorkChange(work.id, 'risk', e.target.value)}><option value="상">상</option><option value="중">중</option><option value="하">하</option></select></td>
+                                                                    <td className="px-3 py-2"><input type="number" className="border rounded px-1 w-full" value={work.workerCount} onChange={(e) => handleWorkChange(work.id, 'workerCount', e.target.value)} /></td>
+                                                                    <td className="px-3 py-2"><input className="border rounded px-1 w-full" value={work.manager} onChange={(e) => handleWorkChange(work.id, 'manager', e.target.value)} /></td>
+                                                                    <td className="px-3 py-2"><select className="border rounded px-1" value={work.status} onChange={(e) => handleWorkChange(work.id, 'status', e.target.value)}><option value="예정">예정</option><option value="진행">진행</option><option value="완료">완료</option></select></td>
+                                                                    <td className="px-3 py-2 text-center"><button onClick={() => handleWorkSave(work.id)} className="text-green-600 bg-green-100 p-1 rounded"><Save size={16} /></button></td>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <td className="px-3 py-3 font-medium">{work.team}</td>
+                                                                    <td className="px-3 py-3">{work.task}</td>
+                                                                    <td className="px-3 py-3"><span className={`px-2 py-1 rounded text-xs font-bold ${work.risk === '상' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>{work.risk}</span></td>
+                                                                    <td className="px-3 py-3 font-bold text-blue-600">{work.workerCount}명</td>
+                                                                    <td className="px-3 py-3">{work.manager}</td>
+                                                                    <td className="px-3 py-3"><span className="flex items-center text-gray-500"><span className={`w-2 h-2 rounded-full mr-2 ${work.status === '진행' ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>{work.status}</span></td>
+                                                                    <td className="px-3 py-3 text-center">
+                                                                        <button onClick={() => handleWorkEdit(work.id)} className="text-blue-500 p-1 rounded hover:bg-blue-50"><Edit2 size={16} /></button>
+                                                                        {/* [추가] 삭제 버튼 */}
+                                                                        <button onClick={() => handleDeleteWork(work.id)} className="text-red-500 p-1 rounded hover:bg-red-50 ml-1"><Trash size={16} /></button>
+                                                                    </td>
+                                                                </>
+                                                            )}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <button onClick={handleAddWork} className="w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 hover:border-blue-400 hover:text-blue-500 transition text-sm font-bold flex items-center justify-center"><Plus size={16} className="mr-1" /> 작업 추가하기</button>
+                                    </div>
+
+                                    {/* 2. 안전 교육 및 위험성평가 현황 */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{animationDelay: '0.2s'}}>
+                                        <div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-gray-800 flex items-center"><ClipboardCheck className="text-blue-500 mr-2" size={20} /> 고위험 작업 안전 관리 (교육 & 위험성평가)</h3></div>
+                                        {riskWorks.length === 0 ? <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">등록된 고위험 작업이 없습니다.</div> : (
+                                            <div className="space-y-6">
+                                                {riskWorks.map((work) => {
+                                                    const rate = parseInt(work.workerCount) > 0 ? Math.round((parseInt(work.eduCompleted) / parseInt(work.workerCount)) * 100) : 0;
+                                                    return (
+                                                        <div key={work.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50 hover:bg-white transition hover:shadow-md">
+                                                            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2 mb-1"><span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded font-bold">{work.team}</span><span className={`text-xs px-2 py-0.5 rounded font-bold ${work.risk === '상' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>위험도 {work.risk}</span></div>
+                                                                    <h4 className="font-bold text-gray-800 text-lg">{work.task}</h4>
+                                                                </div>
+                                                                <div className="flex-1 max-w-md bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                                                    <div className="flex justify-between items-center mb-2"><span className="text-sm font-bold text-gray-600">특별 안전 교육 이수 현황</span><span className={`text-sm font-bold ${rate === 100 ? 'text-green-600' : 'text-orange-500'}`}>{rate}% 달성</span></div>
+                                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2"><div className={`h-2.5 rounded-full transition-all duration-500 ${rate === 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{width: `${rate}%`}}></div></div>
+                                                                    <div className="flex justify-between items-center text-xs"><span className="text-gray-500">교육 대상: <strong className="text-gray-800">{work.workerCount}명</strong></span><div className="flex items-center gap-2"><span>이수 완료:</span><input type="number" min="0" max={work.workerCount} className="w-16 border rounded px-1 py-0.5 text-center font-bold" value={work.eduCompleted} onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)} onBlur={() => handleWorkSave(work.id)} /><span>명</span></div></div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mt-3">
+                                                                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">사전 위험성평가 및 중점 관리 대책</label>
+                                                                <textarea className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none bg-white" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(work.id)}></textarea>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 3. 알림 게시판 */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{animationDelay: '0.3s'}}>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-bold text-gray-800 flex items-center"><MessageSquare className="text-purple-500 mr-2" size={20} /> Safety 알림 게시판</h3>
+                                            <button onClick={handleAddNotice} className="text-sm px-3 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex items-center"><Plus size={12} className="mr-1" /> 글쓰기</button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {noticeData.map((notice) => (
+                                                <div key={notice.id} onClick={() => setSelectedNotice(notice)} className="flex items-center justify-between p-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer group">
+                                                    <div className="flex items-center gap-3"><span className={`text-xs font-bold px-2 py-1 rounded ${notice.type === '공지' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{notice.type}</span><span className="text-sm font-medium text-gray-800 hover:text-blue-600 transition">{notice.title}</span></div>
+                                                    <div className="flex items-center text-xs text-gray-400 gap-3">
+                                                        <span>{notice.author}</span><span>{notice.date}</span>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteNotice(notice.id); }} className="p-1 hover:bg-red-100 rounded text-gray-400 hover:text-red-500 transition ml-2"><Trash size={14} /></button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* 4. 부적합 조치 현황 */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{animationDelay: '0.4s'}}>
+                                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><CheckCircle className="text-green-500 mr-2" size={20} /> 안전 부적합 조치</h3>
+                                        <div className="space-y-3">
+                                            <div onClick={() => { setSelectedIssueType('new'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-100 cursor-pointer hover:-translate-y-1 transition"><div className="flex items-center"><div className="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center text-red-600 mr-3"><AlertTriangle size={16} /></div><span className="text-sm font-bold text-gray-700">신규 발견 (접수 대기)</span></div><span className="text-xl font-bold text-red-600">{issueCounts.new}</span></div>
+                                            <div onClick={() => { setSelectedIssueType('processing'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-100 cursor-pointer hover:-translate-y-1 transition"><div className="flex items-center"><div className="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-600 mr-3"><Activity size={16} /></div><span className="text-sm font-bold text-gray-700">조치 중 (진행)</span></div><span className="text-xl font-bold text-yellow-600">{issueCounts.processing}</span></div>
+                                            <div onClick={() => { setSelectedIssueType('done'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100 cursor-pointer hover:-translate-y-1 transition"><div className="flex items-center"><div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-green-600 mr-3"><CheckCircle size={16} /></div><span className="text-sm font-bold text-gray-700">조치 완료</span></div><span className="text-xl font-bold text-green-600">{issueCounts.done}</span></div>
+                                        </div>
+                                    </div>
+
+                                    {/* 5. 반입 점검 및 알림 */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{animationDelay: '0.5s'}}>
+                                        <h3 className="text-lg font-bold text-gray-800 mb-4">반입 점검 및 알림</h3>
+                                        <div className="grid grid-cols-1 gap-2 mb-4">
+                                            <button onClick={() => openInspectionModal('건설장비')} className="py-2.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold hover:bg-blue-100 flex items-center justify-center border border-blue-100"><Truck size={16} className="mr-2"/> 건설장비 점검</button>
+                                            <button onClick={() => openInspectionModal('기계기구')} className="py-2.5 bg-orange-50 text-orange-700 rounded-lg text-sm font-bold hover:bg-orange-100 flex items-center justify-center border border-orange-100"><Tool size={16} className="mr-2"/> 기계기구 점검</button>
+                                            <button onClick={() => openInspectionModal('유해화학물질')} className="py-2.5 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold hover:bg-purple-100 flex items-center justify-center border border-purple-100"><FlaskConical size={16} className="mr-2"/> 유해화학물질 점검</button>
+                                        </div>
+                                        <ul className="space-y-3 mt-4">
+                                            {inspectionLog.slice(0, 5).map(log => (
+                                                <li key={log.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 text-sm">
+                                                    <div className="flex flex-col"><span className="font-medium text-gray-700">{log.item}</span><span className="text-xs text-gray-500">{log.type} | {log.date}</span></div>
+                                                    <span className={`text-xs px-2 py-1 rounded font-bold ${getStatusColor(log.status)}`}>{log.status}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </main>
+                        
+                        {/* Footer */}
+                        <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-gray-200 mt-8 relative flex justify-center items-center">
+                            <p className="text-gray-400 text-sm font-medium">남화토건(주) 안전보건팀</p>
+                            <div className="absolute right-4 flex space-x-2">
+                                <button onClick={handlePrint} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
+                                {/* [수정됨] 예정공정표 링크가 siteId에 따라 동적으로 변경됨 */}
+                                <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-700 transition shadow-sm whitespace-nowrap"><LinkIcon size={16} className="mr-2" /> 예정공정표</a>
+                                <a href="index.html" className="flex items-center bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-700 transition shadow-sm whitespace-nowrap">나가기</a>
+                            </div>
+                        </footer>
+
+                        {/* Modals */}
+                        {showSettingsModal && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={closeModal(setShowSettingsModal)}>
+                                <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                                    <div className="p-4 flex justify-between items-center bg-gray-800 text-white rounded-t-xl"><h3 className="font-bold">무재해 목표 설정</h3><button onClick={() => setShowSettingsModal(false)}><X size={24} /></button></div>
+                                    <form onSubmit={handleSaveSettings} className="p-6 space-y-4">
+                                        <div><label className="block text-sm font-bold text-gray-700 mb-1">실착공일</label><input name="startDate" type="date" defaultValue={startDate} className="w-full border rounded-lg p-2" required /></div>
+                                        <div><label className="block text-sm font-bold text-gray-700 mb-1">목표일수</label><input name="targetDays" type="number" defaultValue={targetDays} className="w-full border rounded-lg p-2" required /></div>
+                                        <button type="submit" className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold hover:bg-blue-700">설정 저장</button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {showWorkerModal && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center animate-fade-in" onClick={closeModal(setShowWorkerModal)}>
+                                <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+                                    <div className="bg-green-600 p-4 flex justify-between items-center text-white"><h3 className="font-bold">금일 출력 인원 수정</h3><button onClick={() => setShowWorkerModal(false)}><X size={20} /></button></div>
+                                    <div className="p-4">
+                                        <div className="space-y-2 max-h-[60vh] overflow-y-auto mb-3">
+                                            {workerList.map((worker) => (
+                                                <div key={worker.id} className="flex items-center gap-2 mb-2">
+                                                    <input type="text" className="border p-2 rounded w-1/2 text-sm" value={worker.trade} onChange={(e) => handleWorkerChange(worker.id, 'trade', e.target.value)} placeholder="공종명"/>
+                                                    <input type="number" className="border p-2 rounded w-1/3 text-sm" value={worker.count} onChange={(e) => handleWorkerChange(worker.id, 'count', e.target.value)} placeholder="인원"/>
+                                                    <button onClick={() => handleDeleteWorker(worker.id)} className="text-red-400 hover:text-red-600"><Trash size={16} /></button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <button onClick={handleAddWorker} className="w-full py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-200">+ 공종 추가</button>
+                                        <button onClick={saveWorkersToDB} className="w-full mt-2 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700">저장 및 닫기</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {showIssueModal && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={closeModal(setShowIssueModal)}>
+                                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                                    {/* 모달 헤더 */}
+                                    <div className={`p-5 flex justify-between items-center text-white rounded-t-xl shrink-0 ${selectedIssueType === 'new' ? 'bg-red-500' : selectedIssueType === 'processing' ? 'bg-yellow-500' : 'bg-green-500'}`}>
+                                        <h3 className="font-bold text-lg">{selectedIssueType === 'new' ? '신규 발견 목록' : selectedIssueType === 'processing' ? '조치 중 목록' : '조치 완료 목록'}</h3>
+                                        <button onClick={() => setShowIssueModal(false)} className="hover:bg-white/20 rounded-full p-1 transition"><X size={24} /></button>
+                                    </div>
+                                    
+                                    {/* 모달 바디 (스크롤 가능) */}
+                                    <div className="p-6 space-y-6 overflow-y-auto bg-gray-50 flex-1">
+                                        {/* [추가] 신규 등록 버튼 (신규 발견 목록일 때만 표시) */}
+                                        {selectedIssueType === 'new' && (
+                                            <button onClick={handleAddIssue} className="w-full py-3 bg-red-50 text-red-600 rounded-lg border-2 border-dashed border-red-200 font-bold mb-4 hover:bg-red-100 transition flex items-center justify-center">
+                                                <Plus size={18} className="mr-2"/> + 신규 부적합 사항 등록
+                                            </button>
+                                        )}
+
+                                        {filteredIssues.length > 0 ? filteredIssues.map(issue => (
+                                            <div key={issue.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+                                                {/* 상단: 장소 및 발견자 */}
+                                                <div className="flex justify-between items-end mb-4 pb-2 border-b border-gray-100">
+                                                    <div className="flex-1 mr-4">
+                                                        <input 
+                                                            type="text" 
+                                                            className="w-full text-xl font-bold text-gray-800 bg-transparent placeholder-gray-300 focus:outline-none focus:placeholder-gray-200" 
+                                                            value={issue.loc} 
+                                                            onChange={(e) => handleIssueChange(issue.id, 'loc', e.target.value)} 
+                                                            placeholder="장소 입력 (예: 105동 3층)"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                                        <span className="text-xs text-gray-500 mr-2 font-medium">발견자:</span>
+                                                        <input 
+                                                            type="text" 
+                                                            className="bg-transparent text-sm text-gray-700 font-medium focus:outline-none w-20 text-right border-b border-gray-300 focus:border-gray-500" 
+                                                            value={issue.finder} 
+                                                            onChange={(e) => handleIssueChange(issue.id, 'finder', e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* 내용 입력 */}
+                                                <textarea 
+                                                    className="w-full border border-gray-200 rounded-lg p-4 text-gray-700 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 resize-none h-28 mb-5 placeholder-gray-300 leading-relaxed" 
+                                                    value={issue.desc} 
+                                                    onChange={(e) => handleIssueChange(issue.id, 'desc', e.target.value)} 
+                                                    placeholder="안전 부적합 사항을 상세히 입력하세요."
+                                                />
+
+                                                {/* 사진 업로드 영역 */}
+                                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                                    <label className="group border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50 hover:bg-white overflow-hidden relative">
+                                                        {issue.beforeImg ? (
+                                                            <img src={issue.beforeImg} alt="조치 전" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2 group-hover:bg-gray-200 transition">
+                                                                    <Upload size={18} className="text-gray-400 group-hover:text-gray-600"/>
+                                                                </div>
+                                                                <span className="text-xs font-bold text-gray-400 group-hover:text-gray-600">조치 전 사진</span>
+                                                            </>
+                                                        )}
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleIssueImageUpload(issue.id, 'beforeImg', e)} />
+                                                    </label>
+                                                    <label className="group border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition-colors bg-gray-50 hover:bg-white overflow-hidden relative">
+                                                        {issue.afterImg ? (
+                                                            <img src={issue.afterImg} alt="조치 후" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <>
+                                                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2 group-hover:bg-green-50 transition">
+                                                                    <Upload size={18} className="text-gray-400 group-hover:text-green-500"/>
+                                                                </div>
+                                                                <span className="text-xs font-bold text-gray-400 group-hover:text-green-600">조치 후 사진</span>
+                                                            </>
+                                                        )}
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleIssueImageUpload(issue.id, 'afterImg', e)} />
+                                                    </label>
+                                                </div>
+
+                                                {/* 하단 버튼 그룹 */}
+                                                <div className="flex gap-3">
+                                                    <button 
+                                                        className="flex-1 bg-gray-100 text-gray-600 py-3.5 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors" 
+                                                        onClick={saveIssueChanges}
+                                                    >
+                                                        내용 저장
+                                                    </button>
+                                                    
+                                                    {selectedIssueType === 'new' && (
+                                                        <button className="flex-1 bg-yellow-500 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-yellow-600 transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform active:scale-95 duration-200" onClick={() => changeIssueStatus(issue.id, 'processing')}>
+                                                            조치 착수 <ArrowRight size={16} className="ml-2" />
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {selectedIssueType === 'processing' && (
+                                                        <button className="flex-1 bg-green-500 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors flex items-center justify-center shadow-md hover:shadow-lg transform active:scale-95 duration-200" onClick={() => changeIssueStatus(issue.id, 'done')}>
+                                                            조치 완료 승인 <CheckCircle size={16} className="ml-2" />
+                                                        </button>
+                                                    )}
+                                                    
+                                                    {selectedIssueType === 'done' && (
+                                                        <div className="flex-1 bg-gray-50 border border-gray-200 text-green-600 py-3.5 rounded-lg text-sm font-bold flex items-center justify-center cursor-default">
+                                                            완료된 항목 <CheckCircle size={16} className="ml-2" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <div className="text-center text-gray-400 py-20 flex flex-col items-center">
+                                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                                                    <AlertTriangle size={32} />
+                                                </div>
+                                                <p>{selectedIssueType === 'new' ? '신규 발견된 항목이 없습니다.' : selectedIssueType === 'processing' ? '조치 중인 항목이 없습니다.' : '완료된 항목이 없습니다.'}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {showInspectionModal && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={closeModal(setShowInspectionModal)}>
+                                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                                    <div className="p-4 flex justify-between items-center bg-blue-600 text-white rounded-t-xl"><h3 className="font-bold">{inspectionType} 점검 등록</h3><button onClick={() => setShowInspectionModal(false)}><X size={24} /></button></div>
+                                    <form onSubmit={handleSaveInspection} className="p-6 space-y-4">
+                                        <div><label className="block text-sm font-medium text-gray-700 mb-1">품목명 / 장비명</label><input name="item" type="text" className="w-full border rounded-lg p-2" required placeholder="예: 이동식 크레인, 에폭시 등" /></div>
+                                        <div><label className="block text-sm font-medium text-gray-700 mb-2">점검 결과</label><div className="flex gap-4"><label className="flex items-center cursor-pointer"><input type="radio" name="result" value="합격" className="mr-2" defaultChecked /><span className="text-sm font-bold text-green-600">합격</span></label><label className="flex items-center cursor-pointer"><input type="radio" name="result" value="불합격" className="mr-2" /><span className="text-sm font-bold text-red-600">불합격</span></label></div></div>
+                                        <div><label className="block text-sm font-medium text-gray-700 mb-1">세부 점검 내용</label><textarea className="w-full border rounded-lg p-2 h-20" placeholder="특이사항 및 점검 결과를 입력하세요"></textarea></div>
+                                        
+                                        {/* [수정됨] 점검 사진 첨부 UI - 다중 이미지 지원 */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">점검 사진 / 서류 첨부</label>
+                                            
+                                            {/* 미리보기 영역 (그리드 형태) */}
+                                            <div className="flex flex-wrap gap-2 mb-2">
+                                                {inspectionImages.map((img, idx) => (
+                                                    <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group">
+                                                        <img src={img} className="w-full h-full object-cover" />
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => handleRemoveInspectionImage(idx)} 
+                                                            className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <X size={12}/>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {/* 업로드 버튼 (추가) */}
+                                                <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                                    <Plus className="w-6 h-6 text-gray-400" />
+                                                    <input type="file" multiple className="hidden" accept="image/*" onChange={handleInspectionImageUpload} />
+                                                </label>
+                                            </div>
+                                            <p className="text-xs text-gray-400">* 사진을 여러 장 선택하거나 추가할 수 있습니다.</p>
+                                        </div>
+
+                                        <button type="submit" className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold hover:bg-blue-700">저장 하기</button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedNotice && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={closeModal(() => setSelectedNotice(null))}>
+                                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                                    <div className="p-4 flex justify-between items-center bg-purple-600 text-white rounded-t-xl"><h3 className="font-bold">공지사항 상세</h3><button onClick={() => setSelectedNotice(null)}><X size={24} /></button></div>
+                                    <div className="p-6">
+                                        <div className="flex items-center gap-2 mb-4"><span className={`text-xs font-bold px-2 py-1 rounded ${selectedNotice.type === '공지' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{selectedNotice.type}</span><span className="text-sm text-gray-500">{selectedNotice.date} | {selectedNotice.author}</span></div>
+                                        <h4 className="text-xl font-bold text-gray-800 mb-4">{selectedNotice.title}</h4>
+                                        <div className="bg-gray-50 p-4 rounded-lg text-gray-700 text-sm min-h-[150px] whitespace-pre-wrap leading-relaxed">{selectedNotice.content}</div>
+                                        <button onClick={() => setSelectedNotice(null)} className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-300 transition">닫기</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div> 
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<SafetyDashboard />);
+    </script>
+</body>
+</html>

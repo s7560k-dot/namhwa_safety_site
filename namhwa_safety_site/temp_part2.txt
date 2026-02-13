@@ -1,0 +1,471 @@
+
+        const SafetyDashboard = () => {
+            const [currentDate, setCurrentDate] = useState('');
+            const queryParams = new URLSearchParams(window.location.search);
+            // [수정됨] 기본값을 'siteB'(수원 노유자시설)로 설정
+            const siteId = queryParams.get('siteId') || 'siteB'; 
+            
+            // =================================================================
+            // [폴더 구조 연동 로직] - siteConfig 확장 (테마 색상 추가)
+            // =================================================================
+            const siteConfig = {
+                'siteA': {
+                    name: '대광새마을금고 신축공사',
+                    link: './status_a/index.html',
+                    theme: 'blue',
+                    gradient: 'from-blue-700 to-blue-500',
+                    text: 'text-blue-900',
+                    bg: 'bg-blue-600'
+                },
+                'siteB': {
+                    name: '수원 노유자시설 신축공사',
+                    link: './status_b/index.html',
+                    theme: 'purple',
+                    gradient: 'from-purple-700 to-purple-500',
+                    text: 'text-purple-900',
+                    bg: 'bg-purple-600'
+                }
+            };
+
+            // 현재 siteId에 맞는 정보 가져오기 (잘못된 ID면 siteB 기본)
+            const currentSiteInfo = siteConfig[siteId] || siteConfig['siteB'];
+
+            const [startDate, setStartDate] = useState('2024-01-01');
+            const [targetDays, setTargetDays] = useState(500);
+            const [accidentFreeDays, setAccidentFreeDays] = useState(0);
+
+            // 초기 상태는 빈 배열 (DB에서 불러옴)
+            const [riskWorks, setRiskWorks] = useState([]);
+            const [noticeData, setNoticeData] = useState([]);
+            const [issueList, setIssueList] = useState([]); 
+            const [inspectionLog, setInspectionLog] = useState([]);
+            const [workerList, setWorkerList] = useState([]);
+            
+            // UI States
+            const [logoUrl, setLogoUrl] = useState(null);
+            const [showWorkerModal, setShowWorkerModal] = useState(false);
+            const [showIssueModal, setShowIssueModal] = useState(false);
+            const [selectedIssueType, setSelectedIssueType] = useState(null); 
+            const [editingWorkId, setEditingWorkId] = useState(null);
+            const [showInspectionModal, setShowInspectionModal] = useState(false);
+            const [inspectionType, setInspectionType] = useState('');
+            const [showSettingsModal, setShowSettingsModal] = useState(false); 
+            const [selectedNotice, setSelectedNotice] = useState(null); 
+            
+            // [수정됨] 점검 이미지 상태 - 다중 이미지 지원을 위해 배열로 변경
+            const [inspectionImages, setInspectionImages] = useState([]);
+
+            // 1. 날짜 및 무재해 일수 계산 (startDate 변경 시 실행)
+            useEffect(() => {
+                const today = new Date();
+                setCurrentDate(`${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`);
+                
+                const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const startParts = startDate.split('-'); 
+                const startMidnight = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
+                const diffTime = todayMidnight - startMidnight;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+                setAccidentFreeDays(diffDays >= 0 ? diffDays + 1 : 0);
+            }, [startDate]);
+
+            // 2. DB 리스너 연결 (페이지 로드 시 한 번 실행)
+            useEffect(() => {
+                if (db) {
+                    const siteRef = db.collection('sites').doc(siteId);
+
+                    // [추가] 사이트 설정(실착공일, 목표일) 실시간 동기화
+                    const unsubSite = siteRef.onSnapshot(doc => {
+                        if (doc.exists) {
+                            const data = doc.data();
+                            if(data.startDate) setStartDate(data.startDate);
+                            if(data.targetDays) setTargetDays(data.targetDays);
+                        } else {
+                            // 문서가 없으면 기본 설정값 생성
+                            siteRef.set({ startDate: '2024-01-01', targetDays: 500 }, { merge: true });
+                        }
+                    });
+
+                    // [수정됨] 개별 컬렉션 시딩 (중복 방지)
+                    const seedCollection = async (colName, data) => {
+                        const colRef = siteRef.collection(colName);
+                        const snap = await colRef.get();
+                        if(snap.empty) {
+                            const batch = db.batch();
+                            data.forEach(d => batch.set(colRef.doc(d.id), d));
+                            await batch.commit();
+                        }
+                    };
+
+                    seedCollection('riskWorks', DEFAULT_SEED_DATA.riskWorks);
+                    seedCollection('notices', DEFAULT_SEED_DATA.notices);
+                    seedCollection('issues', DEFAULT_SEED_DATA.issueList);
+                    seedCollection('inspections', DEFAULT_SEED_DATA.inspectionLog);
+                    seedCollection('workers', DEFAULT_SEED_DATA.workerDetails);
+
+                    // 2. 실시간 리스너 등록
+                    const unsubRisk = siteRef.collection('riskWorks').onSnapshot(snap => setRiskWorks(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    const unsubNotice = siteRef.collection('notices').orderBy('date', 'desc').onSnapshot(snap => setNoticeData(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    const unsubIssue = siteRef.collection('issues').onSnapshot(snap => setIssueList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    const unsubInsp = siteRef.collection('inspections').orderBy('date', 'desc').onSnapshot(snap => setInspectionLog(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                    const unsubWorker = siteRef.collection('workers').onSnapshot(snap => setWorkerList(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+
+                    return () => { 
+                        unsubSite(); // 설정 리스너 해제
+                        unsubRisk(); unsubNotice(); unsubIssue(); unsubInsp(); unsubWorker(); 
+                    };
+                }
+            }, [siteId]);
+
+            const issueCounts = {
+                new: issueList.filter(i => i.status === 'new').length,
+                processing: issueList.filter(i => i.status === 'processing').length,
+                done: issueList.filter(i => i.status === 'done').length
+            };
+            const filteredIssues = issueList.filter(i => i.status === selectedIssueType);
+
+            // --- Handlers (DB Write) ---
+            
+            // 로고 (로컬 프리뷰만)
+            const handleLogoUpload = (e) => { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setLogoUrl(reader.result); reader.readAsDataURL(file); } };
+            
+            // 작업 관리
+            const handleWorkEdit = (id) => setEditingWorkId(id);
+            const handleWorkSave = (id) => { 
+                setEditingWorkId(null); 
+                // 변경된 내용은 handleWorkChange에서 이미 로컬 state에 반영됨. 
+                // 하지만 DB에는 반영 안됨. 여기서는 편의상 "Save" 버튼 누를 때 DB 업데이트 하도록 구현.
+                const workToSave = riskWorks.find(w => w.id === id);
+                if(workToSave && db) db.collection('sites').doc(siteId).collection('riskWorks').doc(id).update(workToSave);
+            };
+            // Input Change -> Local State Update (UX 반응성)
+            const handleWorkChange = (id, field, value) => { 
+                setRiskWorks(riskWorks.map(work => work.id === id ? { ...work, [field]: value } : work)); 
+            };
+            
+            const handleAddWork = () => { 
+                const newWork = { team: '', task: '', risk: '중', manager: '', status: '예정', workerCount: 0, eduCompleted: 0, assessment: '' };
+                if(db) db.collection('sites').doc(siteId).collection('riskWorks').add(newWork);
+            };
+
+            // [추가] 고위험 작업 삭제 함수
+            const handleDeleteWork = (id) => {
+                if(confirm("정말로 이 작업을 삭제하시겠습니까?")) {
+                    if(db) db.collection('sites').doc(siteId).collection('riskWorks').doc(id).delete();
+                }
+            };
+
+            // [수정됨] 출력 인원 관리 (ID 중복 문제 해결 + 동기화)
+            const handleWorkerChange = (id, field, value) => { 
+                setWorkerList(workerList.map(w => w.id === id ? { ...w, [field]: value } : w)); 
+            };
+            const handleAddWorker = () => setWorkerList([...workerList, { id: Date.now().toString(), trade: '', count: 0 }]);
+            const handleDeleteWorker = (id) => setWorkerList(workerList.filter(w => w.id !== id));
+            
+            const saveWorkersToDB = async () => {
+                if(!db) return;
+                const batch = db.batch();
+                const workerRef = db.collection('sites').doc(siteId).collection('workers');
+                
+                // 1. DB에 있는 ID 목록 가져오기
+                const snapshot = await workerRef.get();
+                const dbIds = snapshot.docs.map(doc => doc.id);
+                const currentIds = workerList.map(w => String(w.id));
+
+                // 2. 삭제된 항목 처리 (DB에는 있는데 현재 리스트에 없는 것 삭제)
+                dbIds.forEach(dbId => {
+                    if (!currentIds.includes(dbId)) {
+                        batch.delete(workerRef.doc(dbId));
+                    }
+                });
+
+                // 3. 현재 항목 업데이트/추가
+                workerList.forEach(w => {
+                    const docRef = workerRef.doc(String(w.id)); 
+                    batch.set(docRef, { trade: w.trade, count: parseInt(w.count) || 0 }, { merge: true });
+                });
+                
+                await batch.commit();
+                setShowWorkerModal(false);
+            };
+
+            // 부적합 조치
+            const handleIssueChange = (id, field, value) => { setIssueList(issueList.map(issue => issue.id === id ? { ...issue, [field]: value } : issue)); };
+            
+            // [추가] 부적합 신규 등록 함수
+            const handleAddIssue = () => {
+                const newIssue = { 
+                    loc: '', 
+                    desc: '', 
+                    finder: '관리자', 
+                    status: 'new', 
+                    beforeImg: null, 
+                    afterImg: null, 
+                    date: new Date().toISOString().slice(0, 10) 
+                };
+                if(db) {
+                    db.collection('sites').doc(siteId).collection('issues').add(newIssue);
+                } else {
+                    const tempId = Date.now().toString();
+                    setIssueList([...issueList, { id: tempId, ...newIssue }]);
+                }
+            };
+
+            // [수정됨] 부적합 조치 사진 업로드 핸들러 - 이미지 압축 (자동 상태 전환 제거)
+            const handleIssueImageUpload = (id, type, e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // 이미지 압축 로직 추가
+                    const reader = new FileReader();
+                    reader.onload = (readerEvent) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 800; // 최대 너비 제한
+                            const MAX_HEIGHT = 600; // 최대 높이 제한
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // 압축된 데이터 URL (JPEG, 품질 0.7)
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                            // 상태 업데이트 및 DB 저장 (자동 상태 전환 로직 제거)
+                            setIssueList(prevList => {
+                                return prevList.map(issue => {
+                                    if (issue.id === id) {
+                                        // DB 업데이트 (압축된 이미지 사용)
+                                        if(db) {
+                                            const updateData = { [type]: dataUrl };
+                                            db.collection('sites').doc(siteId).collection('issues').doc(id).update(updateData)
+                                                .catch(err => {
+                                                    console.error("Error updating document: ", err);
+                                                    alert("사진 저장 중 오류가 발생했습니다. 용량이 너무 클 수 있습니다.");
+                                                });
+                                        }
+                                        return { ...issue, [type]: dataUrl };
+                                    }
+                                    return issue;
+                                });
+                            });
+                        };
+                        img.src = readerEvent.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const saveIssueChanges = () => {
+                 if(!db) return;
+                 const batch = db.batch();
+                 filteredIssues.forEach(issue => {
+                     const ref = db.collection('sites').doc(siteId).collection('issues').doc(issue.id);
+                     batch.update(ref, { 
+                        loc: issue.loc, 
+                        finder: issue.finder, 
+                        desc: issue.desc,
+                        beforeImg: issue.beforeImg || null, // 이미지 필드 추가
+                        afterImg: issue.afterImg || null
+                     });
+                 });
+                 batch.commit().then(() => setShowIssueModal(false));
+            };
+            
+            // [수정됨] 상태 변경 시 현재 데이터 전체 업데이트 (내용, 사진 보존 강화)
+            const changeIssueStatus = (id, newStatus) => { 
+                const targetIssue = issueList.find(i => i.id === id);
+                if (!targetIssue) return;
+
+                // 로컬 상태 즉시 반영 (Optimistic Update)
+                setIssueList(prev => prev.map(issue => issue.id === id ? { ...issue, status: newStatus } : issue));
+                
+                // DB 업데이트 (전체 필드 업데이트하여 내용/사진 동기화 보장)
+                if(db) {
+                    db.collection('sites').doc(siteId).collection('issues').doc(id).set({
+                        ...targetIssue,
+                        status: newStatus
+                    }, { merge: true }) // merge: true로 덮어쓰기
+                      .catch(err => {
+                          console.error("상태 업데이트 실패:", err);
+                          alert("상태 변경 저장에 실패했습니다.");
+                      });
+                }
+            };
+
+            // 공지사항
+            const handleAddNotice = () => { 
+                const title = prompt("제목 입력"); 
+                if(title && db) {
+                    db.collection('sites').doc(siteId).collection('notices').add({
+                        type: '공지', title, content: '', author: '관리자', date: new Date().toISOString().slice(5,10)
+                    });
+                }
+            };
+            // [추가] 공지사항 삭제 기능
+            const handleDeleteNotice = (id) => {
+                if(confirm("이 공지사항을 삭제하시겠습니까?")) {
+                    const pwd = prompt("관리자 비밀번호를 입력하세요");
+                    if(pwd === "1234") {
+                        if(db) db.collection('sites').doc(siteId).collection('notices').doc(id).delete();
+                    } else if(pwd !== null) {
+                        alert("비밀번호가 틀렸습니다.");
+                    }
+                }
+            };
+
+            // 점검
+            const openInspectionModal = (type) => { 
+                setInspectionType(type); 
+                setInspectionImages([]); // 이미지 배열 초기화
+                setShowInspectionModal(true); 
+            };
+
+            // [수정됨] 점검 이미지 업로드 핸들러 - 다중 파일 처리 및 압축
+            const handleInspectionImageUpload = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                const processFile = (file) => {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (readerEvent) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 800;
+                                const MAX_HEIGHT = 600;
+                                let width = img.width;
+                                let height = img.height;
+
+                                if (width > height) {
+                                    if (width > MAX_WIDTH) {
+                                        height *= MAX_WIDTH / width;
+                                        width = MAX_WIDTH;
+                                    }
+                                } else {
+                                    if (height > MAX_HEIGHT) {
+                                        width *= MAX_HEIGHT / height;
+                                        height = MAX_HEIGHT;
+                                    }
+                                }
+
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                
+                                resolve(canvas.toDataURL('image/jpeg', 0.7));
+                            };
+                            img.src = readerEvent.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                };
+
+                // 모든 파일 비동기 처리
+                const newImages = await Promise.all(files.map(processFile));
+                setInspectionImages(prev => [...prev, ...newImages]);
+            };
+
+            // [추가] 점검 이미지 개별 삭제 핸들러
+            const handleRemoveInspectionImage = (index) => {
+                setInspectionImages(prev => prev.filter((_, i) => i !== index));
+            };
+
+            const handleSaveInspection = (e) => { 
+                e.preventDefault(); 
+                if(db) {
+                    db.collection('sites').doc(siteId).collection('inspections').add({
+                        type: inspectionType, 
+                        item: e.target.item.value, 
+                        date: new Date().toISOString().slice(5,10), 
+                        status: e.target.result.value,
+                        images: inspectionImages || [] // 이미지 배열 저장
+                    });
+                }
+                setShowInspectionModal(false); 
+            };
+
+            // 설정 저장 (DB에 저장)
+            const handleSaveSettings = (e) => { 
+                e.preventDefault(); 
+                const newStartDate = e.target.startDate.value;
+                const newTargetDays = parseInt(e.target.targetDays.value);
+                
+                // 로컬 상태 즉시 업데이트
+                setStartDate(newStartDate); 
+                setTargetDays(newTargetDays); 
+                
+                // DB에 영구 저장
+                if (db) {
+                    db.collection('sites').doc(siteId).set({
+                        startDate: newStartDate,
+                        targetDays: newTargetDays
+                    }, { merge: true });
+                }
+                setShowSettingsModal(false); 
+            };
+            
+            const closeModal = (setter) => (e) => { if(e.target === e.currentTarget) setter(false); };
+            const getStatusColor = (status) => status === '합격' ? 'bg-green-100 text-green-600' : status === '불합격' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600';
+            const handlePrint = () => { window.print(); };
+
+            return (
+                <div className="min-h-screen bg-gray-50 text-gray-800 font-sans relative pb-20">
+                    <PrintReport data={{ workerList, riskWorks, noticeData, issueList, inspectionLog }} siteName={currentSiteInfo.name} currentDate={currentDate} accidentFreeDays={accidentFreeDays} targetDays={targetDays} />
+                    <div className="no-print">
+                        {/* 헤더 배경색을 siteConfig에 따라 동적으로 변경 */}
+                        <header className={`bg-white shadow-sm sticky top-0 z-30 border-b-4 ${siteId === 'siteA' ? 'border-blue-500' : 'border-purple-500'}`}>
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                                <div className="flex items-center w-1/4">
+                                    <div><h1 className="text-xl font-bold text-gray-900 leading-tight">Safety ON</h1><p className="text-xs text-gray-500">스마트 안전보건 플랫폼</p></div>
+                                </div>
+                                <div className="flex-1 text-center">
+                                    {/* 제목 색상 동적 적용 */}
+                                    <h2 className={`text-2xl font-extrabold tracking-wide font-['SeoulHangang'] drop-shadow-sm ${currentSiteInfo.text}`}>{currentSiteInfo.name}</h2>
+                                    <p className="text-xs text-gray-400 mt-1">" 남화의 미래를 켜다 "</p>
+                                </div>
+                                <div className="flex items-center justify-end space-x-6 w-1/4">
+                                    <span className="text-sm font-medium text-gray-500 flex items-center hidden sm:flex"><CalendarIcon className="mr-2" size={16} /> {currentDate}</span>
+                                    <div className="relative cursor-pointer"><Bell className="text-gray-400 hover:text-gray-600" /><span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">3</span></div>
+                                    {/* 관리 아이콘 색상 동적 적용 */}
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white cursor-pointer ${currentSiteInfo.bg}`}>관리</div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                            {/* Top Banner: 배경 그라데이션 동적 적용 */}
+                            <div className={`bg-gradient-to-r ${currentSiteInfo.gradient} rounded-2xl shadow-lg p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between animate-fade-in relative`}>
+                                <button onClick={() => setShowSettingsModal(true)} className="absolute top-4 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition"><Settings size={20} className="text-white" /></button>
+                                <div className="mb-4 md:mb-0">
+                                    <h2 className="text-lg font-medium opacity-90 mb-1 flex items-center">우리 현장 무재해 기록 <button onClick={() => setShowSettingsModal(true)} className="ml-3 text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded flex items-center transition cursor-pointer border border-transparent hover:border-white/40" title="클릭하여 날짜 수정">실착공일: {startDate} <Edit2 size={12} className="ml-1 opacity-70"/></button></h2>
+                                    <div className="flex items-end"><span className="text-5xl font-bold mr-2">{accidentFreeDays}</span><span className="text-xl mb-2">일째</span><span className="ml-4 bg-white/20 px-3 py-1 rounded-full text-sm">목표: {targetDays}일</span></div>
+                                </div>
+                                <div className="flex space-x-8 text-center pr-12">
+                                    <div className="cursor-pointer hover:bg-white/10 p-2 rounded-lg transition" onClick={() => setShowWorkerModal(true)}>
+                                        <p className="text-sm opacity-75 mb-1 flex items-center justify-center">금일 출력 인원 <MoreHorizontal size={12} className="ml-1" /></p>
+                                        <p className="text-2xl font-bold flex items-center justify-center"><Users size={20} className="mr-1" /> {workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명</p>
+                                    </div>
+                                    <div className="h-12 w-px bg-white/30"></div>
+                                    <div><p className="text-sm opacity-75 mb-1">고위험 작업</p><p className="text-2xl font-bold flex items-center justify-center text-yellow-300"><AlertTriangle size={20} className="mr-1" /> {riskWorks.length}건</p></div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-2 space-y-6">
