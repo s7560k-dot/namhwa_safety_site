@@ -1149,12 +1149,21 @@
                                             {/* 미리보기 영역 (그리드 형태) */}
                                             <div className="flex flex-wrap gap-2 mb-2">
                                                 {inspectionImages.map((img, idx) => (
-                                                    <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group">
-                                                        <img src={img} className="w-full h-full object-cover" />
+                                                    <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group bg-gray-50 flex items-center justify-center">
+                                                        {typeof img === 'string' ? (
+                                                            <img src={img} className="w-full h-full object-cover" />
+                                                        ) : img.type === 'pdf' ? (
+                                                            <div className="flex flex-col items-center justify-center text-center p-1">
+                                                                <span className="text-2xl">📄</span>
+                                                                <span className="text-[10px] text-gray-500 truncate w-16 leading-tight mt-1">{img.name}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <img src={img.url} className="w-full h-full object-cover" />
+                                                        )}
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveInspectionImage(idx)}
-                                                            className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                                         >
                                                             <X size={12} />
                                                         </button>
@@ -1163,10 +1172,10 @@
                                                 {/* 업로드 버튼 (추가) */}
                                                 <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                                                     <Plus className="w-6 h-6 text-gray-400" />
-                                                    <input type="file" multiple className="hidden" accept="image/*" onChange={handleInspectionImageUpload} />
+                                                    <input type="file" multiple className="hidden" accept="image/*, .pdf" onChange={handleInspectionImageUpload} />
                                                 </label>
                                             </div>
-                                            <p className="text-xs text-gray-400">* 사진을 여러 장 선택하거나 추가할 수 있습니다.</p>
+                                            <p className="text-xs text-gray-400">* 사진 또는 PDF 문서를 여러 개 첨부할 수 있습니다.</p>
                                         </div>
 
                                         <button type="submit" className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold hover:bg-blue-700">저장 하기</button>

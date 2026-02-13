@@ -1259,16 +1259,25 @@
             const previewPdf = document.getElementById('previewPdf');
 
             if (currentFileUrl) {
+                const isPdf = currentFileUrl.toLowerCase().includes(".pdf") || currentFileUrl.startsWith("data:application/pdf");
                 previewBox.style.display = "block";
-                previewImg.style.display = "block";
-                previewPdf.style.display = "none";
-                previewImg.src = currentFileUrl;
 
-                previewImg.onerror = function () {
+                if (isPdf) {
                     previewImg.style.display = "none";
                     previewPdf.style.display = "block";
                     previewPdf.src = currentFileUrl;
-                };
+                } else {
+                    previewImg.style.display = "block";
+                    previewPdf.style.display = "none";
+                    previewImg.src = currentFileUrl;
+
+                    // 이미지 로드 실패 시 PDF로 재시도 (확장자 없는 경우 등 대비)
+                    previewImg.onerror = function () {
+                        previewImg.style.display = "none";
+                        previewPdf.style.display = "block";
+                        previewPdf.src = currentFileUrl;
+                    };
+                }
             } else {
                 previewBox.style.display = "none";
                 previewImg.src = "";
@@ -1576,7 +1585,8 @@
                 // [수정됨] 리스트에 이미지/문서 미리보기 표시 추가
                 let fileDisplay = "";
                 if (d.imageData) {
-                    if (d.imageData.includes("pdf") || d.imageData.startsWith("data:application/pdf")) {
+                    // [수정됨] 대소문자 무시하고 PDF 체크
+                    if (d.imageData.toLowerCase().includes(".pdf") || d.imageData.startsWith("data:application/pdf")) {
                         fileDisplay = `<div style="margin-top:8px; padding:4px; background:#f8f9fa; border-radius:4px; font-size:12px;"><a href="${d.imageData}" target="_blank" onclick="event.stopPropagation()" style="color:#e67e22; text-decoration:none; display:flex; align-items:center;">📄 PDF 문서 보기 (클릭)</a></div>`;
                     } else {
                         fileDisplay = `<div style="margin-top:8px;"><img src="${d.imageData}" style="height:60px; width:auto; border-radius:4px; border:1px solid #eee; cursor:zoom-in;" onclick="event.stopPropagation(); window.open(this.src)"></div>`;
