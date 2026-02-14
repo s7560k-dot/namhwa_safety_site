@@ -1036,7 +1036,13 @@
                                         {riskWorks.length === 0 ? <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">등록된 고위험 작업이 없습니다.</div> : (
                                             <div className="space-y-6">
                                                 {riskWorks.map((work) => {
-                                                    const rate = parseInt(work.workerCount) > 0 ? Math.round((parseInt(work.eduCompleted) / parseInt(work.workerCount)) * 100) : 0;
+                                                    const eduCompleted = parseInt(work.eduCompleted) || 0;
+                                                    const workerCount = parseInt(work.workerCount) || 0;
+                                                    const rate = workerCount > 0 ? Math.round((eduCompleted / workerCount) * 100) : 0;
+                                                    const isOverflow = rate > 100;
+                                                    const normalWidth = isOverflow ? 100 : rate;
+                                                    const overflowWidth = isOverflow ? (rate - 100) : 0;
+
                                                     return (
                                                         <div key={work.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50 hover:bg-white transition hover:shadow-md">
                                                             <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
@@ -1045,9 +1051,42 @@
                                                                     <h4 className="font-bold text-gray-800 text-lg">{work.task}</h4>
                                                                 </div>
                                                                 <div className="flex-1 max-w-md bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                                    <div className="flex justify-between items-center mb-2"><span className="text-sm font-bold text-gray-600">특별 안전 교육 이수 현황</span><span className={`text-sm font-bold ${rate === 100 ? 'text-green-600' : 'text-orange-500'}`}>{rate}% 달성</span></div>
-                                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2"><div className={`h-2.5 rounded-full transition-all duration-500 ${rate === 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${rate}%` }}></div></div>
-                                                                    <div className="flex justify-between items-center text-xs"><span className="text-gray-500">교육 대상: <strong className="text-gray-800">{work.workerCount}명</strong></span><div className="flex items-center gap-2"><span>이수 완료:</span><input type="number" min="0" max={work.workerCount} className="w-16 border rounded px-1 py-0.5 text-center font-bold" value={work.eduCompleted} onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)} onBlur={() => handleWorkSave(work.id)} /><span>명</span></div></div>
+                                                                    <div className="flex justify-between items-center mb-2">
+                                                                        <span className="text-sm font-bold text-gray-600">특별 안전 교육 이수 현황</span>
+                                                                        <span className={`text-sm font-bold ${rate >= 100 ? 'text-green-600' : rate >= 80 ? 'text-blue-600' : 'text-orange-500'}`}>
+                                                                            {rate}% {isOverflow ? '(초과 달성!)' : '달성'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 relative overflow-hidden">
+                                                                        {/* 100%까지는 기본 색상 (초록/파랑) */}
+                                                                        <div
+                                                                            className={`h-2.5 ${isOverflow ? 'rounded-l-full' : 'rounded-full'} transition-all duration-500 ${rate >= 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                                                                            style={{ width: `${normalWidth}%` }}>
+                                                                        </div>
+                                                                        {/* 100% 초과 시 빨간색으로 표시 */}
+                                                                        {isOverflow && (
+                                                                            <div
+                                                                                className="h-2.5 bg-red-400 rounded-r-full transition-all duration-500 absolute left-full -translate-x-full"
+                                                                                style={{ width: `${Math.min(overflowWidth, 20)}%` }}
+                                                                                title={`초과: ${overflowWidth}%`}>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center text-xs">
+                                                                        <span className="text-gray-500">교육 대상: <strong className="text-gray-800">{work.workerCount}명</strong></span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span>이수 완료:</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                min="0"
+                                                                                className="w-16 border rounded px-1 py-0.5 text-center font-bold"
+                                                                                value={work.eduCompleted}
+                                                                                onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)}
+                                                                                onBlur={() => handleWorkSave(work.id)}
+                                                                            />
+                                                                            <span>명</span>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div className="mt-3">
@@ -1132,8 +1171,8 @@
                             <p className="text-gray-400 text-sm font-medium">남화토건(주) 안전보건팀</p>
                             <div className="absolute right-4 flex space-x-2">
                                 <button onClick={handlePrint} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
-                                {/* [수정됨] 예정공정표 링크가 siteId에 따라 동적으로 변경됨 */}
-                                <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-700 transition shadow-sm whitespace-nowrap"><LinkIcon size={16} className="mr-2" /> 예정공정표</a>
+                                {/* [수정됨] 예정공정표 링크 - 공정표 페이지로 올바르게 연결 */}
+                                <a href={siteId === 'siteA' ? './status_a/schedule.html' : './status_b/schedule.html'} target="_blank" className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-700 transition shadow-sm whitespace-nowrap"><LinkIcon size={16} className="mr-2" /> 예정공정표</a>
                                 <a href="index.html" className="flex items-center bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-700 transition shadow-sm whitespace-nowrap">나가기</a>
                             </div>
                         </footer>
