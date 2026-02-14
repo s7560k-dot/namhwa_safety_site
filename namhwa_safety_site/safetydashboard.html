@@ -430,18 +430,21 @@
                 setShowNotifications(prev => !prev);
             };
 
-            // 1. 날짜 및 무재해 일수 계산 (startDate 변경 시 실행)
+            // 1. 날짜 및 무재해 일수 계산
+            // [수정됨 2026-02-14] 날짜는 매번 현재 날짜로 자동 계산
             useEffect(() => {
+                // 날짜 자동 업데이트
                 const today = new Date();
                 setCurrentDate(`${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`);
 
+                // 무재해 일수 계산
                 const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                 const startParts = startDate.split('-');
                 const startMidnight = new Date(parseInt(startParts[0]), parseInt(startParts[1]) - 1, parseInt(startParts[2]));
                 const diffTime = todayMidnight - startMidnight;
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 setAccidentFreeDays(diffDays >= 0 ? diffDays + 1 : 0);
-            }, [startDate]);
+            }); // [수정됨] 의존성 배열 제거: 매 렌더링마다 현재 날짜 계산
 
             // 2. DB 리스너 연결 (페이지 로드 시 한 번 실행)
             useEffect(() => {
