@@ -1244,29 +1244,64 @@
         // 1. Firebase 읽기 (Real-time) - 구조 개선: 개별 리스너 사용
 
         // (1) 메인 프로젝트 정보 ... (기존 유지) ...
-        onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.headerInfo) globalData.headerInfo = data.headerInfo;
-                if (data.prepConst) globalData.prepConst = data.prepConst;
-                if (data.prepSafety) globalData.prepSafety = data.prepSafety;
-                if (data.kpiData) globalData.kpiData = data.kpiData;
-                if (data.safetyData) globalData.safetyData = data.safetyData;
-                if (data.comments) globalData.comments = data.comments;
-            } else {
-                setDoc(docRef, {
-                    headerInfo: globalData.headerInfo,
-                    kpiData: globalData.kpiData,
-                    safetyData: globalData.safetyData
-                }, { merge: true });
+        // ☝️ [수정됨 2026-02-14] 무한 로딩 방지를 위한 타임아웃 추가
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                console.warn('⚠️ Firebase 로딩 타임아웃: 10초 경과');
+                loadingEl.style.display = 'none';
+                // 기본 데이터로 렌더링 시도
+                renderHeader();
+                renderGrid();
+                renderKpiTable();
             }
-            renderHeader();
-            renderGrid();
-            renderKpiTable();
-            document.getElementById('loading').style.display = 'none';
+        }, 10000); // 10초 타임아웃
+
+        // ☝️ [수정됨 2026-02-14] kpiData와 safetyData 기본값 초기화
+        globalData.kpiData = [];
+        globalData.safetyData = [
+            { title: "위험성평가", monthlyTags: {} },
+            { title: "안전교육", monthlyTags: {} },
+            { title: "협의체/회의", monthlyTags: {} },
+            { title: "법적점검", monthlyTags: {} },
+            { title: "성과측정", monthlyTags: {} }
+        ];
+
+        onSnapshot(docRef, (docSnap) => {
+            try {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.headerInfo) globalData.headerInfo = data.headerInfo;
+                    if (data.prepConst) globalData.prepConst = data.prepConst;
+                    if (data.prepSafety) globalData.prepSafety = data.prepSafety;
+                    if (data.kpiData) globalData.kpiData = data.kpiData;
+                    if (data.safetyData) globalData.safetyData = data.safetyData;
+                    if (data.comments) globalData.comments = data.comments;
+                } else {
+                    console.warn('⚠️ Firestore 문서가 존재하지 않음, 기본 데이터로 초기화');
+                    setDoc(docRef, {
+                        headerInfo: globalData.headerInfo,
+                        kpiData: globalData.kpiData,
+                        safetyData: globalData.safetyData
+                    }, { merge: true }).catch(err => console.error('초기화 실패:', err));
+                }
+                renderHeader();
+                renderGrid();
+                renderKpiTable();
+                document.getElementById('loading').style.display = 'none';
+            } catch (err) {
+                console.error('렌더링 오류:', err);
+                document.getElementById('loading').innerHTML = `<div style="color:#f59e0b; text-align:center;">⚠️ 일부 데이터 로딩 실패<br>기본 화면으로 표시합니다.<br><button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer;">새로고침</button></div>`;
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    renderHeader();
+                    renderGrid();
+                    renderKpiTable();
+                }, 3000);
+            }
         }, (error) => {
-            console.error("Firestore Error:", error);
-            document.getElementById('loading').innerHTML = `<div style="color:red; text-align:center;">데이터 불러오기 실패<br>${error.message}<br><br>※ 관리자에게 'Firestore 규칙' 확인을 요청하세요.</div>`;
+            console.error("❌ Firestore Error:", error);
+            document.getElementById('loading').innerHTML = `<div style="color:red; text-align:center;">데이터 불러오기 실패<br>${error.message}<br><br>※ Firestore 규칙을 확인해주세요.<br><br><button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer;">재시도</button></div>`;
         });
 
         // (2) 공정별 상세 활동 ... (기존 유지) ...

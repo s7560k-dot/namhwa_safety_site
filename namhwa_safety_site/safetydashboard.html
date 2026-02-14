@@ -181,6 +181,14 @@
         const LinkIcon = (props) => <Icon {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></Icon>;
         const Printer = (props) => <Icon {...props}><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></Icon>;
 
+        // [수정됨 2026-02-14] 오늘 날짜를 MM.DD 형식으로 반환하는 함수
+        const getTodayDate = () => {
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${month}.${day}`;
+        };
+
         // 초기 데이터 (DB가 비어있을 때 사용)
         const DEFAULT_SEED_DATA = {
             riskWorks: [
@@ -188,8 +196,8 @@
                 { id: '2', team: '설비 1팀', task: '지하 2층 밀폐공간 용접', risk: '상', status: '예정', manager: '이영희', workerCount: 3, eduCompleted: 2, assessment: '질식 사고 예방을 위한 송풍기 가동 필수, 산소 농도 측정 기록' },
             ],
             notices: [
-                { id: 'n1', type: '공지', title: '[현장] 혹서기 근로자 휴게 시간 준수 안내', content: '최고 기온이 33도 이상인 폭염 주의보 발령 시 오후 2시~5시 사이 옥외작업 단축 및 휴식시간을 철저히 준수 바랍니다.', author: '안전팀장', date: '05.20' },
-                { id: 'n2', type: '일정', title: '[현장] 제5회 안전보건협의체 회의', content: '금일 14:00 현장 회의실에서 협의체 회의가 있습니다.', author: '현장소장', date: '05.21' },
+                { id: 'n1', type: '공지', title: '[현장] 혹서기 근로자 휴게 시간 준수 안내', content: '최고 기온이 33도 이상인 폭염 주의보 발령 시 오후 2시~5시 사이 옥외작업 단축 및 휴식시간을 철저히 준수 바랍니다.', author: '안전팀장', date: getTodayDate() },
+                { id: 'n2', type: '일정', title: '[현장] 제5회 안전보건협의체 회의', content: '금일 14:00 현장 회의실에서 협의체 회의가 있습니다.', author: '현장소장', date: getTodayDate() },
             ],
             issueList: [
                 { id: 'i1', loc: '105동 3층', desc: '개구부 덮개 미설치로 인한 추락 위험', finder: '안전과장', status: 'new' },
@@ -197,8 +205,8 @@
                 { id: 'i3', loc: '야적장', desc: '자재 정리정돈 불량', finder: '관리자', status: 'done' },
             ],
             inspectionLog: [
-                { id: 'ins1', type: '장비', item: '이동식 크레인 (100t)', date: '05.20', status: '합격' },
-                { id: 'ins2', type: '기계', item: '용접기 A-102', date: '05.19', status: '합격' },
+                { id: 'ins1', type: '장비', item: '이동식 크레인 (100t)', date: getTodayDate(), status: '합격' },
+                { id: 'ins2', type: '기계', item: '용접기 A-102', date: getTodayDate(), status: '합격' },
             ],
             workerDetails: [
                 { id: 'w1', trade: '관리자', count: 12 },
