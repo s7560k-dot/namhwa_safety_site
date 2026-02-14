@@ -1171,8 +1171,9 @@
                             <p className="text-gray-400 text-sm font-medium">남화토건(주) 안전보건팀</p>
                             <div className="absolute right-4 flex space-x-2">
                                 <button onClick={handlePrint} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
-                                {/* [수정됨] 예정공정표 링크 - 공정표 페이지로 올바르게 연결 */}
-                                <a href={siteId === 'siteA' ? './status_a/schedule.html' : './status_b/schedule.html'} target="_blank" className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-700 transition shadow-sm whitespace-nowrap"><LinkIcon size={16} className="mr-2" /> 예정공정표</a>
+                                {/* [재수정됨] 예정공정표 링크 - 실제 공정표 파일로 연결 */}
+                                {/* 대광새마을금고(siteA): status_a/index.html, 수원노유자시설(siteB): status_b/suwon_original_backup.html */}
+                                <a href={siteId === 'siteA' ? './status_a/index.html' : './status_b/suwon_original_backup.html'} target="_blank" className="flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-purple-700 transition shadow-sm whitespace-nowrap"><LinkIcon size={16} className="mr-2" /> 예정공정표</a>
                                 <a href="index.html" className="flex items-center bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-700 transition shadow-sm whitespace-nowrap">나가기</a>
                             </div>
                         </footer>
