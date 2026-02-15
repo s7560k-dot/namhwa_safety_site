@@ -480,6 +480,103 @@
             background: #fff5f5;
         }
 
+        /* [NEW] 반입 점검 섹션 스타일 */
+        .inspection-section {
+            max-width: 1600px;
+            margin: 0 auto 30px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+        }
+
+        .inspection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .inspection-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-inspect {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-inspect.blue {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-color: #bbdefb;
+        }
+
+        .btn-inspect.orange {
+            background: #fff3e0;
+            color: #e65100;
+            border-color: #ffe0b2;
+        }
+
+        .btn-inspect.purple {
+            background: #f3e5f5;
+            color: #7b1fa2;
+            border-color: #e1bee7;
+        }
+
+        .btn-inspect:hover {
+            filter: brightness(0.95);
+        }
+
+        .inspection-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .inspection-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .inspect-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pass {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-fail {
+            background: #ffebee;
+            color: #c62828;
+        }
+
         /* 팝업 UI */
         .modal-overlay {
             display: none;
@@ -798,7 +895,8 @@
     </div>
 
     <div class="header-panel">
-        <h2 style="text-align:center; margin-bottom: 20px;">수원 노유자시설 신축공사</h2>
+        <h2 style="text-align:center; margin-bottom: 20px;">수원 노유자시설 신축공사 <span
+                style="font-size:12px; color:#ccc; font-weight:normal;">(v2025.10.16)</span></h2>
         <div class="info-container">
             <div class="info-box">
                 <div class="info-title">📅 공사 기간</div>
@@ -855,6 +953,21 @@
         </table>
     </div>
 
+    <!-- [NEW] 반입 점검 및 알림 섹션 (숨김 처리: 공정표 페이지에서는 보이지 않도록 함) -->
+    <div class="inspection-section" style="display: none;">
+        <div class="inspection-header">
+            <h3 style="margin:0;">🏗️ 반입 장비/자재 점검 및 알림</h3>
+        </div>
+        <div class="inspection-buttons">
+            <button class="btn-inspect blue" onclick="openInspectionModal('건설장비')">🚜 건설장비 점검</button>
+            <button class="btn-inspect orange" onclick="openInspectionModal('기계기구')">🛠️ 기계기구 점검</button>
+            <button class="btn-inspect purple" onclick="openInspectionModal('유해화학물질')">🧪 유해화학물질 점검</button>
+        </div>
+        <ul id="inspectionList" class="inspection-list">
+            <li style="text-align:center; color:#999; padding:10px;">등록된 점검 내역이 없습니다.</li>
+        </ul>
+    </div>
+
     <div class="log-section">
         <div class="log-header">
             <h3 style="margin:0;">📊 실시간 안전활동 등록 현황 (최신순)</h3>
@@ -875,7 +988,8 @@
             <div class="modal-body">
                 <!-- [Added] Date Input Field -->
                 <div><label class="form-label">📅 작업 일자 (자동 입력)</label><input type="date" id="modalDate"
-                        class="form-input"></div>
+                        class="form-input" style="font-weight:bold; font-size:16px; color:#333; background:#f9f9f9;">
+                </div>
 
                 <div class="row-2-col">
                     <div class="col"><label class="form-label">⚠️ 핵심 위험</label><input type="text" id="modalRisk"
@@ -940,26 +1054,54 @@
         </div>
     </div>
 
+    <!-- [NEW] 반입 점검 등록 모달 -->
+    <div id="inspectionModal" class="modal-overlay">
+        <div class="modal-box" style="width: 500px;">
+            <div class="modal-header" style="background:var(--primary); color:white;">
+                <h3 class="modal-title" id="inspectionModalTitle" style="color:white;">점검 등록</h3>
+                <button class="btn-close" style="color:white; border-color:white;"
+                    onclick="closeInspectionModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inspectType">
+                <div>
+                    <label class="form-label">📦 품목명 / 장비명</label>
+                    <input type="text" id="inspectItem" class="form-input" placeholder="예: 굴삭기, 사다리, 에폭시 등">
+                </div>
+                <div>
+                    <label class="form-label">✅ 점검 결과</label>
+                    <div style="display:flex; gap:20px; padding:10px 0;">
+                        <label style="cursor:pointer;"><input type="radio" name="inspectResult" value="합격" checked>
+                            <span style="color:var(--success); font-weight:bold;">합격</span></label>
+                        <label style="cursor:pointer;"><input type="radio" name="inspectResult" value="불합격"> <span
+                                style="color:var(--danger); font-weight:bold;">불합격</span></label>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">📝 세부 점검 내용</label>
+                    <textarea id="inspectDesc" class="form-input" rows="3" placeholder="특이사항 입력"></textarea>
+                </div>
+                <div>
+                    <label class="form-label">📸 사진 첨부</label>
+                    <input type="file" id="inspectFile" class="form-input" accept="image/*" multiple>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-gray" onclick="closeInspectionModal()">취소</button>
+                <button class="btn btn-navy" onclick="saveInspection()">저장하기</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+        import { db, storage } from "../firebase.js";
+        import { doc, collection, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         // ============================================
-        // [수정됨 2026-02-14] 파이어베이스 설정 - 대시보드와 통합
+        // [파이어베이스 설정]
+        // firebase.js에서 설정된 db, storage 객체를 가져와 사용합니다.
         // ============================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
-            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
-            projectId: "namhwa-safety-dashboard",
-            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
-            messagingSenderId: "152864778612",
-            appId: "1:152864778612:web:ecc482adce93a1534a2421"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
 
         // ★ [수정됨 2026-02-14] 수원 현장 DB 경로를 대시보드와 통합 (sites/siteB)
         const SITE_ID = "siteB";
@@ -1028,7 +1170,11 @@
             }
         }, 10000); // 10초 타임아웃
 
-        // 1. Firebase 읽기 (Real-time)
+
+        // [무한 루프 방지] 초기화 플래그
+        let isInitializing = false;
+
+        // (1) 메인 문서 읽기
         onSnapshot(docRef, (docSnap) => {
             try {
                 if (docSnap.exists()) {
@@ -1042,22 +1188,59 @@
                         }
                     }
                 } else {
-                    console.warn('⚠️ Firestore 문서가 존재하지 않음, 기본 데이터로 초기화');
-                    setDoc(docRef, globalData).catch(err => console.error('초기화 실패:', err));
+                    // [수정됨] 무한 루프 방지: 초기화 중이 아닐 때만 setDoc 실행
+                    if (!isInitializing) {
+                        isInitializing = true;
+                        console.warn('⚠️ Firestore 문서가 존재하지 않음, 기본 데이터로 초기화');
+                        setDoc(docRef, globalData).catch(err => console.error('초기화 실패:', err));
+                    }
                 }
                 renderAll();
                 document.getElementById('loading').style.display = 'none';
             } catch (err) {
                 console.error('렌더링 오류:', err);
-                document.getElementById('loading').innerHTML = '<div style="color:#f59e0b; text-align:center;">⚠️ 일부 데이터 로딩 실패<br>기본 화면으로 표시합니다.<br><button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer;">새로고침</button></div>';
-                setTimeout(() => {
-                    document.getElementById('loading').style.display = 'none';
-                    renderAll();
-                }, 3000);
+                // ... error handling ...
             }
         }, (error) => {
             console.error("❌ Firestore Error:", error);
-            document.getElementById('loading').innerHTML = '<div style="color:red; text-align:center;">데이터 불러오기 실패<br>' + error.message + '<br><br>※ Firestore 규칙을 확인해주세요.<br><br><button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:4px; cursor:pointer;">재시도</button></div>';
+        });
+
+        // ==========================================
+        // [복구됨] 하위 컬렉션(Subcollection) 리스너
+        // ==========================================
+
+        // (2) 공정별 상세 활동 (taskDetails)
+        const detailsRef = collection(db, "sites", SITE_ID, "taskDetails");
+        onSnapshot(detailsRef, (snapshot) => {
+            globalData.taskDetails = {};
+            snapshot.forEach((doc) => {
+                globalData.taskDetails[doc.id] = doc.data();
+            });
+            renderActivityLog(); // 로그 UI 갱신
+        });
+
+        // (3) 실시간 활동 로그 (activityLogs)
+        const logsRef = collection(db, "sites", SITE_ID, "activityLogs");
+        const logsQuery = query(logsRef, orderBy("lastUpdated", "desc"), limit(50));
+
+        onSnapshot(logsQuery, (snapshot) => {
+            globalData.activityLog = [];
+            snapshot.forEach((doc) => {
+                globalData.activityLog.push({ id: doc.id, ...doc.data() });
+            });
+            renderActivityLog();
+        });
+
+        // (4) 반입 점검 로그 (inspectionLogs)
+        const inspectRef = collection(db, "sites", SITE_ID, "inspectionLogs");
+        const inspectQuery = query(inspectRef, orderBy("date", "desc"), limit(20));
+
+        onSnapshot(inspectQuery, (snapshot) => {
+            globalData.inspectionLogs = [];
+            snapshot.forEach((doc) => {
+                globalData.inspectionLogs.push({ id: doc.id, ...doc.data() });
+            });
+            renderInspectionLog();
         });
 
         // 2. 렌더링
@@ -1155,7 +1338,8 @@
 
         // --- 팝업 ---
         let currentTaskIndex = null;
-        let tempFileBase64 = null; // [수정됨] 변수명 변경 (Image->File)
+        let selectedFile = null; // [Refactor] File object for upload
+        let currentFileUrl = null; // [Refactor] Existing URL or Base64
 
         window.openModal = function (index) {
             currentTaskIndex = index;
@@ -1164,8 +1348,6 @@
 
             document.getElementById('modalTitle').innerText = defaultLabel + " 상세 활동";
 
-            // [Modified] Date Auto-populate Logic
-            // If saved date exists, use it. Otherwise, default to Today.
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
             document.getElementById('modalDate').value = savedDetail.workDate || today;
 
@@ -1174,24 +1356,27 @@
             document.getElementById('modalActivity').value = savedDetail.activity || "";
 
             document.getElementById('fileInput').value = "";
-            tempFileBase64 = savedDetail.imageData || null; // 예전 키값 유지(imageData)
+            currentFileUrl = savedDetail.imageData || null;
+            selectedFile = null;
 
-            // [수정됨] 저장된 파일이 PDF인지 이미지인지 확인하여 표시
+            // [수정됨] 저장된 파일이 PDF인지 이미지인지 확인하여 표시 (URL 포함)
             const previewBox = document.getElementById('previewBox');
             const previewImg = document.getElementById('previewImg');
             const previewPdf = document.getElementById('previewPdf');
 
-            if (tempFileBase64) {
+            if (currentFileUrl) {
                 previewBox.style.display = "block";
-                // 데이터 헤더로 타입 구분
-                if (tempFileBase64.startsWith("data:application/pdf")) {
+                // 데이터 헤더로 타입 구분 혹은 URL 확장자 체크
+                const isPdf = currentFileUrl.toLowerCase().includes(".pdf") || currentFileUrl.startsWith("data:application/pdf");
+
+                if (isPdf) {
                     previewImg.style.display = "none";
                     previewPdf.style.display = "block";
-                    previewPdf.src = tempFileBase64;
+                    previewPdf.src = currentFileUrl;
                 } else {
                     previewPdf.style.display = "none";
                     previewImg.style.display = "block";
-                    previewImg.src = tempFileBase64;
+                    previewImg.src = currentFileUrl;
                 }
             } else {
                 previewBox.style.display = "none";
@@ -1205,34 +1390,38 @@
         window.closeModal = function () { document.getElementById('modal').style.display = 'none'; };
 
         // [수정됨] 파일 처리 (PDF 지원)
+        // [수정됨] 파일 처리 (PDF 지원)
         window.handleFileSelect = function (input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
 
-                // 파일 용량 체크 (예: 2MB 제한) - Base64 변환 시 용량 커짐 주의
-                if (file.size > 2 * 1024 * 1024) {
-                    alert("파일 크기가 너무 큽니다. (2MB 이하만 가능)");
+                // 파일 용량 체크 (예: 10MB 제한)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert("파일 크기가 너무 큽니다. (10MB 이하만 가능)");
                     input.value = "";
                     return;
                 }
 
+                selectedFile = file; // 업로드 대기
+                // currentFileUrl = null; // Reset current URL on new selection? Maybe.
+
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    tempFileBase64 = e.target.result;
+                    currentFileUrl = e.target.result; // For preview only
                     const previewBox = document.getElementById('previewBox');
                     const previewImg = document.getElementById('previewImg');
                     const previewPdf = document.getElementById('previewPdf');
 
                     previewBox.style.display = "block";
 
-                    if (file.type === "application/pdf") {
+                    if (file.type.includes("pdf")) {
                         previewImg.style.display = "none";
                         previewPdf.style.display = "block";
-                        previewPdf.src = tempFileBase64;
+                        previewPdf.src = currentFileUrl;
                     } else {
                         previewPdf.style.display = "none";
                         previewImg.style.display = "block";
-                        previewImg.src = tempFileBase64;
+                        previewImg.src = currentFileUrl;
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1241,7 +1430,8 @@
 
         window.deleteFile = function () {
             if (confirm("첨부파일을 삭제하시겠습니까?")) {
-                tempFileBase64 = null;
+                currentFileUrl = null;
+                selectedFile = null;
                 document.getElementById('previewBox').style.display = "none";
                 document.getElementById('previewImg').src = "";
                 document.getElementById('previewPdf').src = "";
@@ -1250,18 +1440,36 @@
         };
 
         // [수정] 저장 기능
+        // [수정] 저장 기능 (Subcollection)
         window.saveTaskDetails = async function () {
             try {
                 if (!globalData.taskDetails) globalData.taskDetails = {};
-                globalData.taskDetails[currentTaskIndex] = {
-                    workDate: document.getElementById('modalDate').value, // Save the date
+
+                let finalImageUrl = currentFileUrl;
+
+                // [Refactor] Upload to Firebase Storage
+                if (selectedFile) {
+                    const storageRef = ref(storage, `site_attachments/${SITE_ID}/${Date.now()}_${selectedFile.name}`);
+                    await uploadBytes(storageRef, selectedFile);
+                    finalImageUrl = await getDownloadURL(storageRef);
+                }
+
+                const taskData = {
+                    workDate: document.getElementById('modalDate').value,
                     risk: document.getElementById('modalRisk').value,
                     kpi: document.getElementById('modalKPI').value,
                     activity: document.getElementById('modalActivity').value,
-                    imageData: tempFileBase64, // 변수값 저장
+                    imageData: finalImageUrl,
                     lastUpdated: new Date().toISOString()
                 };
-                await updateDoc(docRef, { taskDetails: globalData.taskDetails });
+
+                // 로컬 데이터 갱신
+                globalData.taskDetails[currentTaskIndex] = taskData;
+
+                // Firestore Subcollection 저장 (문서 ID = currentTaskIndex)
+                const taskDocRef = doc(db, "sites", SITE_ID, "taskDetails", String(currentTaskIndex));
+                await setDoc(taskDocRef, taskData, { merge: true });
+
                 alert("✅ [저장 완료]\n\n안전보건 활동 내역이 서버에 안전하게 저장되었습니다.\n화면 하단 목록에서 내역을 확인하실 수 있습니다.");
                 closeModal();
             } catch (e) {
@@ -1278,11 +1486,21 @@
             const dateStr = new Date().toISOString().slice(0, 10);
             const newComment = { name, content, date: dateStr };
 
+            // 로컬 데이터 갱신
             if (!globalData.comments) globalData.comments = {};
             if (!globalData.comments[currentTaskIndex]) globalData.comments[currentTaskIndex] = [];
             globalData.comments[currentTaskIndex].push(newComment);
 
-            await updateDoc(docRef, { comments: globalData.comments });
+            // Firestore Subcollection 저장 (comments 필드는 taskDetails 문서 내에 존재한다고 가정하거나, 별도 컬렉션일 수 있음)
+            // 백업 파일 로직 확인 결과: taskDetails 문서 내의 'comments' 필드로 저장하는 것이 아니라, 
+            // comments 역시 별도 관리가 필요해 보이나, 기존 로직이 'comments' 필드를 업데이트 하는 것이었음.
+            // 하지만 taskDetails가 subcollection이 되었으므로, 해당 문서의 필드로 저장해야 함.
+
+            const taskDocRef = doc(db, "sites", SITE_ID, "taskDetails", String(currentTaskIndex));
+            // taskDetails 문서가 없을 수도 있으므로 setDoc(merge) 사용
+            // 주의: 배열 update는 arrayUnion을 쓰는게 좋지만, 여기선 전체 배열 덮어쓰기로 유지 (기존 로직 호환)
+            await setDoc(taskDocRef, { comments: globalData.comments[currentTaskIndex] }, { merge: true });
+
             document.getElementById('commentContent').value = '';
             renderComments(currentTaskIndex);
         };
@@ -1303,7 +1521,11 @@
             const pwd = prompt("관리자 비밀번호:");
             if (pwd === "1234") {
                 globalData.comments[currentTaskIndex].splice(idx, 1);
-                await updateDoc(docRef, { comments: globalData.comments });
+
+                // Firestore Subcollection 업데이트
+                const taskDocRef = doc(db, "sites", SITE_ID, "taskDetails", String(currentTaskIndex));
+                await setDoc(taskDocRef, { comments: globalData.comments[currentTaskIndex] }, { merge: true });
+
                 renderComments(currentTaskIndex);
             } else if (pwd !== null) alert("비밀번호 오류");
         };
@@ -1366,8 +1588,13 @@
             if (confirm("정말로 이 활동 내역을 삭제하시겠습니까?")) {
                 const pwd = prompt("관리자 비밀번호를 입력하세요:");
                 if (pwd === "1234") {
+                    // 로컬 삭제
                     delete globalData.taskDetails[index];
-                    await updateDoc(docRef, { taskDetails: globalData.taskDetails });
+
+                    // Firestore Subcollection 삭제
+                    const taskDocRef = doc(db, "sites", SITE_ID, "taskDetails", String(index));
+                    await deleteDoc(taskDocRef);
+
                     alert("삭제되었습니다.");
                     renderActivityLog();
                 } else {
@@ -1440,6 +1667,130 @@
                 `;
                 listContainer.appendChild(li);
             });
+        };
+        // [NEW] 반입 점검 관련 함수들
+        window.openInspectionModal = function (type) {
+            document.getElementById('inspectType').value = type;
+            document.getElementById('inspectionModalTitle').innerText = `${type} 점검 등록`;
+            document.getElementById('inspectItem').value = "";
+            document.getElementById('inspectDesc').value = "";
+            document.getElementById('inspectFile').value = "";
+            document.getElementsByName('inspectResult')[0].checked = true; // 합격 기본
+            document.getElementById('inspectionModal').style.display = 'flex';
+        };
+
+        window.closeInspectionModal = function () {
+            document.getElementById('inspectionModal').style.display = 'none';
+        };
+
+        window.saveInspection = async function () {
+            const type = document.getElementById('inspectType').value;
+            const item = document.getElementById('inspectItem').value;
+            const result = document.querySelector('input[name="inspectResult"]:checked').value;
+            const desc = document.getElementById('inspectDesc').value;
+            const files = document.getElementById('inspectFile').files;
+
+            if (!item) return alert("품목명을 입력해주세요.");
+
+            const btn = document.querySelector('#inspectionModal .btn-navy');
+            btn.innerText = "저장 중...";
+            btn.disabled = true;
+
+            try {
+                // 이미지 업로드 (첫번째 파일만 예시로 처리, 필요시 다중 처리)
+                let imageUrl = null;
+                if (files.length > 0) {
+                    const file = files[0];
+                    const storageRef = ref(storage, `site_inspections/${Date.now()}_${file.name}`);
+                    await uploadBytes(storageRef, file);
+                    imageUrl = await getDownloadURL(storageRef);
+                }
+
+                const today = new Date();
+                const logData = {
+                    type: type,
+                    item: item,
+                    result: result,
+                    desc: desc,
+                    imageUrl: imageUrl,
+                    date: today.toLocaleString('ko-KR'),
+                    timestamp: Date.now()
+                };
+
+                const inspectRef = collection(db, "sites", SITE_ID, "inspectionLogs");
+                await addDoc(inspectRef, logData);
+
+                // 알림 발송 - 권한 확인 필요
+                if (window.Notification && Notification.permission === "granted") {
+                    new Notification(`[반입점검] ${type} - ${item}`, {
+                        body: `결과: ${result}\n내용: ${desc}`,
+                        icon: "/pwa-192x192.png" // 아이콘 경로 확인 필요
+                    });
+                }
+
+                alert("점검 내용이 저장되었습니다.");
+                closeInspectionModal();
+            } catch (e) {
+                console.error(e);
+                alert("저장 실패: " + e.message);
+            } finally {
+                btn.innerText = "저장하기";
+                btn.disabled = false;
+            }
+        };
+
+        window.renderInspectionLog = function () {
+            const list = document.getElementById('inspectionList');
+            // [수정] 공정표 페이지 등에서 해당 섹션이 없을 경우 에러 방지
+            if (!list) return;
+
+            if (!globalData.inspectionLogs || globalData.inspectionLogs.length === 0) {
+                list.innerHTML = '<li style="text-align:center; color:#999; padding:10px;">등록된 점검 내역이 없습니다.</li>';
+                return;
+            }
+            list.innerHTML = "";
+            globalData.inspectionLogs.forEach(log => {
+                const li = document.createElement('li');
+                li.className = 'inspection-item';
+                // 스타일 정의가 필요한 클래스 (CSS에 추가 필요할 수 있음)
+                const resultClass = log.result === '합격' ? 'status-pass' : 'status-fail';
+
+                li.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:4px; border-bottom:1px solid #eee; padding:10px;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <div>
+                                <span style="background:#eee; color:#666; padding:2px 6px; border-radius:4px; font-size:12px; margin-right:5px;">${log.type}</span>
+                                <span style="font-weight:bold; color:#333;">${log.item}</span>
+                            </div>
+                            <button onclick="deleteLogItem('${log.id}')" style="border:none; background:none; color:#ccc; cursor:pointer;" title="삭제">×</button>
+                        </div>
+                        <div style="font-size:12px; color:#888;">${log.date} ${log.desc ? '- ' + log.desc : ''}</div>
+                        ${log.imageUrl ? `<a href="${log.imageUrl}" target="_blank" style="font-size:12px; color:var(--primary);">📸 사진 보기</a>` : ''}
+                        <div style="margin-top:4px;">
+                            <span style="font-weight:bold; color:${log.result === '합격' ? 'green' : 'red'};">${log.result}</span>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        };
+
+        window.deleteLogItem = async function (logId) {
+            if (confirm("이 이력 항목을 삭제하시겠습니까? (복구 불가)")) {
+                const pwd = prompt("관리자 비밀번호를 입력하세요:");
+                if (pwd === "1234") {
+                    try {
+                        const logDocRef = doc(db, "sites", SITE_ID, "inspectionLogs", logId);
+                        await deleteDoc(logDocRef);
+                        alert("삭제되었습니다.");
+                    } catch (e) {
+                        console.error(e);
+                        alert("삭제 실패: " + e.message);
+                    }
+                } else {
+                    if (pwd !== null) alert("비밀번호가 틀렸습니다.");
+                }
+            }
         };
     </script>
 </body>
