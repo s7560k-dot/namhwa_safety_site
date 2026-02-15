@@ -125,6 +125,8 @@
             text-align: center;
             font-weight: bold;
             padding: 10px;
+            white-space: nowrap;
+            /* [Modified] Text wrap prevention */
         }
 
         .cell-sidebar {
@@ -800,8 +802,9 @@
         <div class="info-container">
             <div class="info-box">
                 <div class="info-title">📅 공사 기간</div>
-                <div id="infoPeriod" class="info-content" contenteditable="true" onblur="updateDB()">
-                    실착공일로부터 16개월
+                <!-- [Modified] Removed contenteditable to prevent user editing, as it is now hardcoded -->
+                <div id="infoPeriod" class="info-content">
+                    2025.10.16 ~ 2027.02.16<br><span style="font-size:11px; color:#888;">(실착공일로부터 16개월)</span>
                 </div>
             </div>
             <div class="info-box">
@@ -870,6 +873,10 @@
                     onclick="closeModal()">×</button>
             </div>
             <div class="modal-body">
+                <!-- [Added] Date Input Field -->
+                <div><label class="form-label">📅 작업 일자 (자동 입력)</label><input type="date" id="modalDate"
+                        class="form-input"></div>
+
                 <div class="row-2-col">
                     <div class="col"><label class="form-label">⚠️ 핵심 위험</label><input type="text" id="modalRisk"
                             class="form-input risk-text"></div>
@@ -961,7 +968,7 @@
         // 기본 데이터 구조
         let globalData = {
             headerInfo: {
-                period: "실착공일로부터 16개월",
+                period: "2025.10.16 ~ 2027.02.16<br><span style='font-size:11px; color:#888;'>(실착공일로부터 16개월)</span>",
                 scale: "지하1층 ~ 지상4층 (노유자시설)",
                 goal: "중대재해 ZERO / 무재해 1000일 달성"
             },
@@ -1062,7 +1069,8 @@
         }
 
         function renderHeader() {
-            document.getElementById('infoPeriod').innerText = globalData.headerInfo.period;
+            // [수정됨] 공사기간 텍스트 강제 고정 (DB값 무시) - 기존: globalData.headerInfo.period 사용
+            document.getElementById('infoPeriod').innerHTML = "2025.10.16 ~ 2027.02.16<br><span style='font-size:11px; color:#888;'>(실착공일로부터 16개월)</span>";
             document.getElementById('infoScale').innerText = globalData.headerInfo.scale;
             document.getElementById('infoGoal').innerText = globalData.headerInfo.goal;
         }
@@ -1127,7 +1135,7 @@
         // 3. 쓰기 (전역 함수)
         window.updateDB = async function () {
             globalData.headerInfo = {
-                period: document.getElementById('infoPeriod').innerText,
+                period: document.getElementById('infoPeriod').innerText, // This will capture the hardcoded text if user tries to save, but since it's hardcoded on render, it persists visually. But technically updating DB with hardcoded text is fine.
                 scale: document.getElementById('infoScale').innerText,
                 goal: document.getElementById('infoGoal').innerText
             };
@@ -1155,6 +1163,12 @@
             const defaultLabel = constructionData[index].label;
 
             document.getElementById('modalTitle').innerText = defaultLabel + " 상세 활동";
+
+            // [Modified] Date Auto-populate Logic
+            // If saved date exists, use it. Otherwise, default to Today.
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            document.getElementById('modalDate').value = savedDetail.workDate || today;
+
             document.getElementById('modalRisk').value = savedDetail.risk || "";
             document.getElementById('modalKPI').value = savedDetail.kpi || "";
             document.getElementById('modalActivity').value = savedDetail.activity || "";
@@ -1240,6 +1254,7 @@
             try {
                 if (!globalData.taskDetails) globalData.taskDetails = {};
                 globalData.taskDetails[currentTaskIndex] = {
+                    workDate: document.getElementById('modalDate').value, // Save the date
                     risk: document.getElementById('modalRisk').value,
                     kpi: document.getElementById('modalKPI').value,
                     activity: document.getElementById('modalActivity').value,
