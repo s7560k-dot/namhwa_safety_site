@@ -3,14 +3,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
-  authDomain: "namhwa-safety-dashboard.firebaseapp.com",
-  projectId: "namhwa-safety-dashboard",
-  storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
-  messagingSenderId: "152864778612",
-  appId: "1:152864778612:web:ecc482adce93a1534a2421"
-};
+import { firebaseConfig } from "./firebase_config.js";
 
 const app = initializeApp(firebaseConfig);
 

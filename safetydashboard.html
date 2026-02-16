@@ -380,6 +380,14 @@
                     gradient: 'from-purple-700 to-purple-500',
                     text: 'text-purple-900',
                     bg: 'bg-purple-600'
+                },
+                'siteC': {
+                    name: '부산 신축 공사',
+                    link: './status_c/busan.html',
+                    theme: 'green',
+                    gradient: 'from-green-700 to-green-500',
+                    text: 'text-green-900',
+                    bg: 'bg-green-600'
                 }
             };
 
@@ -1183,8 +1191,9 @@
                             <div className="absolute right-4 flex space-x-2">
                                 <button onClick={handlePrint} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
                                 {/* [수정됨 2026-02-14] 예정공정표 링크 - 복구된 실제 공정표 파일로 연결 */}
-                                {/* 대광새마을금고(siteA): status_a/index.html, 수원노유자시설(siteB): status_b/suwon.html */}
-                                <a href={siteId === 'siteA' ? './status_a/index.html' : './status_b/suwon.html'} target="_blank" className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap border border-purple-400/30"><LinkIcon size={18} className="mr-2" /> 예정공정표 바로가기</a>
+                                {/* [수정됨 2026-02-14] 예정공정표 링크 - 복구된 실제 공정표 파일로 연결 */}
+                                {/* 대광새마을금고(siteA): status_a/index.html, 수원노유자시설(siteB): status_b/suwon.html, 부산신축(siteC): status_c/busan.html */}
+                                <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap border border-purple-400/30"><LinkIcon size={18} className="mr-2" /> 예정공정표 바로가기</a>
                                 <a href="index.html" className="flex items-center bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-700 transition shadow-sm whitespace-nowrap">나가기</a>
                             </div>
                         </footer>
