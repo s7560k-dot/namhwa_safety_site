@@ -34,7 +34,7 @@ export const useDashboardData = (siteId) => {
 
         // 3. Load Risk Works (Today's only would be ideal, but for now load all and filter in UI or query)
         // Simplified for migration: Load all sorted by createdAt desc
-        const riskUnsub = db.collection('sites').doc(siteId).collection('risk_works')
+        const riskUnsub = db.collection('sites').doc(siteId).collection('riskWorks')
             .orderBy('createdAt', 'desc').limit(20) // Limit for performance
             .onSnapshot(snapshot => {
                 setRiskWorks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));

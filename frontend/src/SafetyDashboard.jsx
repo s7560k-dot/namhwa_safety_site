@@ -39,9 +39,9 @@ const SafetyDashboard = () => {
 
     // Site Config
     const siteConfig = {
-        siteA: { name: '대광로제비앙 (광주 선운)', text: 'text-blue-700', bg: 'bg-blue-600', gradient: 'from-blue-600 to-indigo-600', link: '/status_a/index.html' },
-        siteB: { name: '수원 권선구 노유자시설', text: 'text-purple-700', bg: 'bg-purple-600', gradient: 'from-purple-600 to-pink-600', link: '/status_b/suwon.html' },
-        siteC: { name: '부산 신축 공사', text: 'text-green-700', bg: 'bg-green-600', gradient: 'from-green-600 to-teal-600', link: '/status_c/busan.html' } // Placeholder for siteC
+        siteA: { name: '대광새마을금고 신축공사', text: 'text-blue-700', bg: 'bg-blue-600', gradient: 'from-blue-600 to-indigo-600', link: '/status_a/index.html' },
+        siteB: { name: '수원 노유자시설 신축공사', text: 'text-purple-700', bg: 'bg-purple-600', gradient: 'from-purple-600 to-pink-600', link: '/status_b/suwon.html' },
+        siteC: { name: '평택 세탁소 시설 신축공사', text: 'text-green-700', bg: 'bg-green-600', gradient: 'from-green-600 to-teal-600', link: '/status_c/busan.html' }
     };
     const currentSiteInfo = siteConfig[siteId] || siteConfig['siteA'];
 
@@ -124,7 +124,7 @@ const SafetyDashboard = () => {
 
     // Risk Work Handlers
     const handleAddWork = async () => {
-        await db.collection('sites').doc(siteId).collection('risk_works').add({
+        await db.collection('sites').doc(siteId).collection('riskWorks').add({
             team: '신규팀', task: '작업 내용', risk: '중', workerCount: 0, manager: '', status: '예정',
             eduCompleted: 0, assessment: '', createdAt: Date.now()
         });
@@ -136,13 +136,13 @@ const SafetyDashboard = () => {
     const handleWorkSave = async (id) => {
         const work = data.riskWorks.find(w => w.id === id);
         if (work) {
-            await db.collection('sites').doc(siteId).collection('risk_works').doc(id).update(work);
+            await db.collection('sites').doc(siteId).collection('riskWorks').doc(id).update(work);
             setEditingWorkId(null);
         }
     };
     const handleDeleteWork = async (id) => {
         if (confirm("삭제하시겠습니까?")) {
-            await db.collection('sites').doc(siteId).collection('risk_works').doc(id).delete();
+            await db.collection('sites').doc(siteId).collection('riskWorks').doc(id).delete();
         }
     };
 
@@ -242,8 +242,13 @@ const SafetyDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-800 font-sans relative pb-20">
-            <PrintReport data={data} siteName={currentSiteInfo.name} currentDate={currentDate} accidentFreeDays={data.accidentFreeDays} targetDays={data.targetDays} />
-            <div className="no-print">
+            {/* Report: Hidden on screen, Visible on print */}
+            <div id="print-area" className="hidden">
+                <PrintReport data={data} siteName={currentSiteInfo.name} currentDate={currentDate} accidentFreeDays={data.accidentFreeDays} targetDays={data.targetDays} />
+            </div>
+
+            {/* Dashboard: Visible on screen, Hidden on print */}
+            <div id="screen-area">
                 <header className={`bg-white shadow-sm sticky top-0 z-30 border-b-4 ${siteId === 'siteA' ? 'border-blue-500' : 'border-purple-500'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                         <div className="flex items-center w-1/4">
@@ -325,6 +330,60 @@ const SafetyDashboard = () => {
                                     </table>
                                 </div>
                                 <button onClick={handleAddWork} className="w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 hover:border-blue-400 hover:text-blue-500 transition text-sm font-bold flex items-center justify-center"><Plus size={16} className="mr-1" /> 작업 추가하기</button>
+                            </div>
+
+                            {/* 2. 안전 교육 및 위험성평가 현황 (Restored) */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                                <div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-gray-800 flex items-center"><ClipboardCheck className="text-blue-500 mr-2" size={20} /> 고위험 작업 안전 관리 (교육 & 위험성평가)</h3></div>
+                                {data.riskWorks.length === 0 ? <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">등록된 고위험 작업이 없습니다.</div> : (
+                                    <div className="space-y-6">
+                                        {data.riskWorks.map((work) => {
+                                            const eduCompleted = parseInt(work.eduCompleted) || 0;
+                                            const workerCount = parseInt(work.workerCount) || 0;
+                                            const rate = workerCount > 0 ? Math.round((eduCompleted / workerCount) * 100) : 0;
+                                            const isOverflow = rate > 100;
+                                            const normalWidth = isOverflow ? 100 : rate;
+                                            const overflowWidth = isOverflow ? (rate - 100) : 0;
+
+                                            return (
+                                                <div key={work.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50 hover:bg-white transition hover:shadow-md">
+                                                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1"><span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded font-bold">{work.team}</span><span className={`text-xs px-2 py-0.5 rounded font-bold ${work.risk === '상' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>위험도 {work.risk}</span></div>
+                                                            <h4 className="font-bold text-gray-800 text-lg">{work.task}</h4>
+                                                        </div>
+                                                        <div className="flex-1 max-w-md bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <span className="text-sm font-bold text-gray-600">특별 안전 교육 이수 현황</span>
+                                                                <span className={`text-sm font-bold ${rate >= 100 ? 'text-green-600' : rate >= 80 ? 'text-blue-600' : 'text-orange-500'}`}>
+                                                                    {rate}% {isOverflow ? '(초과 달성!)' : '달성'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 relative overflow-hidden">
+                                                                <div className={`h-2.5 ${isOverflow ? 'rounded-l-full' : 'rounded-full'} transition-all duration-500 ${rate >= 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${normalWidth}%` }}></div>
+                                                                {isOverflow && (
+                                                                    <div className="h-2.5 bg-red-400 rounded-r-full transition-all duration-500 absolute left-full -translate-x-full" style={{ width: `${Math.min(overflowWidth, 20)}%` }} title={`초과: ${overflowWidth}%`}></div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-xs">
+                                                                <span className="text-gray-500">교육 대상: <strong className="text-gray-800">{work.workerCount}명</strong></span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span>이수 완료:</span>
+                                                                    <input type="number" min="0" className="w-16 border rounded px-1 py-0.5 text-center font-bold" value={work.eduCompleted} onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)} onBlur={() => handleWorkSave(work.id)} />
+                                                                    <span>명</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-3">
+                                                        <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">사전 위험성평가 및 중점 관리 대책</label>
+                                                        <textarea className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none bg-white" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(work.id)}></textarea>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Notice Section */}
