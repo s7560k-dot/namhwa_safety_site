@@ -492,7 +492,10 @@
                     const unsubRisk = siteRef.collection('riskWorks').onSnapshot(snap => setRiskWorks(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
                     const unsubNotice = siteRef.collection('notices').orderBy('date', 'desc').onSnapshot(snap => setNoticeData(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
                     const unsubIssue = siteRef.collection('issues').onSnapshot(snap => setIssueList(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-                    const unsubInsp = siteRef.collection('inspections').orderBy('date', 'desc').onSnapshot(snap => setInspectionLog(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+
+                    // [수정됨] 컬렉션 이름 'inspections' -> 'inspectionLogs' (기존 데이터 호환)
+                    const unsubInsp = siteRef.collection('inspectionLogs').orderBy('date', 'desc').onSnapshot(snap => setInspectionLog(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+
                     const unsubWorker = siteRef.collection('workers').onSnapshot(snap => setWorkerList(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 
                     return () => {
@@ -878,7 +881,8 @@
             const handleSaveInspection = (e) => {
                 e.preventDefault();
                 if (db) {
-                    db.collection('sites').doc(siteId).collection('inspections').add({
+                    // [수정됨] 컬렉션 이름 'inspections' -> 'inspectionLogs' (기존 데이터 호환)
+                    db.collection('sites').doc(siteId).collection('inspectionLogs').add({
                         type: inspectionType,
                         item: e.target.item.value,
                         date: new Date().toISOString().slice(5, 10),
@@ -1159,26 +1163,36 @@
                                             <button onClick={() => openInspectionModal('유해화학물질')} className="py-2.5 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold hover:bg-purple-100 flex items-center justify-center border border-purple-100"><FlaskConical size={16} className="mr-2" /> 유해화학물질 점검</button>
                                         </div>
                                         <ul className="space-y-3 mt-4">
-                                            {inspectionLog.slice(0, 5).map(log => (
-                                                <li key={log.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 text-sm">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium text-gray-700">{log.item}</span>
-                                                        <span className="text-xs text-gray-500">{log.type} | {log.date}</span>
-                                                        {/* [NEW] 리스트에 첨부파일 미리보기 아이콘 추가 */}
-                                                        {log.images && log.images.length > 0 && (
-                                                            <div className="flex gap-1 mt-1">
-                                                                {log.images.map((img, idx) => (
-                                                                    <div key={idx} onClick={(e) => { e.stopPropagation(); setPreviewFile(typeof img === 'string' ? { url: img, name: '이미지' } : img); }} className="cursor-pointer text-xs border rounded px-1 py-0.5 bg-white hover:bg-gray-100 flex items-center gap-1 text-gray-600 transition">
-                                                                        {typeof img === 'string' || (img.type && img.type.includes('image')) ? <span className="text-[10px]">📷</span> : <span className="text-[10px]">📄</span>}
-                                                                        <span className="max-w-[80px] truncate">{typeof img === 'string' ? '이미지' : img.name}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <span className={`text-xs px-2 py-1 rounded font-bold ${getStatusColor(log.status)}`}>{log.status}</span>
-                                                </li>
-                                            ))}
+
+                                            {inspectionLog.slice(0, 5).map(log => {
+                                                // [수정됨] 이미지 처리 로직 개선 (레거시 imageUrl 지원)
+                                                // images 배열이 있으면 사용, 없으면 imageUrl을 배열로 변환
+                                                const displayImages = log.images && log.images.length > 0
+                                                    ? log.images
+                                                    : (log.imageUrl ? [{ url: log.imageUrl, name: '이미지' }] : []);
+
+                                                return (
+                                                    <li key={log.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 text-sm">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium text-gray-700">{log.item}</span>
+                                                            <span className="text-xs text-gray-500">{log.type} | {log.date}</span>
+                                                            {/* 첨부파일 미리보기 아이콘 표시 */}
+                                                            {displayImages.length > 0 && (
+                                                                <div className="flex gap-1 mt-1">
+                                                                    {displayImages.map((img, idx) => (
+                                                                        <div key={idx} onClick={(e) => { e.stopPropagation(); setPreviewFile(typeof img === 'string' ? { url: img, name: '이미지' } : img); }} className="cursor-pointer text-xs border rounded px-1 py-0.5 bg-white hover:bg-gray-100 flex items-center gap-1 text-gray-600 transition">
+                                                                            {typeof img === 'string' || (img.type && img.type.includes('image')) || !img.type ? <span className="text-[10px]">📷</span> : <span className="text-[10px]">📄</span>}
+                                                                            <span className="max-w-[80px] truncate">{typeof img === 'string' ? '이미지' : img.name || '사진'}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <span className={`text-xs px-2 py-1 rounded font-bold ${getStatusColor(log.status)}`}>{log.status}</span>
+                                                    </li>
+                                                );
+                                            })}
+
                                         </ul>
                                     </div>
                                 </div>

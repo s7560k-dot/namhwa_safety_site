@@ -16,6 +16,14 @@ const SafetyDashboard = () => {
 
     // Use custom hook for data
     const data = useDashboardData(siteId);
+    const { approvals, activityLogs, taskDetails } = data;
+
+    // [DEBUG] Log new data
+    useEffect(() => {
+        if (approvals?.length > 0) console.log("✅ Approvals loaded:", approvals);
+        if (activityLogs?.length > 0) console.log("✅ ActivityLogs loaded:", activityLogs);
+        if (taskDetails?.length > 0) console.log("✅ TaskDetails loaded:", taskDetails);
+    }, [approvals, activityLogs, taskDetails]);
 
     // Local UI State
     const [currentDate, setCurrentDate] = useState("");
@@ -263,6 +271,33 @@ const SafetyDashboard = () => {
                             <div className="relative cursor-pointer z-[105]" onClick={handleToggleNotifications}>
                                 <Bell className={`hover:text-gray-600 transition ${showNotifications ? 'text-blue-500' : 'text-gray-400'}`} />
                                 {data.notificationCount > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-bounce">{data.notificationCount}</span>}
+
+                                {/* Notification Dropdown */}
+                                {showNotifications && (
+                                    <div className="absolute right-0 top-10 w-80 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fade-in z-50">
+                                        <div className="px-4 py-2 border-b border-gray-50 flex justify-between items-center">
+                                            <h4 className="font-bold text-gray-700">알림</h4>
+                                            <span className="text-xs text-blue-500 cursor-pointer hover:underline" onClick={(e) => { e.stopPropagation(); data.setNotifications([]); data.setNotificationCount(0); }}>모두 읽음</span>
+                                        </div>
+                                        {data.notifications && data.notifications.length > 0 ? (
+                                            <div className="max-h-80 overflow-y-auto">
+                                                {data.notifications.map((notif, idx) => (
+                                                    <div key={idx} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition cursor-pointer">
+                                                        <div className="flex items-start">
+                                                            <div className={`mt-1 w-2 h-2 rounded-full mr-3 shrink-0 ${notif.type === '공지' ? 'bg-blue-500' : notif.type === '부적합' ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-gray-800">{notif.message}</p>
+                                                                <p className="text-xs text-gray-400 mt-1">{notif.date} · {notif.type}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="px-4 py-8 text-center text-gray-400 text-sm">새로운 알림이 없습니다.</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white cursor-pointer ${currentSiteInfo.bg}`}>관리</div>
                         </div>
@@ -273,16 +308,38 @@ const SafetyDashboard = () => {
                     <div className={`bg-gradient-to-r ${currentSiteInfo.gradient} rounded-2xl shadow-lg p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between animate-fade-in relative`}>
                         <button onClick={() => setShowSettingsModal(true)} className="absolute top-4 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition"><Settings size={20} className="text-white" /></button>
                         <div className="mb-4 md:mb-0">
-                            <h2 className="text-lg font-medium opacity-90 mb-1 flex items-center">우리 현장 무재해 기록 <button onClick={() => setShowSettingsModal(true)} className="ml-3 text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded flex items-center transition cursor-pointer border border-transparent hover:border-white/40">실착공일: {data.startDate} <Edit2 size={12} className="ml-1 opacity-70" /></button></h2>
-                            <div className="flex items-end"><span className="text-5xl font-bold mr-2">{data.accidentFreeDays}</span><span className="text-xl mb-2">일째</span><span className="ml-4 bg-white/20 px-3 py-1 rounded-full text-sm">목표: {data.targetDays}일</span></div>
+                            <h2 className="text-lg font-medium opacity-90 mb-1 flex items-center">
+                                {data.headerInfo?.scale || "우리 현장 무재해 기록"}
+                                <button onClick={() => setShowSettingsModal(true)} className="ml-3 text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded flex items-center transition cursor-pointer border border-transparent hover:border-white/40">
+                                    공사기간: {data.headerInfo?.period || data.startDate} <Edit2 size={12} className="ml-1 opacity-70" />
+                                </button>
+                            </h2>
+                            <div className="flex items-end">
+                                <span className="text-5xl font-bold mr-2">{data.accidentFreeDays}</span>
+                                <span className="text-xl mb-2">일째</span>
+                                <span className="ml-4 bg-white/20 px-3 py-1 rounded-full text-sm">
+                                    목표: {data.headerInfo?.goal || data.targetDays}
+                                </span>
+                            </div>
                         </div>
                         <div className="flex space-x-8 text-center pr-12">
-                            <div className="cursor-pointer hover:bg-white/10 p-2 rounded-lg transition" onClick={() => setShowWorkerModal(true)}>
-                                <p className="text-sm opacity-75 mb-1 flex items-center justify-center">금일 출력 인원 <MoreHorizontal size={12} className="ml-1" /></p>
-                                <p className="text-2xl font-bold flex items-center justify-center"><Users size={20} className="mr-1" /> {data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명</p>
-                            </div>
-                            <div className="h-12 w-px bg-white/30"></div>
-                            <div><p className="text-sm opacity-75 mb-1">고위험 작업</p><p className="text-2xl font-bold flex items-center justify-center text-yellow-300"><AlertTriangle size={20} className="mr-1" /> {data.riskWorks.length}건</p></div>
+                            {data.kpiData && data.kpiData.length > 0 ? (
+                                data.kpiData.map((kpi, idx) => (
+                                    <div key={idx} className="cursor-pointer hover:bg-white/10 p-2 rounded-lg transition">
+                                        <p className="text-sm opacity-75 mb-1 flex items-center justify-center">{kpi.title}</p>
+                                        <p className="text-2xl font-bold flex items-center justify-center">{kpi.value}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <>
+                                    <div className="cursor-pointer hover:bg-white/10 p-2 rounded-lg transition" onClick={() => setShowWorkerModal(true)}>
+                                        <p className="text-sm opacity-75 mb-1 flex items-center justify-center">금일 출력 인원 <MoreHorizontal size={12} className="ml-1" /></p>
+                                        <p className="text-2xl font-bold flex items-center justify-center"><Users size={20} className="mr-1" /> {data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명</p>
+                                    </div>
+                                    <div className="h-12 w-px bg-white/30"></div>
+                                    <div><p className="text-sm opacity-75 mb-1">고위험 작업</p><p className="text-2xl font-bold flex items-center justify-center text-yellow-300"><AlertTriangle size={20} className="mr-1" /> {data.riskWorks.length}건</p></div>
+                                </>
+                            )}
                         </div>
                     </div>
 

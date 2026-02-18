@@ -3,11 +3,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import SafetyDashboard from './SafetyDashboard';
 import ResourceCenter from './ResourceCenter';
 import Login from './Login';
-import './index.css';
+import FirestoreScanner from './components/FirestoreScanner';
 
 function App() {
   return (
     <Router>
+      <FirestoreScanner />
       <Routes>
         <Route path="/" element={<ResourceCenter />} />
         <Route path="/login" element={<Login />} />
