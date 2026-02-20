@@ -58,25 +58,43 @@ const NamhwaLogo = ({ type = "horizontal", className = "", isScrolled = false })
 // [메인 앱 컴포넌트]
 // ----------------------------------------------------------------------
 const ResourceCenter = () => {
-    const [isSafetyOn, setIsSafetyOn] = useState(false);
+    const [isSafetyOn, setIsSafetyOn] = useState(() => {
+        return sessionStorage.getItem('safetyOn') === 'true';
+    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [bgError, setBgError] = useState(false);
 
-    // Background Image URL (Local SVG Asset - Created for guaranteed reliability)
-    const BG_IMAGE_URL = "/bg_city_night.svg";
+    // Background Image URL (Local Asset per user request)
+    const BG_IMAGE_URL = "/night_view.jpg";
 
     const toggleSafety = () => {
-        setIsSafetyOn(!isSafetyOn);
+        const newValue = !isSafetyOn;
+        setIsSafetyOn(newValue);
+        sessionStorage.setItem('safetyOn', newValue);
     };
 
     useEffect(() => {
+        // 복귀 시(새로고침/뒤로가기)에만 스크롤 위치 복구
+        const isInitiallyOn = sessionStorage.getItem('safetyOn') === 'true';
+        if (isInitiallyOn) {
+            const savedScroll = sessionStorage.getItem('dashboardScroll');
+            if (savedScroll) {
+                setTimeout(() => window.scrollTo(0, parseInt(savedScroll, 10)), 50);
+            }
+        }
+
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const handleLinkClick = () => {
+        // 다른 페이지 이동 직전 스크롤 위치 저장
+        sessionStorage.setItem('dashboardScroll', window.scrollY.toString());
+    };
 
     const sites = [
         { id: 'siteA', title: "대광 새마을금고 골프연습장", link: "/dashboard/siteA", status: "진행중" },
@@ -110,9 +128,20 @@ const ResourceCenter = () => {
             {/* Navigation */}
             <nav className={`fixed w-full z-50 transition-all duration-500 ease-out ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm py-3' : 'bg-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-                    <div className="flex items-center gap-6">
-                        <NamhwaLogo type="horizontal" isScrolled={isScrolled} />
-                        <div className={`h-6 w-px hidden md:block ${isScrolled ? 'bg-slate-200' : 'bg-white/20'}`}></div>
+                    <div className="flex items-center gap-3">
+                        {/* 1. 로고 심볼 (벽돌색 유지) */}
+                        <img
+                            src="/namhwa_symbol.png"
+                            alt="Namhwa Symbol"
+                            className="h-10 md:h-12 object-contain"
+                        />
+                        {/* 2. 로고 텍스트 (야간 배경에서만 흰색으로 반전) */}
+                        <img
+                            src="/namhwa_text.png"
+                            alt="Namhwa Text"
+                            className={`h-8 md:h-10 object-contain transition-all duration-300 ${!isScrolled ? 'brightness-0 invert' : ''}`}
+                        />
+                        <div className={`h-6 w-px hidden md:block ml-2 ${isScrolled ? 'bg-slate-200' : 'bg-white/20'}`}></div>
                         <span className={`text-xs font-semibold tracking-widest uppercase hidden md:block pt-0.5 ${isScrolled ? 'text-slate-400' : 'text-white/60'}`}>
                             Safety Hub
                         </span>
@@ -132,10 +161,10 @@ const ResourceCenter = () => {
 
                 {mobileMenuOpen && (
                     <div className="absolute top-full left-0 w-full bg-white shadow-2xl py-6 px-8 flex flex-col gap-6 md:hidden border-t border-slate-50">
-                        <a href="#systems" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">시스템 & 매뉴얼</a>
-                        <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">현장 대시보드</a>
-                        <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">SOP & 점검표</a>
-                        <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">안전 계산기</a>
+                        <a href="#systems" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Systems</a>
+                        <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Sites</a>
+                        <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Checklists</a>
+                        <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Tools</a>
                     </div>
                 )}
             </nav>
@@ -184,11 +213,11 @@ const ResourceCenter = () => {
             <div className={`transition-all duration-1000 ${isSafetyOn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20 pointer-events-none h-0 overflow-hidden'}`}>
 
                 {/* Systems Section */}
-                <section id="systems" className="py-24 bg-white">
+                <section id="systems" className="py-24 bg-cyan-50/85 backdrop-blur-xl border-t border-white/20 shadow-[inset_0_0_100px_rgba(255,255,255,0.4)]">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="mb-20">
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Systems <span className="text-red-600">.</span></h3>
-                            <p className="text-slate-400 font-medium tracking-wide uppercase text-sm">시스템 및 경영 매뉴얼</p>
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Systems <span className="text-cyan-600">.</span></h3>
+                            <p className="text-cyan-700 font-medium tracking-wide uppercase text-sm">시스템 및 경영 매뉴얼</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -198,41 +227,52 @@ const ResourceCenter = () => {
                                 </div>
                                 <h4 className="text-2xl font-black tracking-tight text-slate-900 mb-4 leading-tight">안전보건<br />경영시스템</h4>
                                 <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">ISO 45001 기준에 맞춘 통합 안전보건 관리 매뉴얼을 확인하십시오.</p>
-                                <button className="inline-flex items-center gap-2 text-red-600 font-bold text-sm tracking-tight hover:gap-4 transition-all">
+                                <a href="/System/index.html" onClick={handleLinkClick} className="inline-flex items-center gap-2 text-red-600 font-bold text-sm tracking-tight hover:gap-4 transition-all">
                                     VIEW DOCUMENT <ArrowRight size={16} />
-                                </button>
+                                </a>
                             </div>
 
                             {[
-                                { title: "안전보건 매뉴얼", desc: "현장 안전 관리를 위한 상세 표준 지침서" },
-                                { title: "R&R 정의서", desc: "조직 내 구성원별 역할과 책임 정의" }
+                                { title: "안전보건 매뉴얼", desc: "현장 안전 관리를 위한 상세 표준 지침서", link: "/safety_manual.pdf", target: "_blank" },
+                                { title: "R&R 정의서", desc: "조직 내 구성원별 역할과 책임 정의", link: "#", target: "_self" }
                             ].map((item, idx) => (
-                                <div key={idx} className="bg-slate-50/50 rounded-3xl p-10 border border-dashed border-slate-200 flex flex-col justify-between opacity-60">
+                                <a href={item.link} target={item.target} onClick={handleLinkClick} key={idx} className={`bg-slate-50/50 rounded-3xl p-10 border border-dashed border-slate-200 flex flex-col justify-between ${item.link === '#' ? 'opacity-60 cursor-not-allowed' : 'hover:border-red-300 hover:bg-white transition-all hover:shadow-xl'}`}>
                                     <div>
-                                        <div className="w-16 h-16 bg-slate-100 text-slate-300 rounded-2xl flex items-center justify-center mb-8">
+                                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 ${item.link === '#' ? 'bg-slate-100 text-slate-300' : 'bg-red-50 text-red-500'}`}>
                                             <Lock size={28} />
                                         </div>
-                                        <h4 className="text-2xl font-black tracking-tight text-slate-400 mb-4 leading-tight">{item.title}</h4>
+                                        <h4 className={`text-2xl font-black tracking-tight mb-4 leading-tight ${item.link === '#' ? 'text-slate-400' : 'text-slate-800'}`}>{item.title}</h4>
                                         <p className="text-slate-400 text-sm font-medium leading-relaxed">{item.desc}</p>
                                     </div>
-                                    <span className="mt-8 text-[10px] font-black tracking-widest text-slate-300 uppercase">Updating Soon</span>
-                                </div>
+                                    <span className={`mt-8 text-[10px] font-black tracking-widest uppercase ${item.link === '#' ? 'text-slate-300' : 'text-red-500'}`}>
+                                        {item.link === '#' ? 'Updating Soon' : 'View PDF'}
+                                    </span>
+                                </a>
                             ))}
                         </div>
                     </div>
                 </section>
 
                 {/* Sites Section [NEW] */}
-                <section id="sites" className="py-24 bg-slate-50 border-y border-slate-200">
+                <section id="sites" className="py-24 bg-purple-50/85 backdrop-blur-xl border-y border-white/20 shadow-[inset_0_0_100px_rgba(255,255,255,0.4)]">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="mb-20 text-center md:text-left">
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Active Projects <span className="text-red-600">.</span></h3>
-                            <p className="text-slate-400 font-medium tracking-wide uppercase text-sm">진행 중인 현장 스마트 대시보드</p>
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Active Projects <span className="text-purple-600">.</span></h3>
+                            <p className="text-purple-700 font-medium tracking-wide uppercase text-sm">진행 중인 현장 스마트 대시보드</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="group relative p-8 rounded-3xl bg-slate-100/50 border border-dashed border-slate-200 opacity-70 flex flex-col justify-center items-center text-center">
+                                <div className="w-14 h-14 bg-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mb-6">
+                                    <LayoutDashboard size={24} />
+                                </div>
+                                <h4 className="text-xl font-bold text-slate-600 mb-2">현장 목록 전체보기</h4>
+                                <span className="mt-4 px-3 py-1 bg-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                                    준비중 (Coming Soon)
+                                </span>
+                            </div>
                             {sites.map((site) => (
-                                <Link to={site.link} key={site.id} className="group relative p-8 rounded-3xl bg-white border border-slate-100 hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+                                <Link to={site.link} onClick={handleLinkClick} key={site.id} className="group relative p-8 rounded-3xl bg-white border border-slate-100 hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
                                     <div className="absolute top-8 right-8">
                                         <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-bold uppercase tracking-wider">
                                             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -255,25 +295,29 @@ const ResourceCenter = () => {
                 </section>
 
                 {/* Checklists Section */}
-                <section id="sops" className="py-32 bg-white">
+                <section id="sops" className="py-28 bg-amber-50/85 backdrop-blur-xl border-b border-white/20 shadow-[inset_0_0_100px_rgba(255,255,255,0.4)]">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="mb-20 text-center md:text-left">
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Checklists <span className="text-red-600">.</span></h3>
-                            <p className="text-slate-400 font-medium tracking-wide uppercase text-sm">현장별 맞춤 점검표 및 절차서</p>
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Checklists <span className="text-amber-600">.</span></h3>
+                            <p className="text-amber-700 font-medium tracking-wide uppercase text-sm">현장별 맞춤 점검표 및 절차서</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
-                                { title: "안전보건 경영시스템 점검", sub: "SHM System Check", icon: <ClipboardCheck /> },
-                                { title: "신규 착공 현장 체크리스트", sub: "New Site Initial Check", icon: <CheckSquare /> },
-                                { title: "건축공사 일일 안전점검", sub: "Daily Building Check", icon: <ClipboardCheck /> },
-                                { title: "토목공사 일일 안전점검", sub: "Daily Civil Eng. Check", icon: <ClipboardCheck /> },
-                                { title: "위험성 평가표 (AHA)", sub: "Risk Assessment Form", icon: <AlertTriangle /> },
-                                { title: "작업허가서 (PTW)", sub: "Permit To Work System", icon: <FileText /> },
+                                { title: "SHM SYSTEM", sub: "Web System", icon: <Shield />, link: "/shm_system/index.html" },
+                                { title: "PRE CHECK", sub: "Checklist", icon: <CheckSquare />, link: "/pre_check/index.html" },
+                                { title: "DAILY ARCH", sub: "Architecture", icon: <ClipboardCheck />, link: "/daily_arch/index.html" },
+                                { title: "DAILY CE", sub: "Civil Eng.", icon: <ClipboardCheck />, link: "/daily_ce/index.html" },
+                                { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
+                                { title: "AHA", sub: "Risk Assessment", icon: <FileText />, link: "/AHA/index.html" },
+                                { title: "PTW", sub: "Permit to Work", icon: <Lock />, link: "/PTW/index.html" },
+                                { title: "WSHCC", sub: "Council", icon: <BookOpen />, link: "/WSHCC/index.html" },
                             ].map((item, index) => (
-                                <button
+                                <a
+                                    href={item.link}
+                                    onClick={handleLinkClick}
                                     key={index}
-                                    className="group relative p-8 rounded-3xl bg-slate-50 border border-slate-100 text-left hover:bg-white hover:border-red-500 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                                    className="block group relative p-8 rounded-3xl bg-slate-50 border border-slate-100 text-left hover:bg-white hover:border-red-500 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                                 >
                                     <div className="flex items-start justify-between mb-8">
                                         <div className="p-4 rounded-2xl bg-white text-slate-400 group-hover:bg-red-600 group-hover:text-white transition-all duration-300 shadow-sm">
@@ -283,7 +327,42 @@ const ResourceCenter = () => {
                                     </div>
                                     <h4 className="font-black text-lg text-slate-900 tracking-tight leading-tight mb-2">{item.title}</h4>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{item.sub}</p>
-                                </button>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Calculators Section [NEW from color-block request] */}
+                <section id="tools" className="py-24 bg-emerald-50/85 backdrop-blur-xl border-t border-white/20 shadow-[inset_0_0_100px_rgba(255,255,255,0.4)]">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="mb-20 text-center md:text-left">
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">Calculators <span className="text-emerald-600">.</span></h3>
+                            <p className="text-emerald-700 font-medium tracking-wide uppercase text-sm">현장 전용 안전율 및 규격 계산기 (Web Tools)</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { title: "중량물취급 안전율 계산기", sub: "Safety Factor Calc", icon: <Calculator />, link: "/work/index.html" },
+                                { title: "아웃트리거 받침철판 규격 계산기", sub: "Outrigger Plate Calc", icon: <Calculator />, link: "/OUT/index.html" }
+                            ].map((item, index) => (
+                                <a
+                                    href={item.link}
+                                    onClick={handleLinkClick}
+                                    key={index}
+                                    className="block group relative p-10 rounded-3xl bg-white border border-slate-100 text-left hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
+                                >
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -z-10 group-hover:bg-red-50 transition-colors duration-500"></div>
+                                    <div className="w-16 h-16 bg-slate-50 text-slate-800 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-red-600 group-hover:text-white transition-colors duration-500 shadow-sm">
+                                        {React.cloneElement(item.icon, { size: 32 })}
+                                    </div>
+                                    <h4 className="text-2xl font-black text-slate-900 mb-2 group-hover:text-red-600 transition-colors">{item.title}</h4>
+                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{item.sub}</p>
+
+                                    <div className="mt-8 flex items-center text-slate-300 text-sm font-bold group-hover:text-red-600 transition-colors">
+                                        LAUNCH TOOL <ArrowRight size={16} className="ml-2" />
+                                    </div>
+                                </a>
                             ))}
                         </div>
                     </div>
