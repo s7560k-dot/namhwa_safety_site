@@ -4,7 +4,37 @@
 
 @layer base {
   body {
-    @apply font-sans antialiased text-gray-900 bg-gray-50;
+    @apply font-sans antialiased text-gray-900 bg-gray-50 overflow-y-scroll overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  @keyframes marqueeLeft {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes marqueeRight {
+    0% {
+      transform: translateX(-50%);
+    }
+
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-marquee-left {
+    animation: marqueeLeft 40s linear infinite;
+  }
+
+  .animate-marquee-right {
+    animation: marqueeRight 50s linear infinite;
   }
 }
 

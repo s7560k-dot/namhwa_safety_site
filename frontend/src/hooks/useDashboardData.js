@@ -1,9 +1,26 @@
 import { useState, useEffect } from 'react';
 import { db, storage } from '../firebase';
-
+/**
+ * ============================================================================
+ * 🚨 [DATA ISOLATION GUIDE] 현장별 데이터 분리 및 파이어베이스 연동 훅 🚨
+ * ============================================================================
+ * 이 훅(Hook)은 모든 현장의 SafetyDashboard 컴포넌트에서 공통으로 재사용됩니다.
+ * 
+ * [데이터 섞임 방지 안전가이드]
+ * 1. 절대 이 파일 내부에 특정 현장 ID(예: siteId = 'siteB')를 하드코딩하지 마세요!
+ *    하드코딩할 경우 모든 현장의 대시보드가 하나의 DB를 공유하여 데이터가 오염됩니다.
+ * 2. siteId 변수는 반드시 외부(App.jsx 등)의 URL 파라미터(useParams)로 전달받아야 합니다.
+ * 3. 새로운 현장을 추가하는 방법:
+ *    - 파이어베이스 서버의 `sites/{새로운_siteId}/...` 컬렉션 경로가 이 훅을 통해 자동으로 생성됩니다.
+ *    - 코드를 건드릴 필요 없이 오직 ResourceCenter.jsx의 `sites` 목록에 새 ID만 추가하면
+ *      독립된 현장 DB방이 즉시 만들어집니다.
+ * ============================================================================
+ */
 export const useDashboardData = (siteId) => {
-    // [FIX] 강제로 siteB 데이터 로드 (사용자 요청)
-    siteId = 'siteB';
+    // [안전 장치] 라우터에서 현장 ID가 누락되거나 변조될 경우 즉시 경고를 띄웁니다.
+    if (!siteId || typeof siteId !== 'string') {
+        console.error("🔥 [치명적 오류] useDashboardData 훅에 유효한 siteId 파라미터가 전달되지 않아 파이어베이스 데이터 격리가 불가합니다. 현재 값:", siteId);
+    }
     const [workerList, setWorkerList] = useState([]);
     const [riskWorks, setRiskWorks] = useState([]);
     const [noticeData, setNoticeData] = useState([]);
@@ -134,11 +151,18 @@ export const useDashboardData = (siteId) => {
         // 2. New Issues (Status: new)
         issueList.forEach(issue => {
             if (issue.status === 'new') {
+                let formattedDate = new Date().toISOString().slice(0, 10);
+                if (issue.createdAt) {
+                    const d = new Date(issue.createdAt);
+                    if (!isNaN(d.getTime())) {
+                        formattedDate = d.toISOString().slice(0, 10);
+                    }
+                }
                 newNotifications.push({
                     id: `issue_${issue.id}`,
                     type: '부적합',
                     message: `신규 부적합 조치 요청 (${issue.loc || '위치 미지정'})`,
-                    date: new Date(issue.createdAt).toISOString().slice(0, 10),
+                    date: formattedDate,
                     link: '#'
                 });
             }

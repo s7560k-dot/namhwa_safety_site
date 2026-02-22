@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { useParams } from 'react-router-dom';
 import { db, storage } from './firebase';
 import { useDashboardData } from './hooks/useDashboardData';
@@ -10,7 +10,28 @@ import {
 } from './components/Icons';
 import * as Modals from './components/Modals';
 
-const SafetyDashboard = () => {
+class ErrorBoundary extends Component {
+    constructor(props) { super(props); this.state = { hasError: false, errorInfo: null, error: null }; }
+    static getDerivedStateFromError(error) { return { hasError: true }; }
+    componentDidCatch(error, errorInfo) { this.setState({ errorInfo, error }); console.error("ErrorBoundary caught an error", error, errorInfo); }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-10 bg-red-50 text-red-900 h-screen font-mono">
+                    <h2 className="text-2xl font-bold mb-4">🚨 Rendering Error in SafetyDashboard</h2>
+                    <p className="mb-2 whitespace-pre-wrap font-bold">{this.state.error?.toString()}</p>
+                    <details className="cursor-pointer bg-white p-4 rounded shadow">
+                        <summary className="font-bold outline-none">Toggle Stack Trace</summary>
+                        <pre className="mt-2 text-xs overflow-auto whitespace-pre-wrap">{this.state.errorInfo?.componentStack}</pre>
+                    </details>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+const SafetyDashboardInner = () => {
     const { siteId: paramSiteId } = useParams();
     const siteId = paramSiteId || 'siteA'; // Default to siteA
 
@@ -305,41 +326,53 @@ const SafetyDashboard = () => {
                 </header>
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className={`bg-gradient-to-r ${currentSiteInfo.gradient} rounded-2xl shadow-lg p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between animate-fade-in relative`}>
-                        <button onClick={() => setShowSettingsModal(true)} className="absolute top-4 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition"><Settings size={20} className="text-white" /></button>
-                        <div className="mb-4 md:mb-0">
-                            <h2 className="text-lg font-medium opacity-90 mb-1 flex items-center">
-                                {data.headerInfo?.scale || "우리 현장 무재해 기록"}
-                                <button onClick={() => setShowSettingsModal(true)} className="ml-3 text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded flex items-center transition cursor-pointer border border-transparent hover:border-white/40">
-                                    공사기간: {data.headerInfo?.period || data.startDate} <Edit2 size={12} className="ml-1 opacity-70" />
+                    <div className={`bg-gradient-to-r ${currentSiteInfo.gradient} rounded-xl shadow-lg p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between animate-fade-in relative overflow-hidden`}>
+                        {/* 설정 버튼 (절대 위치 우측 고정) */}
+                        <button onClick={() => setShowSettingsModal(true)} className="absolute top-1/2 -translate-y-1/2 right-6 w-11 h-11 bg-white/15 rounded-full hover:bg-white/25 transition flex items-center justify-center backdrop-blur-md border border-white/10 z-10 shadow-sm">
+                            <Settings size={20} className="text-white opacity-90" />
+                        </button>
+
+                        {/* 왼쪽 영역: 무재해 기록 */}
+                        <div className="flex-1 mb-6 md:mb-0">
+                            <div className="flex items-center mb-2">
+                                <h2 className="text-[17px] font-medium tracking-wide text-white/95">우리 현장 무재해 기록</h2>
+                                <button onClick={() => setShowSettingsModal(true)} className="ml-3 text-[11px] bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md flex items-center transition cursor-pointer border border-white/5 tracking-wide text-white/90">
+                                    실착공일: {data.startDate} <Edit2 size={10} className="ml-1.5 opacity-70" />
                                 </button>
-                            </h2>
+                            </div>
                             <div className="flex items-end">
-                                <span className="text-5xl font-bold mr-2">{data.accidentFreeDays}</span>
-                                <span className="text-xl mb-2">일째</span>
-                                <span className="ml-4 bg-white/20 px-3 py-1 rounded-full text-sm">
-                                    목표: {data.headerInfo?.goal || data.targetDays}
-                                </span>
+                                <span className="text-5xl md:text-[54px] font-black leading-none">{data.accidentFreeDays}</span>
+                                <span className="text-lg font-medium ml-2 pb-1 opacity-90">일째</span>
+                                <div className="ml-5 bg-white/15 px-3 py-1 mb-1.5 rounded-full text-[13px] font-medium flex items-center border border-white/5 pb-1">
+                                    목표: {data.headerInfo?.goal || data.targetDays}일
+                                </div>
                             </div>
                         </div>
-                        <div className="flex space-x-8 text-center pr-12">
-                            {data.kpiData && data.kpiData.length > 0 ? (
-                                data.kpiData.map((kpi, idx) => (
-                                    <div key={idx} className="cursor-pointer hover:bg-white/10 p-2 rounded-lg transition">
-                                        <p className="text-sm opacity-75 mb-1 flex items-center justify-center">{kpi.title}</p>
-                                        <p className="text-2xl font-bold flex items-center justify-center">{kpi.value}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <>
-                                    <div className="cursor-pointer hover:bg-white/10 p-2 rounded-lg transition" onClick={() => setShowWorkerModal(true)}>
-                                        <p className="text-sm opacity-75 mb-1 flex items-center justify-center">금일 출력 인원 <MoreHorizontal size={12} className="ml-1" /></p>
-                                        <p className="text-2xl font-bold flex items-center justify-center"><Users size={20} className="mr-1" /> {data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명</p>
-                                    </div>
-                                    <div className="h-12 w-px bg-white/30"></div>
-                                    <div><p className="text-sm opacity-75 mb-1">고위험 작업</p><p className="text-2xl font-bold flex items-center justify-center text-yellow-300"><AlertTriangle size={20} className="mr-1" /> {data.riskWorks.length}건</p></div>
-                                </>
-                            )}
+
+                        {/* 오른쪽 영역: 금일 출력 인원 및 고위험 작업 */}
+                        <div className="flex items-center space-x-6 md:space-x-8 pr-[4.5rem]">
+                            {/* 금일 출력 인원 */}
+                            <div className="flex flex-col items-end cursor-pointer group" onClick={() => setShowWorkerModal(true)}>
+                                <p className="text-[13px] text-white/80 mb-2 flex items-center font-medium tracking-wide">
+                                    금일 출력 인원 <MoreHorizontal size={14} className="ml-1 opacity-60" />
+                                </p>
+                                <p className="text-[26px] font-bold flex items-center tracking-tight">
+                                    <Users size={20} className="mr-1.5 opacity-90" strokeWidth={2.5} />
+                                    {data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명
+                                </p>
+                            </div>
+
+                            {/* 세로 구분선 */}
+                            <div className="h-12 w-px bg-white/25 mx-2 rounded-full"></div>
+
+                            {/* 고위험 작업 */}
+                            <div className="flex flex-col items-start pr-2">
+                                <p className="text-[13px] text-white/80 mb-2 font-medium tracking-wide">고위험 작업</p>
+                                <p className="text-[26px] font-bold flex items-center text-yellow-300 tracking-tight">
+                                    <AlertTriangle size={18} className="mr-1.5" strokeWidth={2.5} />
+                                    {data.riskWorks.length}건
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -519,5 +552,11 @@ const SafetyDashboard = () => {
         </div>
     );
 };
+
+const SafetyDashboard = () => (
+    <ErrorBoundary>
+        <SafetyDashboardInner />
+    </ErrorBoundary>
+);
 
 export default SafetyDashboard;
