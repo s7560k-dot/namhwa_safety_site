@@ -1,0 +1,553 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>남화토건 안전보건 자료실</title>
+    <style>
+        /* CSS Reset 및 기본 스타일 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', 'Dotum', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            /* 로그인 확인 전까지 숨김 처리 */
+            /* display: none; -> 스크립트에서 제어 */
+        }
+
+        /* 유틸리티 클래스 대체 */
+        .min-h-screen {
+            min-height: 100vh;
+        }
+
+        .py-12 {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .max-w-5xl {
+            max-width: 64rem;
+        }
+
+        .bg-white {
+            background-color: white;
+        }
+
+        .bg-gray-100 {
+            background-color: #f3f4f6;
+        }
+
+        .p-6 {
+            padding: 1.5rem;
+        }
+
+        .md\:p-10 {
+            padding: 2.5rem;
+        }
+
+        .rounded-xl {
+            border-radius: 0.75rem;
+        }
+
+        .shadow-2xl {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-10 {
+            margin-bottom: 2.5rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .justify-end {
+            justify-content: flex-end;
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .gap-5 {
+            gap: 1.25rem;
+        }
+
+        /* 1열 (모바일) -> 3열 (데스크톱) 반응형 그리드 */
+        .grid-cols-1 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        @media (min-width: 768px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .md\:p-10 {
+                padding: 2.5rem;
+            }
+        }
+
+        /* 타이포그래피 */
+        h1 {
+            font-size: 1.875rem;
+            line-height: 2.25rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 2.25rem;
+                line-height: 2.5rem;
+            }
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            line-height: 2rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            border-bottom-width: 2px;
+            border-bottom-style: solid;
+            padding-bottom: 0.5rem;
+        }
+
+        /* 로그아웃 버튼 */
+        #logout-btn {
+            background-color: #4b5563;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        #logout-btn:hover {
+            background-color: #374151;
+        }
+
+        /* 섹션별 보더 색상 */
+        .border-cyan-500 {
+            border-color: #06b6d4;
+        }
+
+        .border-amber-500 {
+            border-color: #f59e0b;
+        }
+
+        .border-emerald-500 {
+            border-color: #10b981;
+        }
+
+        .border-purple-500 {
+            border-color: #a855f7;
+        }
+
+        /* 카테고리 버튼 공통 */
+        .category-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            transition: all 0.3s ease;
+            color: white;
+            min-height: 80px;
+            text-decoration: none;
+            /* 링크 밑줄 제거 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: none;
+            /* 버튼 태그일 경우 */
+        }
+
+        .category-button:hover:not(.cursor-not-allowed) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 색상별 버튼 스타일 */
+        .bg-cyan-600 {
+            background-color: #0891b2;
+        }
+
+        .bg-cyan-600:hover {
+            background-color: #0e7490;
+        }
+
+        .bg-amber-500 {
+            background-color: #f59e0b;
+        }
+
+        .bg-amber-500:hover {
+            background-color: #d97706;
+        }
+
+        .bg-emerald-600 {
+            background-color: #059669;
+        }
+
+        .bg-emerald-600:hover {
+            background-color: #047857;
+        }
+
+        .bg-purple-600 {
+            background-color: #9333ea;
+        }
+
+        .bg-purple-600:hover {
+            background-color: #7e22ce;
+        }
+
+        /* 비활성화 버튼 */
+        .bg-gray-400 {
+            background-color: #9ca3af;
+        }
+
+        .cursor-not-allowed {
+            cursor: not-allowed;
+        }
+
+        .opacity-70 {
+            opacity: 0.7;
+        }
+
+        .text-gray-800 {
+            color: #1f2937;
+        }
+
+        /* 로딩 스피너 및 기타 */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        #loading-screen.hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #7F0050;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #main-content {
+            display: none;
+        }
+
+        #main-content.visible {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen py-12 px-4">
+
+    <!-- 로딩 화면 -->
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p class="mt-4 text-gray-600 font-medium">로그인 확인 중...</p>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div id="main-content">
+        <!-- 로그아웃 버튼 -->
+        <div class="flex justify-end max-w-5xl mx-auto mb-4">
+            <button id="logout-btn"
+                class="bg-gray-600 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded shadow transition duration-200">
+                로그아웃
+            </button>
+        </div>
+
+        <div class="max-w-5xl mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+
+
+            <!-- 페이지 제목 -->
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-10">
+                남화토건(주) 안전보건팀 자료실
+            </h1>
+
+            <!-- 시스템 & 매뉴얼 섹션 -->
+            <section aria-labelledby="systems-heading">
+                <h2 id="systems-heading"
+                    class="text-2xl font-semibold text-gray-800 mt-8 mb-5 border-b-2 border-cyan-500 pb-2">
+                    시스템 & 매뉴얼 (Systems & Manuals)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <a href="System/" class="category-button bg-cyan-600 hover:bg-cyan-700">
+                        안전보건경영시스템 (웹 매뉴얼)
+                    </a>
+                    <span class="category-button bg-gray-400 text-gray-800 cursor-not-allowed opacity-70"
+                        aria-disabled="true" title="준비중입니다">
+                        안전보건 매뉴얼 (준비중)
+                    </span>
+                    <span class="category-button bg-gray-400 text-gray-800 cursor-not-allowed opacity-70"
+                        aria-disabled="true" title="준비중입니다">
+                        R&R (준비중)
+                    </span>
+                </div>
+            </section>
+
+            <!-- SOP & 점검표 섹션 -->
+            <section aria-labelledby="sops-heading">
+                <h2 id="sops-heading"
+                    class="text-2xl font-semibold text-gray-800 mt-10 mb-5 border-b-2 border-amber-500 pb-2">
+                    SOP & 점검표 (SOPs & Checklists)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <a href="shm_system/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        안전보건 경영시스템<br>(SHM System Check)
+                    </a>
+                    <span class="category-button bg-gray-400 text-gray-800 cursor-not-allowed opacity-70"
+                        aria-disabled="true" title="준비중입니다">
+                        표준작업절차서 (SOP) (준비중)
+                    </span>
+                    <a href="pre_check/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        신규 착공 현장 체크리스트
+                    </a>
+                    <a href="daily_arch/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        건축공사 일일 안전점검표
+                    </a>
+                    <a href="daily_ce/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        토목공사 일일 안전점검표
+                    </a>
+                    <a href="sh_check/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        현장 안전보건 점검 (SH Check)
+                    </a>
+                    <a href="AHA/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        위험성 평가표 (AHA)
+                    </a>
+                    <a href="PTW/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        작업허가서 (PTW)
+                    </a>
+                    <a href="WSHCC/" class="category-button bg-amber-500 hover:bg-amber-600">
+                        주간 안전보건 이행 점검표 (WSHCC)
+                    </a>
+                </div>
+            </section>
+
+            <!-- 안전 계산기 섹션 -->
+            <section aria-labelledby="calculators-heading">
+                <h2 id="calculators-heading"
+                    class="text-2xl font-semibold text-gray-800 mt-10 mb-5 border-b-2 border-emerald-500 pb-2">
+                    안전 계산기 (Safety Calculators)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <a href="work/" class="category-button bg-emerald-600 hover:bg-emerald-700">
+                        중량물취급 안전율 계산기
+                    </a>
+                    <a href="OUT/" class="category-button bg-emerald-600 hover:bg-emerald-700">
+                        아웃트리거 받침철판 규격 계산기
+                    </a>
+                </div>
+            </section>
+
+            <!-- 현장 섹션 -->
+            <section aria-labelledby="sites-heading">
+                <h2 id="sites-heading"
+                    class="text-2xl font-semibold text-gray-800 mt-10 mb-5 border-b-2 border-purple-500 pb-2">
+                    현장 (Sites)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <span class="category-button bg-purple-600 opacity-70 cursor-not-allowed" aria-disabled="true"
+                        title="준비중입니다">
+                        현장 목록 전체보기 (준비중)
+                    </span>
+                    <a href="safetydashboard.html?siteId=siteA"
+                        class="category-button bg-purple-600 hover:bg-purple-700">
+                        대광 새마을금고 골프연습장
+                    </a>
+                    <a href="safetydashboard.html?siteId=siteB"
+                        class="category-button bg-purple-600 hover:bg-purple-700">
+                        수원 노유자시설 신축공사
+                    </a>
+            <a href="safetydashboard.html?siteId=siteC" class="category-button bg-green-600 hover:bg-green-700">
+                <div class="category-icon">🏗️</div>
+                부산 신축 공사
+            </a>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div id="error-console"
+        style="display:none; position:fixed; bottom:0; left:0; width:100%; background:rgba(255,0,0,0.9); color:white; padding:10px; font-size:12px; z-index:10000;">
+        <p style="font-weight:bold;">⚠️ 오류가 발생했습니다 (보안망 차단 가능성):</p>
+        <div id="error-messages"></div>
+    </div>
+
+    <script>
+        // 전역 에러 핸들러 (모듈 스크립트 실행 전 로드)
+        window.onerror = function (msg, url, line, col, error) {
+            const errorConsole = document.getElementById('error-console');
+            const errorMessages = document.getElementById('error-messages');
+            errorConsole.style.display = 'block';
+            errorMessages.innerHTML += `<p>${msg} (Line: ${line})</p>`;
+            return false;
+        };
+
+        // 3초 타임아웃 - 로딩이 너무 길어지면 강제 표시 버튼 제공
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+                // 로딩 화면 내부에 강제 버튼 추가
+                const forceBtn = document.createElement('button');
+                forceBtn.innerText = "응답이 지연되고 있습니다. [강제로 내용 보기]";
+                forceBtn.style.cssText = "margin-top:20px; padding:10px 20px; background:#4b5563; color:white; border:none; border-radius:5px; cursor:pointer;";
+                forceBtn.onclick = function () {
+                    loadingScreen.style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                };
+                loadingScreen.appendChild(forceBtn);
+            }
+        }, 3000); // 3초 대기
+    </script>
+
+    <script type="module">
+        // Firebase 모듈 import (중앙화된 설정 사용)
+        import { auth } from './firebase.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // 상수 정의
+        const LOGIN_PAGE_PATH = "INDEX/index.html";
+        const LOADING_SCREEN = document.getElementById('loading-screen');
+        const MAIN_CONTENT = document.getElementById('main-content');
+        const LOGOUT_BUTTON = document.getElementById('logout-btn');
+
+        /**
+         * 로그인 페이지로 리다이렉트하는 함수
+         * Preview 환경에서도 안정적으로 작동하도록 Fallback UI 제공
+         */
+        const redirectToLogin = () => {
+            try {
+                // 표준 페이지 이동 시도
+                window.location.href = LOGIN_PAGE_PATH;
+            } catch (error) {
+                console.warn("자동 리다이렉트 실패 (Preview 환경일 수 있음). 수동 링크를 표시합니다.", error);
+
+                // Fallback: 사용자가 직접 클릭할 수 있는 UI 표시
+                document.body.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen bg-gray-100">
+                        <div class="bg-white p-8 rounded-lg shadow-md text-center max-w-sm mx-auto">
+                            <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                </path>
+                            </svg>
+                            <h2 class="text-xl font-bold text-gray-900 mb-2">로그인이 필요합니다</h2>
+                            <p class="text-gray-600 mb-6">안전보건 자료실에 접근하려면 로그인이 필요합니다.</p>
+                            <a href="${LOGIN_PAGE_PATH}"
+                               class="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+                                로그인 페이지로 이동
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        /**
+         * 로딩 화면을 숨기고 메인 콘텐츠를 표시하는 함수
+         */
+        const showMainContent = () => {
+            LOADING_SCREEN.classList.add('hidden');
+            MAIN_CONTENT.classList.add('visible');
+        };
+
+        /**
+         * 인증 상태 변경 감지
+         * 로그인 상태면 메인 콘텐츠 표시, 아니면 로그인 페이지로 리다이렉트
+         */
+        // try-catch로 감싸서 네트워크 차단 시에도 멈추지 않도록 함
+        try {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // 로그인 확인됨: 메인 콘텐츠 표시
+                    console.log("사용자 로그인 확인:", user.email);
+                    showMainContent();
+                } else {
+                    // 로그인 안 됨: 로그인 페이지로 이동
+                    console.log("미인증 사용자 - 로그인 페이지로 리다이렉트합니다.");
+                    redirectToLogin();
+                }
+            });
+        } catch (e) {
+            console.error("Firebase 인증 오류:", e);
+            document.getElementById('error-console').style.display = 'block';
+            document.getElementById('error-messages').innerHTML += `<p>Firebase 인증 시작 실패: ${e.message}</p>`;
+        }
+
+        /**
+         * 로그아웃 버튼 이벤트 핸들러
+         */
+        LOGOUT_BUTTON.addEventListener('click', async () => {
+            if (confirm("로그아웃 하시겠습니까?")) {
+                try {
+                    await signOut(auth);
+                    console.log("로그아웃 성공");
+                    redirectToLogin();
+                } catch (error) {
+                    console.error("로그아웃 중 오류 발생:", error);
+                    alert("로그아웃 중 문제가 발생했습니다. 다시 시도해주세요.");
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
