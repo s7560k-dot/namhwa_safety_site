@@ -3,6 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import SafetyDashboard from './SafetyDashboard';
 import ResourceCenter from './ResourceCenter';
 import Login from './Login';
+import Admin from './Admin';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfUse from './components/TermsOfUse';
+import ContactSupport from './components/ContactSupport';
 import FirestoreScanner from './components/FirestoreScanner';
 
 function App() {
@@ -12,6 +16,10 @@ function App() {
       <Routes>
         <Route path="/" element={<ResourceCenter />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfUse />} />
+        <Route path="/support" element={<ContactSupport />} />
         <Route path="/dashboard/:siteId" element={<SafetyDashboard />} />
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />

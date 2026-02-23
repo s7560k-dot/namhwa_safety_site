@@ -8,25 +8,19 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "!**/*.{js,css,png,jpg,jpeg,gif,svg,ico,pdf,html,json,txt}",
         "destination": "/index.html"
       }
     ],
-    "redirects": [
+    "headers": [
       {
-        "source": "/INDEX/resource.html",
-        "destination": "/",
-        "type": 301
-      },
-      {
-        "source": "/resource.html",
-        "destination": "/",
-        "type": 301
-      },
-      {
-        "source": "/safetydashboard.html",
-        "destination": "/",
-        "type": 301
+        "source": "/**/*.{js,css,html}",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
       }
     ]
   }

@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety ON - 남화토건 스마트 안전보건 플랫폼</title>
+    <meta name="description" content="남화토건(주) 스마트 안전보건 플랫폼 Safety ON - 현장 안전을 더 스마트하게">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ===========================
+           [1] 디자인 토큰 & 리셋
+        =========================== */
+        :root {
+            --navy: #0f2342;
+            --blue: #1a56db;
+            --blue-lt: #3b82f6;
+            --accent: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-900: #0f172a;
+            --white: #ffffff;
+            --radius: 12px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, .10);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ===========================
+           [2] 네비게이션
+        =========================== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(15, 35, 66, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-logo .logo-badge {
+            background: linear-gradient(135deg, var(--blue-lt), var(--accent));
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .nav-btn-ghost {
+            background: transparent;
+            color: rgba(255, 255, 255, .75);
+        }
+
+        .nav-btn-ghost:hover {
+            background: rgba(255, 255, 255, .1);
+            color: white;
+        }
+
+        .nav-btn-primary {
+            background: var(--blue-lt);
+            color: white;
+        }
+
+        .nav-btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, .4);
+        }
+
+        /* ===========================
+           [3] 히어로 섹션
+        =========================== */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 50%, #0d1f3c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 64px;
+        }
+
+        /* 배경 장식 */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, .15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse-slow 6s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(245, 158, 11, .08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse-slow 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes pulse-slow {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 24px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59, 130, 246, .15);
+            border: 1px solid rgba(59, 130, 246, .3);
+            color: #93c5fd;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
+            animation: fadeInDown 0.6s ease forwards;
+        }
+
+        .hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #60a5fa;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .hero-title {
+            font-size: clamp(48px, 8vw, 80px);
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 16px;
+            animation: fadeInUp 0.7s ease 0.1s both;
+        }
+
+        .hero-title .highlight {
+            background: linear-gradient(135deg, #60a5fa, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(18px, 3vw, 24px);
+            font-weight: 300;
+            color: rgba(255, 255, 255, .65);
+            margin-bottom: 48px;
+            letter-spacing: -0.3px;
+            animation: fadeInUp 0.7s ease 0.2s both;
+        }
+
+        .hero-sub strong {
+            color: rgba(255, 255, 255, .9);
+            font-weight: 600;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.7s ease 0.3s both;
+        }
+
+        .btn-hero-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--blue-lt), #2563eb);
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 16px 32px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, .4);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, .5);
+        }
+
+        .btn-hero-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, .08);
+            color: rgba(255, 255, 255, .85);
+            font-size: 16px;
+            font-weight: 600;
+            padding: 16px 32px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, .15);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-hero-ghost:hover {
+            background: rgba(255, 255, 255, .15);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* 스크롤 인디케이터 */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, .35);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            animation: fadeInUp 1s ease 0.8s both;
+        }
+
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, .3), transparent);
+            animation: scroll-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes scroll-pulse {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scaleY(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scaleY(1.1);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===========================
+           [4] 섹션 공통
+        =========================== */
+        .section {
+            padding: 80px 24px;
+        }
+
+        .section-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--blue-lt);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 800;
+            color: var(--gray-900);
+            line-height: 1.2;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            font-size: 16px;
+            color: var(--gray-600);
+            max-width: 560px;
+        }
+
+        /* ===========================
+           [5] 현장 바로가기 카드
+        =========================== */
+        .sites-section {
+            background: var(--white);
+        }
+
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .site-card {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: block;
+        }
+
+        .site-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, .12);
+            border-color: transparent;
+        }
+
+        .site-card-header {
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .site-card-header.blue {
+            background: linear-gradient(135deg, #1a56db, #3b82f6);
+        }
+
+        .site-card-header.purple {
+            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+        }
+
+        .site-card-header.green {
+            background: linear-gradient(135deg, #059669, #34d399);
+        }
+
+        .site-card-header.orange {
+            background: linear-gradient(135deg, #d97706, #fbbf24);
+        }
+
+        .site-card-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .site-card-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+
+        .site-card-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, .2);
+            color: rgba(255, 255, 255, .9);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #86efac;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        .site-card-body {
+            padding: 20px 28px;
+            background: white;
+        }
+
+        .site-card-meta {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 16px;
+        }
+
+        .site-card-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--blue-lt);
+            transition: gap 0.2s;
+        }
+
+        .site-card:hover .site-card-link {
+            gap: 10px;
+        }
+
+        /* ===========================
+           [6] 주요 기능 섹션
+        =========================== */
+        .features-section {
+            background: var(--gray-50);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 48px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 28px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+            border-color: #bfdbfe;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+
+        .icon-blue {
+            background: #eff6ff;
+        }
+
+        .icon-green {
+            background: #f0fdf4;
+        }
+
+        .icon-amber {
+            background: #fffbeb;
+        }
+
+        .icon-red {
+            background: #fff1f2;
+        }
+
+        .icon-purple {
+            background: #faf5ff;
+        }
+
+        .icon-teal {
+            background: #f0fdfa;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.6;
+        }
+
+        /* ===========================
+           [7] 빠른 실행 바
+        =========================== */
+        .quick-section {
+            background: linear-gradient(135deg, var(--navy), #1e3a5f);
+            padding: 60px 24px;
+        }
+
+        .quick-grid {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .15);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 14px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, .18);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+        }
+
+        /* ===========================
+           [8] 푸터
+        =========================== */
+        .footer {
+            background: var(--gray-900);
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .footer-sub {
+            font-size: 13px;
+            color: var(--gray-400);
+        }
+
+        /* ===========================
+           [9] 반응형
+        =========================== */
+        @media (max-width: 640px) {
+            .nav-links .nav-btn-ghost {
+                display: none;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .quick-grid {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 네비게이션 -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo">
+                🛡️ Safety ON
+                <span class="logo-badge">SMART</span>
+            </a>
+            <div class="nav-links">
+                <a href="/safetydashboard.html" class="nav-btn nav-btn-ghost">대시보드</a>
+                <a href="/INDEX/index.html" class="nav-btn nav-btn-ghost">자료실</a>
+                <a href="/safetydashboard.html" class="nav-btn nav-btn-primary">바로 시작</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 히어로 섹션 -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                남화토건(주) 스마트 안전보건 플랫폼
+            </div>
+            <h1 class="hero-title">
+                <span class="highlight">Safety ON</span><br>
+                남화의 미래를 켜다
+            </h1>
+            <p class="hero-sub">
+                현장 안전을 더 <strong>스마트하게</strong>, 더 <strong>빠르게</strong><br>
+                실시간 안전보건 대시보드로 모든 현장을 한눈에 관리하세요.
+            </p>
+            <div class="hero-cta">
+                <a href="/safetydashboard.html" class="btn-hero-primary">
+                    🏗️ 대시보드 열기
+                </a>
+                <a href="/INDEX/index.html" class="btn-hero-ghost">
+                    📁 자료실 입장
+                </a>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+            SCROLL
+        </div>
+    </section>
+
+    <!-- 현장 바로가기 -->
+    <section class="section sites-section">
+        <div class="section-inner">
+            <div class="section-label">현장 현황</div>
+            <h2 class="section-title">관리 현장 바로가기</h2>
+            <p class="section-desc">각 현장의 실시간 안전보건 현황을 확인하고 관리하세요.</p>
+
+            <div class="sites-grid">
+                <!-- 현장 A -->
+                <a href="/safetydashboard.html?siteId=siteA" class="site-card">
+                    <div class="site-card-header blue">
+                        <div class="site-card-icon">🏛️</div>
+                        <div class="site-card-name">대광새마을금고 신축공사</div>
+                        <span class="site-card-status">
+                            <span class="status-dot"></span> 진행중
+                        </span>
+                    </div>
+                    <div class="site-card-body">
+                        <div class="site-card-meta">안전보건 통합 로드맵 · 예정공정표</div>
+                        <div class="site-card-link">대시보드 열기 →</div>
+                    </div>
+                </a>
+
+                <!-- 현장 B -->
+                <a href="/safetydashboard.html?siteId=siteB" class="site-card">
+                    <div class="site-card-header purple">
+                        <div class="site-card-icon">🏥</div>
+                        <div class="site-card-name">수원 노유자시설 신축공사</div>
+                        <span class="site-card-status">
+                            <span class="status-dot"></span> 진행중
+                        </span>
+                    </div>
+                    <div class="site-card-body">
+                        <div class="site-card-meta">안전보건 통합 로드맵 · 예정공정표</div>
+                        <div class="site-card-link">대시보드 열기 →</div>
+                    </div>
+                </a>
+
+                <!-- 자료실 -->
+                <a href="/INDEX/index.html" class="site-card">
+                    <div class="site-card-header green">
+                        <div class="site-card-icon">📚</div>
+                        <div class="site-card-name">안전보건팀 자료실</div>
+                        <span class="site-card-status">
+                            <span class="status-dot"></span> 운영중
+                        </span>
+                    </div>
+                    <div class="site-card-body">
+                        <div class="site-card-meta">안전 문서 · 법령 · 자료 통합 관리</div>
+                        <div class="site-card-link">자료실 입장 →</div>
+                    </div>
+                </a>
+
+                <!-- 예정공정표 A -->
+                <a href="/status_a/index.html" class="site-card">
+                    <div class="site-card-header orange">
+                        <div class="site-card-icon">📋</div>
+                        <div class="site-card-name">대광 예정공정표</div>
+                        <span class="site-card-status">
+                            <span class="status-dot"></span> 업데이트됨
+                        </span>
+                    </div>
+                    <div class="site-card-body">
+                        <div class="site-card-meta">공정 계획 · 안전보건 로드맵</div>
+                        <div class="site-card-link">공정표 열기 →</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 주요 기능 -->
+    <section class="section features-section">
+        <div class="section-inner">
+            <div class="section-label">핵심 기능</div>
+            <h2 class="section-title">Safety ON이 제공하는 것</h2>
+            <p class="section-desc">현장의 안전을 위한 모든 도구를 하나의 플랫폼에서 관리하세요.</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon icon-blue">⚠️</div>
+                    <div class="feature-title">고위험 작업 관리</div>
+                    <div class="feature-desc">TBM 기록, 위험성 평가, 작업 현황을 실시간으로 등록하고 추적합니다.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-red">🚨</div>
+                    <div class="feature-title">부적합 조치 추적</div>
+                    <div class="feature-desc">안전 부적합 사항 발견부터 조치 완료까지 전 과정을 사진과 함께 관리합니다.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-green">👷</div>
+                    <div class="feature-title">출력 인원 관리</div>
+                    <div class="feature-desc">공종별 출력 인원을 실시간으로 집계하고 일일 리포트를 자동 생성합니다.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-amber">📢</div>
+                    <div class="feature-title">공지사항 & 알림</div>
+                    <div class="feature-desc">현장 공지 및 일정을 등록하고 파일 첨부와 실시간 알림으로 공유합니다.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-purple">🏗️</div>
+                    <div class="feature-title">반입 점검 기록</div>
+                    <div class="feature-desc">장비·자재 반입 시 점검 결과를 사진·PDF와 함께 기록하고 보관합니다.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon icon-teal">📊</div>
+                    <div class="feature-title">PDF 리포트 출력</div>
+                    <div class="feature-desc">안전보건 일일 리포트를 A4 PDF로 즉시 출력하고 결재란까지 자동 생성합니다.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 빠른 실행 -->
+    <section class="quick-section">
+        <div class="section-inner">
+            <div class="section-label" style="color:#93c5fd;">빠른 실행</div>
+            <h2 class="section-title" style="color:white;">자주 사용하는 페이지</h2>
+            <div class="quick-grid">
+                <a href="/safetydashboard.html" class="quick-btn">🛡️ 안전보건 대시보드</a>
+                <a href="/status_a/index.html" class="quick-btn">📋 대광 예정공정표</a>
+                <a href="/status_b/suwon.html" class="quick-btn">📋 수원 예정공정표</a>
+                <a href="/INDEX/index.html" class="quick-btn">📁 자료실 로그인</a>
+                <a href="/resource.html" class="quick-btn">📚 안전 자료실</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-logo">🛡️ Safety ON</div>
+        <p class="footer-sub">© 2024 남화토건(주) 안전보건팀 · Smart Safety Platform</p>
+    </footer>
+
+</body>
+
+</html>

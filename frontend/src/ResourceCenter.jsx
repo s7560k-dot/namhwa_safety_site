@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Footer from './components/Footer';
 import {
     Shield,
     BookOpen,
@@ -94,6 +95,11 @@ const ResourceCenter = () => {
     const handleLinkClick = () => {
         // 다른 페이지 이동 직전 스크롤 위치 저장
         sessionStorage.setItem('dashboardScroll', window.scrollY.toString());
+    };
+
+    // [NEW] Footer Cookie Settings Handler
+    const handleOpenCookieSettings = () => {
+        alert("쿠키 설정 모달을 띄웁니다.");
     };
 
     const sites = [
@@ -418,31 +424,12 @@ const ResourceCenter = () => {
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer className="bg-slate-950 text-white py-24">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12 mb-16 pb-16 border-b border-slate-900">
-                            <div className="flex items-center gap-4">
-                                <img src="/namhwa-symbol1.png" alt="남화토건 심볼" className="h-12 md:h-16 object-contain" />
-                                <img src="/namhwa-text1.png" alt="남화토건 텍스트" className="h-14 md:h-20 object-contain brightness-0 invert" />
-                            </div>
-                            <div className="grid grid-cols-2 md:flex gap-12 text-[11px] font-black tracking-widest uppercase text-slate-500">
-                                <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                                <a href="#" className="hover:text-white transition-colors">Terms of Use</a>
-                                <a href="#" className="hover:text-white transition-colors">Cookie Settings</a>
-                                <a href="#" className="hover:text-white transition-colors">Contact Support</a>
-                            </div>
-                        </div>
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                            <p className="text-[10px] font-medium text-slate-600 tracking-wider uppercase">
-                                &copy; 2026 Namhwa Construction Co., Ltd. Safety & Health Team.
-                            </p>
-                            <p className="text-[10px] font-black text-red-900 tracking-widest uppercase">
-                                Safety ON: Lighting up the Future
-                            </p>
-                        </div>
-                    </div>
-                </footer>
+                {/* Footer Component Application */}
+                {/* TODO: 글로벌 Auth Context가 적용되면 isAdmin={currentUser?.role === 'admin'} 처럼 연결합니다. 현재는 localStorage 'userRole' 기반 예시 적용 */}
+                <Footer
+                    isAdmin={localStorage.getItem('userRole') === 'admin'}
+                    onOpenCookieSettings={handleOpenCookieSettings}
+                />
             </div>
         </div>
     );

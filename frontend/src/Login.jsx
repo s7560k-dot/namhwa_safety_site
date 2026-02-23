@@ -25,7 +25,6 @@ const Login = () => {
         setError('');
 
         try {
-            // Compat SDK: auth.signInWithEmailAndPassword
             await auth.signInWithEmailAndPassword(email, password);
             navigate('/');
         } catch (err) {
@@ -38,7 +37,7 @@ const Login = () => {
                 case 'auth/user-not-found':
                 case 'auth/wrong-password':
                 case 'auth/invalid-credential':
-                    msg = "이메일 또는 비밀번호가 올바르지 않습니다.";
+                    msg = "이메일 또는 비밀번호가 올바르지 않습니다. 아래 '비밀번호 재설정' 버튼을 이용해주세요.";
                     break;
                 case 'auth/too-many-requests':
                     msg = "너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.";
@@ -51,6 +50,29 @@ const Login = () => {
                     msg = `오류 (${err.code}): ${err.message}`;
             }
             setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // [추가] 비밀번호 재설정 이메일 발송
+    const handleResetPassword = async () => {
+        if (!email) {
+            setError("비밀번호를 재설정할 이메일 주소를 먼저 입력해주세요.");
+            return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+            await auth.sendPasswordResetEmail(email);
+            setError(''); // 에러 메시지 초기화
+            alert(`✅ 비밀번호 재설정 이메일을 "${email}"로 발송했습니다.\n받은 편지함을 확인해주세요.`);
+        } catch (err) {
+            if (err.code === 'auth/user-not-found') {
+                setError("해당 이메일로 등록된 계정이 없습니다. 관리자에게 문의하세요.");
+            } else {
+                setError(`재설정 이메일 발송 실패: ${err.message}`);
+            }
         } finally {
             setLoading(false);
         }
@@ -109,18 +131,25 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div className="mt-4">
+                <div className="mt-4 flex flex-col gap-3">
+                    {/* 비밀번호 재설정 */}
+                    <button
+                        type="button"
+                        onClick={handleResetPassword}
+                        disabled={loading}
+                        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg shadow transition duration-200"
+                    >
+                        🔑 비밀번호 재설정 이메일 발송
+                    </button>
+                    {/* 게스트 로그인 (개발용) */}
                     <button
                         onClick={async () => {
                             setLoading(true);
                             try {
-                                // [Try] Firebase Anonymous Login
                                 await auth.signInAnonymously();
-                                // Success - navigate
                                 navigate('/');
                             } catch (err) {
                                 console.warn("Anonymous login failed, forcing Guest Mode:", err);
-                                // [Forced Fallback] Always navigate to dashboard in dev mode
                                 sessionStorage.setItem('guestMode', 'true');
                                 navigate('/');
                             } finally {
