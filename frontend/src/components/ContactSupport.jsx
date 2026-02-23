@@ -39,7 +39,7 @@ const ContactSupport = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-slate-900">대표 전화</h3>
-                                    <p className="text-slate-500 mt-1">02-1234-5678</p>
+                                    <p className="text-slate-500 mt-1">062-520-1090</p>
                                 </div>
                             </div>
 
@@ -49,7 +49,7 @@ const ContactSupport = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-slate-900">이메일 문의</h3>
-                                    <a href="mailto:safety@namhwa.com" className="text-blue-600 hover:underline mt-1 inline-block">safety@namhwa.com</a>
+                                    <a href="mailto:nhs1033@nate.com" className="text-blue-600 hover:underline mt-1 inline-block">nhs1033@nate.com</a>
                                 </div>
                             </div>
 
@@ -59,7 +59,7 @@ const ContactSupport = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-slate-900">본사 위치</h3>
-                                    <p className="text-slate-500 mt-1 leading-relaxed">서울특별시 강남구 테헤란로 123<br />남화빌딩 안전보건팀 (우) 06234</p>
+                                    <p className="text-slate-500 mt-1 leading-relaxed">광주광역시 북구 금남로 146(남화빌딩)<br />안전보건팀 (우) 61241</p>
                                 </div>
                             </div>
 
@@ -83,13 +83,13 @@ const ContactSupport = () => {
                         <div className="relative z-10">
                             <h2 className="text-2xl font-bold mb-4">시스템 1:1 오류 접수</h2>
                             <p className="text-slate-400 leading-relaxed mb-8">
-                                대시보드 접속 에러, 로그인 실패, 데이터 동기화 지연 등 시스템적인 오류가 발생한 경우 빠른 로그 확인을 위해 아래 버튼을 클릭하여 IT 지원팀에 접수해 주세요.
+                                대시보드 접속 에러, 로그인 실패, 데이터 동기화 지연 등 시스템적인 오류가 발생한 경우 빠른 로그 확인을 위해 아래 버튼을 클릭하여 안전보건팀에 접수해 주세요.
                             </p>
                         </div>
 
                         <div className="relative z-10 flex flex-col gap-3">
-                            <a href="mailto:it-support@namhwa.com?subject=[오류접수]%20시스템%20장애%20리포트" className="block text-center bg-blue-600 hover:bg-blue-500 transition-colors text-white font-bold py-4 rounded-xl shadow-lg">
-                                IT 지원팀에 이메일 보내기
+                            <a href="mailto:nhs1033@nate.com?subject=[오류접수]%20시스템%20장애%20리포트" className="block text-center bg-blue-600 hover:bg-blue-500 transition-colors text-white font-bold py-4 rounded-xl shadow-lg">
+                                안전보건팀에 이메일 보내기
                             </a>
                             <p className="text-center text-xs text-slate-500">
                                 업무시간 외의 장애 접수는 익일 오전 중으로 순차 처리됩니다.
