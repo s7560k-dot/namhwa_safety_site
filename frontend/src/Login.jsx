@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -25,7 +25,21 @@ const Login = () => {
         setError('');
 
         try {
-            await auth.signInWithEmailAndPassword(email, password);
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            // [추가] Firestore에서 사용자 역할 확인 및 로컬 스토리지 저장
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                if (userData.role === 'admin') {
+                    localStorage.setItem('userRole', 'admin');
+                }
+            } else if (email.endsWith('@namhwa.com') || email === 'nhs1033@nate.com') {
+                // 화이트리스트 이메일의 경우 레거시 호환을 위해 설정
+                localStorage.setItem('userRole', 'admin');
+            }
+
             navigate('/');
         } catch (err) {
             console.error("Login error", err);

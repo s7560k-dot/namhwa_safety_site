@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { auth } from './firebase';
 import Footer from './components/Footer';
+import CookieSettingsModal from './components/CookieSettingsModal';
 import {
     Shield,
     BookOpen,
@@ -14,7 +16,8 @@ import {
     X,
     ArrowRight,
     Lock,
-    LayoutDashboard
+    LayoutDashboard,
+    LogOut
 } from 'lucide-react';
 
 // CI 규정집 색상 (R127 G0 B0)
@@ -65,6 +68,9 @@ const ResourceCenter = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [bgError, setBgError] = useState(false);
+    const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [user, setUser] = useState(null);
 
     // Background Image URL (Local Asset per user request)
     const BG_IMAGE_URL = "/night_view.jpg";
@@ -76,6 +82,19 @@ const ResourceCenter = () => {
     };
 
     useEffect(() => {
+        // Firebase Auth 상태 감시
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            setUser(user);
+            // 관리자 여부 판별 (예: 특정 도메인 또는 이메일)
+            // 보안을 위해 실제 서비스에서는 커스텀 클레임(Custom Claims) 등을 권장합니다.
+            const isUserAdmin = user && (
+                user.email?.endsWith('@namhwa.com') ||
+                user.email === 'nhs1033@nate.com' ||
+                localStorage.getItem('userRole') === 'admin'
+            );
+            setIsAdmin(!!isUserAdmin);
+        });
+
         // 복귀 시(새로고침/뒤로가기)에만 스크롤 위치 복구
         const isInitiallyOn = sessionStorage.getItem('safetyOn') === 'true';
         if (isInitiallyOn) {
@@ -89,7 +108,10 @@ const ResourceCenter = () => {
             setIsScrolled(window.scrollY > 50);
         };
         window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            unsubscribe();
+        };
     }, []);
 
     const handleLinkClick = () => {
@@ -97,9 +119,23 @@ const ResourceCenter = () => {
         sessionStorage.setItem('dashboardScroll', window.scrollY.toString());
     };
 
+    const handleLogout = async () => {
+        if (window.confirm("로그아웃 하시겠습니까?")) {
+            try {
+                await auth.signOut();
+                localStorage.removeItem('userRole'); // 레거시 데이터 정리
+                sessionStorage.removeItem('guestMode');
+                window.location.reload(); // 상태 초기화를 위해 새로고침
+            } catch (error) {
+                console.error("Logout error:", error);
+                alert("로그아웃 중 오류가 발생했습니다.");
+            }
+        }
+    };
+
     // [NEW] Footer Cookie Settings Handler
     const handleOpenCookieSettings = () => {
-        alert("쿠키 설정 모달을 띄웁니다.");
+        setIsCookieModalOpen(true);
     };
 
     const sites = [
@@ -159,6 +195,22 @@ const ResourceCenter = () => {
                         <a href="#sops" className="hover:text-red-500 transition-colors">Checklists</a>
                         <a href="#tools" className="hover:text-red-500 transition-colors">Tools</a>
                         <a href="#board" className="hover:text-red-500 transition-colors">Board</a>
+                        {user ? (
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 text-red-500 hover:text-red-400 transition-colors"
+                            >
+                                <LogOut size={16} />
+                                Logout
+                            </button>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="text-slate-400 hover:text-white transition-colors"
+                            >
+                                Login
+                            </Link>
+                        )}
                     </div>
 
                     <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`md:hidden ${isScrolled ? 'text-slate-800' : 'text-white'}`}>
@@ -167,12 +219,32 @@ const ResourceCenter = () => {
                 </div>
 
                 {mobileMenuOpen && (
-                    <div className="absolute top-full left-0 w-full bg-white shadow-2xl py-6 px-8 flex flex-col gap-6 md:hidden border-t border-slate-50">
-                        <a href="#systems" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Systems</a>
-                        <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Sites</a>
-                        <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Checklists</a>
-                        <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Tools</a>
-                        <a href="#board" onClick={() => setMobileMenuOpen(false)} className="text-slate-900 font-bold text-lg">Board</a>
+                    <div className="absolute top-full left-0 w-full bg-white shadow-2xl py-2 flex flex-col md:hidden border-t border-slate-50 overflow-y-auto max-h-[calc(100vh-80px)]">
+                        <a href="#systems" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Systems</a>
+                        <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Sites</a>
+                        <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Checklists</a>
+                        <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Tools</a>
+                        <a href="#board" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Board</a>
+                        {user ? (
+                            <button
+                                onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    handleLogout();
+                                }}
+                                className="px-8 py-5 text-red-600 font-bold text-lg flex items-center gap-2 bg-red-50/30"
+                            >
+                                <LogOut size={20} />
+                                로그아웃
+                            </button>
+                        ) : (
+                            <Link
+                                to="/login"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="px-8 py-5 text-slate-600 font-bold text-lg"
+                            >
+                                로그인
+                            </Link>
+                        )}
                     </div>
                 )}
             </nav>
@@ -187,7 +259,7 @@ const ResourceCenter = () => {
                         <h2 className={`text-xs md:text-sm font-black tracking-[0.4em] uppercase transition-all duration-1000 ease-in-out ${isSafetyOn ? 'text-red-400 opacity-100 translate-y-0' : 'text-red-400 opacity-0 -translate-y-8'}`}>
                             Safety Health Environment
                         </h2>
-                        <h1 className="text-6xl md:text-9xl font-black mb-20 flex justify-center tracking-tighter overflow-visible">
+                        <h1 className="text-5xl sm:text-7xl md:text-9xl font-black mb-12 md:mb-20 flex justify-center tracking-tighter overflow-visible leading-tight">
                             <span className={`inline-block transition-all duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isSafetyOn ? 'text-white translate-x-0 translate-y-0 opacity-100 blur-0 rotate-0 scale-100' : 'text-transparent -translate-x-[20vw] -translate-y-[20vh] opacity-0 blur-xl -rotate-45 scale-150'}`}>S</span>
                             <span className={`inline-block transition-all duration-1000 delay-75 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isSafetyOn ? 'text-white translate-x-0 translate-y-0 opacity-100 blur-0 rotate-0 scale-100' : 'text-transparent -translate-x-[10vw] translate-y-[30vh] opacity-0 blur-xl rotate-12 scale-50'}`}>a</span>
                             <span className={`inline-block transition-all duration-1000 delay-150 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isSafetyOn ? 'text-white translate-x-0 translate-y-0 opacity-100 blur-0 rotate-0 scale-100' : 'text-transparent translate-x-[5vw] -translate-y-[25vh] opacity-0 blur-xl -rotate-12 scale-150'}`}>f</span>
@@ -425,10 +497,15 @@ const ResourceCenter = () => {
                 </section>
 
                 {/* Footer Component Application */}
-                {/* TODO: 글로벌 Auth Context가 적용되면 isAdmin={currentUser?.role === 'admin'} 처럼 연결합니다. 현재는 localStorage 'userRole' 기반 예시 적용 */}
                 <Footer
-                    isAdmin={localStorage.getItem('userRole') === 'admin'}
+                    isAdmin={isAdmin}
                     onOpenCookieSettings={handleOpenCookieSettings}
+                />
+
+                {/* Cookie Settings Modal */}
+                <CookieSettingsModal
+                    isOpen={isCookieModalOpen}
+                    onClose={() => setIsCookieModalOpen(false)}
                 />
             </div>
         </div>

@@ -42,18 +42,26 @@ const TermsOfUse = () => {
                     </section>
 
                     <section>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">제 3 조 (서비스의 제공 및 변경)</h2>
-                        <p className="mt-4">
-                            회사는 이용자에게 안전보건 법령 준수 및 체계적인 현장 관리를 위한 제반 시스템을 제공합니다. 단, 시스템 정기점검 또는 기술적 필요에 의해 사전 공지 후 서비스의 일부 또는 전부를 변경하거나 중단할 수 있습니다.
-                        </p>
-                        <div className="bg-red-50 p-6 rounded-xl border border-red-100 mt-4 text-red-800 text-sm">
-                            <strong className="block mb-2 text-red-900"><AlertTriangle className="inline-block mr-1 mb-1" size={16} /> 안전 수칙 준수 의무</strong>
-                            본 시스템의 사용이 현장에서의 실제적인 안전보건 의무(보호구 착용, 위험성 평가 실시 등)를 대체하지 않으며, 모든 이용자는 관계 법령 및 현장의 안전 수칙을 최우선으로 준수해야 합니다.
-                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">제 3 조 (이용자의 의무)</h2>
+                        <p className="mt-4">이용자는 본 서비스를 이용함에 있어 다음의 행위를 하여서는 안 됩니다.</p>
+                        <ul className="list-disc pl-6 mt-4 space-y-2 text-sm">
+                            <li>타인의 정보를 도용하거나 허위 사실을 기재하는 행위</li>
+                            <li>회사가 게시한 정보를 변경하거나 시스템에 해를 끼치는 프로그램을 배포하는 행위</li>
+                            <li>현장 안전 수칙을 무시하고 시스템 데이터만을 조작하는 행위</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-4 pb-2 border-b border-slate-200">제 4 조 (책임의 제한 및 면책)</h2>
+                        <ul className="list-disc pl-6 mt-4 space-y-2 text-sm">
+                            <li>회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.</li>
+                            <li>회사는 이용자의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</li>
+                            <li>본 시스템은 안전 관리를 돕는 보조적 수단이며, 실제 현장에서 발생하는 사고에 대한 일차적 책임은 해당 공정 담당자 및 안전 책임자에게 있습니다.</li>
+                        </ul>
                     </section>
 
                     <p className="text-sm text-slate-400 mt-12 pt-8 border-t border-slate-200">
-                        본 이용약관은 2026년 1월 1일부터 시행됩니다. (예시 데이터입니다)
+                        본 이용약관은 2026년 2월 24일부터 시행됩니다.
                     </p>
 
                 </div>

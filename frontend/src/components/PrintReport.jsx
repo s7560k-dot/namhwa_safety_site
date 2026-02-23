@@ -2,10 +2,10 @@ import React from 'react';
 
 const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays }) => {
     return (
-        <div className="print-only p-4">
-            <div className="border-b-2 border-black pb-4 mb-6">
-                <h1 className="text-3xl font-bold text-center mb-2">안전보건 일일 리포트</h1>
-                <div className="flex justify-between text-sm">
+        <div className="print-only p-2">
+            <div className="report-title-area text-center mb-8 border-b-2 border-black pb-4">
+                <h1 className="text-4xl font-black mb-4">안전보건 일일 리포트</h1>
+                <div className="flex justify-between text-base px-2">
                     <span>현장명: {siteName}</span>
                     <span>작성일: {currentDate}</span>
                     <span>무재해: {accidentFreeDays}일 (목표: {targetDays}일)</span>
@@ -13,8 +13,8 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
             </div>
             {/* 1. 금일 출력 현황 */}
             <div className="mb-6 avoid-break">
-                <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">1. 금일 출력 현황</h2>
-                <table className="w-full text-center">
+                <h2 className="report-section-title">1. 금일 출력 현황</h2>
+                <table className="report-table text-center">
                     <thead>
                         <tr className="bg-gray-100"><th>공종</th><th>인원</th><th>공종</th><th>인원</th><th>공종</th><th>인원</th></tr>
                     </thead>
@@ -23,63 +23,95 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                             <tr key={rowIndex}>
                                 {[0, 1, 2].map(colIndex => {
                                     const item = data.workerList[rowIndex * 3 + colIndex];
-                                    return item ? (<React.Fragment key={colIndex}><td>{item.trade}</td><td>{item.count}명</td></React.Fragment>) : (<React.Fragment key={colIndex}><td></td><td></td></React.Fragment>);
+                                    // 공종명이 있거나 인원이 0보다 큰 경우만 표시, 그 외엔 빈 칸
+                                    const hasContent = item && (item.trade?.trim() || parseInt(item.count || 0) > 0);
+                                    return hasContent ? (
+                                        <React.Fragment key={colIndex}>
+                                            <td className="w-[20%]">{item.trade}</td>
+                                            <td className="w-[13.3%] font-bold">{item.count}명</td>
+                                        </React.Fragment>
+                                    ) : (
+                                        <React.Fragment key={colIndex}>
+                                            <td className="w-[20%]"></td>
+                                            <td className="w-[13.3%]"></td>
+                                        </React.Fragment>
+                                    );
                                 })}
                             </tr>
                         ))}
-                        <tr className="font-bold bg-gray-50"><td colSpan="5" className="text-right pr-4">총 출력 인원</td><td>{data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명</td></tr>
+                        <tr className="font-bold bg-gray-50 border-t-2 border-black">
+                            <td colSpan="5" className="text-right pr-6 py-2">총 출력 인원</td>
+                            <td className="py-2 text-blue-700">{data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
             {/* 2. 고위험 작업 */}
             <div className="mb-6 avoid-break">
-                <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">2. 고위험 작업 및 TBM(위험성평가) 기록</h2>
-                <table className="w-full">
+                <h2 className="report-section-title">2. 고위험 작업 및 TBM(위험성평가) 기록</h2>
+                <table className="report-table">
                     <thead><tr className="bg-gray-100"><th width="15%">작업팀</th><th width="25%">작업명</th><th width="10%">위험도</th><th width="10%">인원/교육</th><th width="40%">위험성평가 및 중점 관리 대책</th></tr></thead>
                     <tbody>
                         {data.riskWorks.length > 0 ? data.riskWorks.map(work => (
-                            <tr key={work.id}><td className="text-center">{work.team}</td><td>{work.task}</td><td className="text-center">{work.risk}</td><td className="text-center">{work.eduCompleted} / {work.workerCount}</td><td className="text-left text-xs">{work.assessment || '-'}</td></tr>
-                        )) : <tr><td colSpan="5" className="text-center py-4">금일 고위험 작업 없음</td></tr>}
+                            <tr key={work.id}><td className="text-center font-bold">{work.team}</td><td>{work.task}</td><td className="text-center"><span className={work.risk === '상' ? 'text-red-600 font-bold' : ''}>{work.risk}</span></td><td className="text-center font-bold">{work.eduCompleted} / {work.workerCount}</td><td className="text-left text-xs leading-relaxed">{work.assessment || '-'}</td></tr>
+                        )) : <tr><td colSpan="5" className="text-center py-6 border">금일 고위험 작업 없음</td></tr>}
                     </tbody>
                 </table>
             </div>
             {/* 3. 알림 */}
             <div className="mb-6 avoid-break">
-                <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">3. 안전 공지사항</h2>
-                <table className="w-full">
+                <h2 className="report-section-title">3. 안전 공지사항</h2>
+                <table className="report-table">
                     <thead><tr className="bg-gray-100"><th width="15%">구분</th><th width="60%">제목 및 내용</th><th width="15%">작성자</th><th width="10%">날짜</th></tr></thead>
                     <tbody>
                         {data.noticeData.length > 0 ? data.noticeData.map(notice => (
-                            <tr key={notice.id}><td className="text-center">{notice.type}</td><td><div className="font-bold">{notice.title}</div><div className="text-xs text-gray-500">{notice.content}</div></td><td className="text-center">{notice.author}</td><td className="text-center">{notice.date}</td></tr>
-                        )) : <tr><td colSpan="4" className="text-center py-4">등록된 공지사항 없음</td></tr>}
+                            <tr key={notice.id}><td className="text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${notice.type === '공지' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{notice.type}</span></td><td><div className="font-bold mb-1">{notice.title}</div><div className="text-[10px] text-gray-500 line-clamp-2">{notice.content}</div></td><td className="text-center">{notice.author}</td><td className="text-center">{notice.date}</td></tr>
+                        )) : <tr><td colSpan="4" className="text-center py-6 border">등록된 공지사항 없음</td></tr>}
                     </tbody>
                 </table>
             </div>
             <div className="page-break"></div>
             {/* 4. 부적합 조치 */}
             <div className="mb-6">
-                <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">4. 안전 부적합 조치 현황</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    {data.issueList.length > 0 ? data.issueList.map((issue, idx) => (
-                        <div key={issue.id} className="border border-black p-2 avoid-break">
-                            <div className="flex justify-between border-b border-black mb-2 pb-1"><span className="font-bold text-sm">#{idx + 1}. {issue.loc}</span><span className="text-xs">상태: {issue.status === 'done' ? '조치완료' : '조치중'} | 발견: {issue.finder}</span></div>
-                            <div className="text-sm mb-2 h-10 overflow-hidden">{issue.desc}</div>
-                            <div className="flex gap-1 h-32">
-                                <div className="w-1/2 border border-dashed border-gray-400 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                                    {issue.beforeImg ? <img src={issue.beforeImg} className="w-full h-full object-contain" /> : <span className="text-xs text-gray-400">조치 전 사진</span>}
-                                </div>
-                                <div className="w-1/2 border border-dashed border-gray-400 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                                    {issue.afterImg ? <img src={issue.afterImg} className="w-full h-full object-contain" /> : <span className="text-xs text-gray-400">조치 후 사진</span>}
-                                </div>
-                            </div>
-                        </div>
-                    )) : <div className="col-span-2 text-center py-4 border">금일 부적합 사항 없음</div>}
-                </div>
+                <h2 className="report-section-title">4. 안전 부적합 조치 현황</h2>
+                <table className="report-table border-2 border-black">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            <th width="5%">No</th>
+                            <th width="15%">위치</th>
+                            <th width="32%">부적합 내용 및 조치 요청</th>
+                            <th width="24%">조치 전 사진</th>
+                            <th width="24%">조치 후 사진</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.issueList.length > 0 ? data.issueList.map((issue, idx) => (
+                            <tr key={issue.id} className="avoid-break">
+                                <td className="text-center font-bold">{idx + 1}</td>
+                                <td className="text-center font-bold bg-gray-50">{issue.loc}</td>
+                                <td className="text-left text-[11px] p-2 leading-relaxed">
+                                    <div className="font-bold border-b border-gray-200 mb-1 pb-1">발견자: {issue.finder} | 상태: <span className={issue.status === 'done' ? 'text-green-600' : 'text-red-600'}>{issue.status === 'done' ? '조치완료' : '조치중'}</span></div>
+                                    {issue.desc}
+                                </td>
+                                <td className="p-1">
+                                    <div className="w-full h-32 border border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                        {issue.beforeImg ? <img src={issue.beforeImg} className="w-full h-full object-contain" alt="조치 전" /> : <span className="text-[9px] text-gray-400">사진 없음</span>}
+                                    </div>
+                                </td>
+                                <td className="p-1">
+                                    <div className="w-full h-32 border border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                        {issue.afterImg ? <img src={issue.afterImg} className="w-full h-full object-contain" alt="조치 후" /> : <span className="text-[9px] text-gray-400">{issue.status === 'done' ? '사진 누락' : '조치 대기'}</span>}
+                                    </div>
+                                </td>
+                            </tr>
+                        )) : <tr><td colSpan="5" className="text-center py-8 border">금일 부적합 사항 없음</td></tr>}
+                    </tbody>
+                </table>
             </div>
             {/* 5. 점검 이력 (PDF 지원) */}
             <div className="mb-6 avoid-break">
-                <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">5. 반입 점검 및 기타 점검 기록</h2>
-                <table className="w-full">
+                <h2 className="report-section-title">5. 반입 점검 및 기타 점검 기록</h2>
+                <table className="report-table">
                     <thead><tr className="bg-gray-100"><th width="15%">구분</th><th width="40%">점검 대상</th><th width="15%">점검일</th><th width="15%">결과</th><th width="15%">확인</th></tr></thead>
                     <tbody>
                         {data.inspectionLog.length > 0 ? data.inspectionLog.map(log => (
@@ -130,7 +162,38 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                 </table>
             </div>
 
-            <div className="text-center text-xs text-gray-400 mt-8 border-t pt-4">남화토건(주) 스마트 안전보건 플랫폼 - Safety ON Output System</div>
+            <div className="text-center text-[10px] text-gray-400 mt-12 border-t pt-4">남화토건(주) 스마트 안전보건 플랫폼 - Safety ON Output System</div>
+
+            {/* 인쇄 전용 스타일 인라인 주입 */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .report-section-title {
+                    font-size: 16pt;
+                    font-weight: 800;
+                    border-left: 5pt solid black;
+                    padding-left: 10px;
+                    margin-top: 30px;
+                    margin-bottom: 12px;
+                    display: flex;
+                    align-items: center;
+                }
+                .report-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    border: 1pt solid black;
+                }
+                .report-table th, .report-table td {
+                    border: 0.5pt solid #444;
+                    padding: 6px 8px;
+                    font-size: 10pt;
+                    line-height: 1.4;
+                }
+                .report-table th {
+                    background-color: #f1f5f9 !important;
+                    font-weight: 900;
+                    -webkit-print-color-adjust: exact;
+                }
+            `}} />
         </div>
     );
 };
