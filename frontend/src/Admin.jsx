@@ -18,7 +18,9 @@ import {
     CheckCircle2,
     Clock,
     Trash2,
-    LayoutDashboard
+    LayoutDashboard,
+    Plus,
+    X
 } from 'lucide-react';
 import firebase from 'firebase/compat/app';
 import { initializeApp } from "firebase/app";
@@ -41,6 +43,7 @@ const Admin = () => {
     // [New] Functional Tabs State
     const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, users, posts, inquiries
     const [posts, setPosts] = useState([]);
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [inquiries, setInquiries] = useState([]);
     const [stats, setStats] = useState({
         totalUsers: 0,
@@ -168,6 +171,33 @@ const Admin = () => {
         } catch (err) {
             console.error("Posts fetch error:", err);
             setError("게시물을 불러오는 중 오류가 발생했습니다.");
+        }
+    };
+
+    const handleCreatePost = async (e) => {
+        e.preventDefault();
+        setActionLoading(true);
+        const title = e.target.postTitle.value;
+        const type = e.target.postType.value;
+        const content = e.target.postContent.value;
+
+        try {
+            await db.collection('posts').add({
+                title,
+                type,
+                content,
+                siteName: '본사',
+                author: '관리자',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            setSuccess("✅ 게시물이 성공적으로 등록되었습니다.");
+            setIsPostModalOpen(false);
+            fetchPosts();
+        } catch (err) {
+            console.error("Post create error:", err);
+            setError("게시물 등록 중 오류가 발생했습니다.");
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -455,15 +485,86 @@ const Admin = () => {
 
                 {activeTab === 'posts' && (
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                             <div>
                                 <h2 className="text-2xl font-black tracking-tight">게시물 통합 관리</h2>
                                 <p className="text-slate-400 text-sm font-medium mt-1">공지사항 및 전사 자료실 데이터를 관리합니다.</p>
                             </div>
-                            <button onClick={fetchPosts} className="p-3 bg-slate-50 text-slate-500 rounded-2xl hover:bg-slate-100 transition-all shadow-sm">
-                                <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsPostModalOpen(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-md shadow-red-100"
+                                >
+                                    <Plus size={18} /> 새 게시물 작성
+                                </button>
+                                <button onClick={fetchPosts} className="p-2.5 bg-white text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
+                                    <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                                </button>
+                            </div>
                         </div>
+
+                        {/* [MODAL] 새 게시물 작성 폼 */}
+                        {isPostModalOpen && (
+                            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsPostModalOpen(false)}></div>
+                                <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+                                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                        <h3 className="text-xl font-black">새 게시물 등록</h3>
+                                        <button onClick={() => setIsPostModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-all">
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+                                    <form onSubmit={handleCreatePost} className="p-8 space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                            <div className="md:col-span-1 space-y-1.5">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">분류</label>
+                                                <select name="postType" className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm font-bold">
+                                                    <option value="공지">공지사항</option>
+                                                    <option value="자료">자료실</option>
+                                                    <option value="안전">안전지침</option>
+                                                </select>
+                                            </div>
+                                            <div className="md:col-span-3 space-y-1.5">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">제목</label>
+                                                <input
+                                                    type="text"
+                                                    name="postTitle"
+                                                    required
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm font-bold"
+                                                    placeholder="게시물 제목을 입력하세요"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">내용 (또는 HTML 링크)</label>
+                                            <textarea
+                                                name="postContent"
+                                                required
+                                                rows="8"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm font-medium leading-relaxed"
+                                                placeholder="공지 내용을 입력하세요. HTML 페이지를 게시하려는 경우 해당 경로(/notices/notice.html 등)의 링크를 본문에 포함하세요."
+                                            ></textarea>
+                                        </div>
+                                        <div className="flex justify-end gap-3 pt-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPostModalOpen(false)}
+                                                className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+                                            >
+                                                취소
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={actionLoading}
+                                                className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-sm hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                                            >
+                                                {actionLoading ? '등록 중...' : '게시물 등록'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50/50">

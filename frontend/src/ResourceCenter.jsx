@@ -466,7 +466,7 @@ const ResourceCenter = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
-                                { title: "전사 공지사항", sub: "Notice", icon: <FileText />, link: "#", isReady: false },
+                                { title: "전사 공지사항", sub: "Notice", icon: <FileText />, link: "/board/global", isReady: true },
                                 { title: "현장 건의함", sub: "Suggestion", icon: <BookOpen />, link: "#", isReady: false },
                                 { title: "안전보건 자료실", sub: "Data Room", icon: <CheckSquare />, link: "#", isReady: false }
                             ].map((item, index) => (

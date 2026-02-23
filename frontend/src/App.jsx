@@ -8,6 +8,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfUse from './components/TermsOfUse';
 import ContactSupport from './components/ContactSupport';
 import FirestoreScanner from './components/FirestoreScanner';
+import GlobalBoard from './GlobalBoard';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/terms" element={<TermsOfUse />} />
         <Route path="/support" element={<ContactSupport />} />
         <Route path="/dashboard/:siteId" element={<SafetyDashboard />} />
+        <Route path="/board/global" element={<GlobalBoard />} />
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
