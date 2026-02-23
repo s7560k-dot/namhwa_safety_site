@@ -71,7 +71,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 30mm 10mm 10mm 10mm;
+                margin: 25mm 10mm 15mm 10mm;
             }
 
             body {
@@ -111,9 +111,28 @@
             }
 
             th {
-                background-color: #f3f4f6 !important;
+                background-color: #f8fafc !important;
                 text-align: center;
                 font-weight: bold;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .report-title {
+                font-size: 24pt;
+                font-weight: 900;
+                border-bottom: 2pt solid black;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+
+            .section-title {
+                font-size: 14pt;
+                font-weight: bold;
+                border-left: 4pt solid black;
+                padding-left: 8px;
+                margin-top: 25px;
+                margin-bottom: 10px;
             }
         }
 
@@ -220,10 +239,10 @@
         // ==================================================================================
         const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays }) => {
             return (
-                <div className="print-only p-4">
-                    <div className="border-b-2 border-black pb-4 mb-6">
-                        <h1 className="text-3xl font-bold text-center mb-2">안전보건 일일 리포트</h1>
-                        <div className="flex justify-between text-sm">
+                <div className="print-only p-2">
+                    <div className="report-title text-center">
+                        안전보건 일일 리포트
+                        <div className="flex justify-between text-sm font-normal mt-4 px-2">
                             <span>현장명: {siteName}</span>
                             <span>작성일: {currentDate}</span>
                             <span>무재해: {accidentFreeDays}일 (목표: {targetDays}일)</span>
@@ -231,7 +250,7 @@
                     </div>
                     {/* 1. 금일 출력 현황 */}
                     <div className="mb-6 avoid-break">
-                        <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">1. 금일 출력 현황</h2>
+                        <h2 className="section-title">1. 금일 출력 현황</h2>
                         <table className="w-full text-center">
                             <thead>
                                 <tr className="bg-gray-100"><th>공종</th><th>인원</th><th>공종</th><th>인원</th><th>공종</th><th>인원</th></tr>
@@ -251,7 +270,7 @@
                     </div>
                     {/* 2. 고위험 작업 */}
                     <div className="mb-6 avoid-break">
-                        <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">2. 고위험 작업 및 TBM(위험성평가) 기록</h2>
+                        <h2 className="section-title">2. 고위험 작업 및 TBM(위험성평가) 기록</h2>
                         <table className="w-full">
                             <thead><tr className="bg-gray-100"><th width="15%">작업팀</th><th width="25%">작업명</th><th width="10%">위험도</th><th width="10%">인원/교육</th><th width="40%">위험성평가 및 중점 관리 대책</th></tr></thead>
                             <tbody>
@@ -263,7 +282,7 @@
                     </div>
                     {/* 3. 알림 */}
                     <div className="mb-6 avoid-break">
-                        <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">3. 안전 공지사항</h2>
+                        <h2 className="section-title">3. 안전 공지사항</h2>
                         <table className="w-full">
                             <thead><tr className="bg-gray-100"><th width="15%">구분</th><th width="60%">제목 및 내용</th><th width="15%">작성자</th><th width="10%">날짜</th></tr></thead>
                             <tbody>
@@ -276,27 +295,44 @@
                     <div className="page-break"></div>
                     {/* 4. 부적합 조치 */}
                     <div className="mb-6">
-                        <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">4. 안전 부적합 조치 현황</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            {data.issueList.length > 0 ? data.issueList.map((issue, idx) => (
-                                <div key={issue.id} className="border border-black p-2 avoid-break">
-                                    <div className="flex justify-between border-b border-black mb-2 pb-1"><span className="font-bold text-sm">#{idx + 1}. {issue.loc}</span><span className="text-xs">상태: {issue.status === 'done' ? '조치완료' : '조치중'} | 발견: {issue.finder}</span></div>
-                                    <div className="text-sm mb-2 h-10 overflow-hidden">{issue.desc}</div>
-                                    <div className="flex gap-1 h-32">
-                                        <div className="w-1/2 border border-dashed border-gray-400 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                                            {issue.beforeImg ? <img src={issue.beforeImg} className="w-full h-full object-contain" /> : <span className="text-xs text-gray-400">조치 전 사진</span>}
-                                        </div>
-                                        <div className="w-1/2 border border-dashed border-gray-400 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                                            {issue.afterImg ? <img src={issue.afterImg} className="w-full h-full object-contain" /> : <span className="text-xs text-gray-400">조치 후 사진</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                            )) : <div className="col-span-2 text-center py-4 border">금일 부적합 사항 없음</div>}
-                        </div>
+                        <h2 className="section-title">4. 안전 부적합 조치 현황</h2>
+                        <table className="w-full border-black">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th width="5%">No</th>
+                                    <th width="15%">위치</th>
+                                    <th width="30%">부적합 내용 및 조치 요청</th>
+                                    <th width="25%">조치 전 사진</th>
+                                    <th width="25%">조치 후 사진</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.issueList.length > 0 ? data.issueList.map((issue, idx) => (
+                                    <tr key={issue.id} className="avoid-break">
+                                        <td className="text-center">{idx + 1}</td>
+                                        <td className="text-center font-bold">{issue.loc}</td>
+                                        <td className="text-left text-xs">
+                                            <div className="font-bold mb-1">발견자: {issue.finder} | 상태: {issue.status === 'done' ? '조치완료' : '조치중'}</div>
+                                            {issue.desc}
+                                        </td>
+                                        <td className="p-1">
+                                            <div className="w-full h-32 border border-dashed flex items-center justify-center bg-gray-50 overflow-hidden">
+                                                {issue.beforeImg ? <img src={issue.beforeImg} className="w-full h-full object-contain" /> : <span className="text-[8pt] text-gray-400">사진 없음</span>}
+                                            </div>
+                                        </td>
+                                        <td className="p-1">
+                                            <div className="w-full h-32 border border-dashed flex items-center justify-center bg-gray-50 overflow-hidden">
+                                                {issue.afterImg ? <img src={issue.afterImg} className="w-full h-full object-contain" /> : <span className="text-[8pt] text-gray-400">조치 대기</span>}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )) : <tr><td colSpan="5" className="text-center py-4 border">금일 부적합 사항 없음</td></tr>}
+                            </tbody>
+                        </table>
                     </div>
                     {/* 5. 점검 이력 (PDF 지원) */}
                     <div className="mb-6 avoid-break">
-                        <h2 className="text-xl font-bold border-l-4 border-black pl-2 mb-2">5. 반입 점검 및 기타 점검 기록</h2>
+                        <h2 className="section-title">5. 반입 점검 및 기타 점검 기록</h2>
                         <table className="w-full">
                             <thead><tr className="bg-gray-100"><th width="15%">구분</th><th width="40%">점검 대상</th><th width="15%">점검일</th><th width="15%">결과</th><th width="15%">확인</th></tr></thead>
                             <tbody>
