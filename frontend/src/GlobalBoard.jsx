@@ -20,15 +20,30 @@ const GlobalBoard = () => {
 
     useEffect(() => {
         fetchPosts();
-        // 게시판 확인 시간 업데이트 (알림 배지 제거용)
-        localStorage.setItem('lastBoardChecked', Date.now().toString());
     }, []);
 
     const fetchPosts = async () => {
         setLoading(true);
         try {
             const snapshot = await db.collection('posts').orderBy('createdAt', 'desc').get();
-            setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setPosts(docs);
+
+            // 알림 배지 초기화: 가장 최신 게시물의 타임스탬프를 기준으로 저장
+            // 클라이언트-서버 간 시간차(Clock Drift) 문제를 방지하기 위해 서버 측에서 생성된 시간을 사용합니다.
+            if (docs.length > 0 && docs[0].createdAt) {
+                let lastTime;
+                if (typeof docs[0].createdAt.toMillis === 'function') {
+                    lastTime = docs[0].createdAt.toMillis();
+                } else if (docs[0].createdAt.seconds) {
+                    lastTime = docs[0].createdAt.seconds * 1000;
+                } else {
+                    lastTime = Date.now();
+                }
+                localStorage.setItem('lastBoardChecked', lastTime.toString());
+            } else {
+                localStorage.setItem('lastBoardChecked', Date.now().toString());
+            }
         } catch (err) {
             console.error("Error fetching global posts:", err);
         } finally {

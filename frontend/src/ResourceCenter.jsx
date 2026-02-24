@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { auth, db } from './firebase';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { auth, db, Timestamp } from './firebase';
 import Footer from './components/Footer';
 import CookieSettingsModal from './components/CookieSettingsModal';
 import {
@@ -72,6 +72,7 @@ const ResourceCenter = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [user, setUser] = useState(null);
     const [unreadCount, setUnreadCount] = useState(0);
+    const location = useLocation();
 
     // Background Image URL (Local Asset per user request)
     const BG_IMAGE_URL = "/night_view.jpg";
@@ -110,7 +111,7 @@ const ResourceCenter = () => {
             try {
                 const lastChecked = localStorage.getItem('lastBoardChecked') || 0;
                 const snapshot = await db.collection('posts')
-                    .where('createdAt', '>', new firebase.firestore.Timestamp(lastChecked / 1000, 0))
+                    .where('createdAt', '>', Timestamp.fromMillis(parseInt(lastChecked, 10)))
                     .get();
                 setUnreadCount(snapshot.size);
             } catch (err) {
@@ -130,7 +131,7 @@ const ResourceCenter = () => {
             window.removeEventListener('scroll', handleScroll);
             unsubscribe();
         };
-    }, [isSafetyOn]);
+    }, [isSafetyOn, location]);
 
     const handleBoardClick = () => {
         const now = Date.now();
