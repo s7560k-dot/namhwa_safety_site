@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Plus, Upload, Trash, ArrowRight, CheckCircle, AlertTriangle } from './Icons';
 
-export const SettingsModal = ({ show, onClose, onSave, startDate, targetDays }) => {
+export const SettingsModal = ({ show, onClose, onSave, startDate, targetDays, cctvUrl }) => {
     if (!show) return null;
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
@@ -10,6 +10,11 @@ export const SettingsModal = ({ show, onClose, onSave, startDate, targetDays }) 
                 <form onSubmit={onSave} className="p-6 space-y-4">
                     <div><label className="block text-sm font-bold text-gray-700 mb-1">실착공일</label><input name="startDate" type="date" defaultValue={startDate} className="w-full border rounded-lg p-2" required /></div>
                     <div><label className="block text-sm font-bold text-gray-700 mb-1">목표일수</label><input name="targetDays" type="number" defaultValue={targetDays} className="w-full border rounded-lg p-2" required /></div>
+                    <div className="pt-2 border-t border-gray-100">
+                        <label className="block text-sm font-bold text-blue-600 mb-1 flex items-center gap-1.5"><AlertTriangle size={14} /> ADT Caps CCTV 주소</label>
+                        <input name="cctvUrl" type="url" defaultValue={cctvUrl} className="w-full border rounded-lg p-2 text-sm" placeholder="https://..." />
+                        <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">* 공사용 뷰어 주소가 없다면 기본 서비스로 연결됩니다.</p>
+                    </div>
                     <button type="submit" className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold hover:bg-blue-700">설정 저장</button>
                 </form>
             </div>

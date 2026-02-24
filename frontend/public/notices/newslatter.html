@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>남화토건 안전보건 경영검토 특별호</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* [Reset & Common] */
+        :root {
+            --primary: #003a70; /* 남화토건 네이비 */
+            --secondary: #0056b3;
+            --accent: #f39c12; /* 안전 오렌지 */
+            --danger: #e74c3c;
+            --bg-light: #f4f7f6;
+            --text-dark: #333;
+            --text-grey: #666;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+
+        /* [Layout] */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--white);
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            padding-bottom: 40px;
+        }
+
+        /* [Header] */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, #002040 100%);
+            color: var(--white);
+            padding: 50px 20px;
+            text-align: center;
+        }
+        .header-top { font-size: 14px; opacity: 0.9; margin-bottom: 15px; letter-spacing: 1px; color: var(--accent); font-weight: bold;}
+        .header-title { font-size: 36px; font-weight: 900; margin-bottom: 15px; letter-spacing: -1px; }
+        .header-sub { font-size: 18px; font-weight: 300; opacity: 0.9; }
+
+        /* [Section Common] */
+        section { padding: 50px 40px; border-bottom: 1px solid #eee; }
+        .section-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 26px;
+            background-color: var(--accent);
+        }
+
+        /* [1. 2026 목표] */
+        .goal-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4개 컬럼으로 변경 */
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .goal-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .goal-card:hover { transform: translateY(-5px); border-color: var(--secondary); }
+        .goal-number { font-size: 24px; font-weight: 900; color: var(--accent); display: block; margin-bottom: 5px; }
+        .goal-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; color: var(--primary); }
+        .goal-desc { font-size: 13px; color: var(--text-grey); }
+
+        /* [2. 성과 및 리스크 분석] */
+        .analysis-container {
+            display: flex;
+            gap: 30px;
+        }
+        .analysis-box {
+            flex: 1;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+        .box-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .box-good .box-header { border-color: var(--secondary); color: var(--secondary); }
+        .box-bad .box-header { border-color: var(--danger); color: var(--danger); }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .stat-label { color: #555; }
+        .stat-value { font-weight: 700; }
+        .badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; color: white; margin-left: 5px; }
+        .bg-blue { background: var(--secondary); }
+        .bg-red { background: var(--danger); }
+
+        /* [3. 예산 및 투자] */
+        .budget-banner {
+            background: linear-gradient(to right, #ecf0f1, #ffffff);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--accent);
+        }
+        .budget-highlight {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .budget-sub { font-size: 14px; color: #666; margin-top: 5px; }
+
+        /* [4. 이슈 Cards] */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        .news-card {
+            background: white;
+            border: 1px solid #eaeaea;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .news-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--secondary); }
+        
+        .card-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            background: var(--primary);
+            border-radius: 20px;
+        }
+        .badge-iso { background: #8e44ad; }
+        .badge-voice { background: #27ae60; }
+        
+        .card-content { padding: 30px 25px 25px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; line-height: 1.4; padding-right: 10px; }
+        .card-desc { font-size: 15px; color: var(--text-grey); margin-bottom: 20px; flex-grow: 1; line-height: 1.6;}
+        
+        .read-more-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--secondary);
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            width: fit-content;
+        }
+        .read-more-link:hover { color: var(--primary); text-decoration: underline; }
+
+        /* [Footer] */
+        footer {
+            background-color: #2c3e50;
+            color: #bdc3c7;
+            text-align: center;
+            padding: 40px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        /* [Modal] */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-box {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-close {
+            background: none; border: none; color: white;
+            font-size: 28px; cursor: pointer; line-height: 1;
+        }
+        .modal-body { padding: 30px; max-height: 70vh; overflow-y: auto; }
+        .modal-body h4 { 
+            color: var(--primary); margin: 20px 0 10px; font-size: 18px; 
+            border-left: 4px solid var(--accent); padding-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .goal-grid { grid-template-columns: 1fr 1fr; }
+            .analysis-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="header-top">2025 SAFETY HEALTH MANAGEMENT REVIEW REPORT</div>
+            <h1 class="header-title">남화토건 안전보건 경영검토 보고</h1>
+            <p class="header-sub">"안전예산 확대와 ISO 인증으로 신뢰받는 건설사 도약"</p>
+        </header>
+
+        <section>
+            <h2 class="section-title">2026년 안전보건 목표 및 추진방향</h2>
+            <div style="background:#eef6fc; padding:15px; border-radius:8px; text-align:center; margin-bottom:15px; color:#555;">
+                "중대재해 Zero, 재해율 50% 감축을 위한 과감한 투자 결정"
+            </div>
+            <div class="goal-grid">
+                <div class="goal-card">
+                    <span class="goal-number">ZERO</span>
+                    <div class="goal-title">중대재해</div>
+                    <p class="goal-desc">사망사고 0건 달성</p>
+                </div>
+                <div class="goal-card">
+                    <span class="goal-number">50%↓</span>
+                    <div class="goal-title">재해율 감축</div>
+                    <p class="goal-desc">전년 대비 절반 감소</p>
+                </div>
+                <div class="goal-card">
+                    <span class="goal-number">ISO</span>
+                    <div class="goal-title">45001 인증</div>
+                    <p class="goal-desc">국제 표준 시스템 구축</p>
+                </div>
+                <div class="goal-card">
+                    <span class="goal-number">SH3</span>
+                    <div class="goal-title">등급 달성</div>
+                    <p class="goal-desc">안전보건 수준평가 양호</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">2025년 경영실적 및 리스크 분석</h2>
+            <div class="analysis-container">
+                <div class="analysis-box box-good">
+                    <div class="box-header">
+                        <span>📊 2025 주요 성과</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">종합 평가 등급</span>
+                        <span class="stat-value">SH4 (상위 45.3%)</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">아차사고 발굴</span>
+                        <span class="stat-value">142건 <span class="badge bg-blue">▲20%</span></span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">소규모 현장</span>
+                        <span class="stat-value">무재해 준공 달성</span>
+                    </div>
+                    <p style="font-size:13px; color:#666; margin-top:10px;">
+                        * 운영관리 점수가 향상되었으나, 안전 예산 투자 부족이 아쉬운 점으로 지적됨.
+                    </p>
+                </div>
+                
+                <div class="analysis-box box-bad">
+                    <div class="box-header">
+                        <span>🚨 재해 원인 및 리스크</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">중대재해</span>
+                        <span class="stat-value">1건 발생</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">사고 만인율</span>
+                        <span class="stat-value">1.50 (업계평균 1.90)</span>
+                    </div>
+                    <div style="margin-top:10px; padding:10px; background:#fff5f5; border-radius:5px;">
+                        <strong>[원인 분석] 사회적 태만(링겔만 효과)</strong><br>
+                        <span style="font-size:13px; color:#555;">"내 대신 누가 해주겠지"라는 심리적 의존성 확산. 관리감독자 실명제 도입 시급.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">경영진 주요 의사결정 (2026 Plan)</h2>
+            <div class="news-grid">
+                <div class="news-card">
+                    <span class="card-badge">결정 1</span>
+                    <div class="card-content">
+                        <h3 class="card-title">안전보건 예산 대폭 증액<br>(1.77억 ↑)</h3>
+                        <p class="card-desc">2026년 예산을 약 2억 8천만 원으로 편성했습니다. 인력 충원과 장비 구매에 집중 투자합니다.</p>
+                        <a href="javascript:void(0)" class="read-more-link" onclick="viewDetail('budget')">세부 내역 보기 →</a>
+                    </div>
+                </div>
+
+                <div class="news-card">
+                    <span class="card-badge badge-iso">결정 2</span>
+                    <div class="card-content">
+                        <h3 class="card-title">ISO 45001 인증 추진<br>및 시스템 고도화</h3>
+                        <p class="card-desc">대외 신인도 회복과 체계적 관리를 위해 국제 표준 인증을 획득하고 PQ 감점을 만회합니다.</p>
+                        <a href="javascript:void(0)" class="read-more-link" onclick="viewDetail('system')">추진 배경 보기 →</a>
+                    </div>
+                </div>
+
+                <div class="news-card">
+                    <span class="card-badge badge-voice">근로자 참여</span>
+                    <div class="card-content">
+                        <h3 class="card-title">안전보건협의체<br>주요 개선사항</h3>
+                        <p class="card-desc">현장에서 건의된 노후 안전모 교체, 화장실 위생 개선 등 즉각적인 조치가 이루어졌습니다.</p>
+                        <a href="javascript:void(0)" class="read-more-link" onclick="viewDetail('voice')">조치 결과 보기 →</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p style="font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #fff;">남화토건(주) 안전보건팀</p>
+            <p>본 소식지는 '2025 안전보건경영 검토보고서'를 바탕으로 작성되었습니다.</p>
+            <p style="margin-top: 15px; opacity: 0.5; font-size: 12px;">Copyright © NAMHWA CONSTRUCTION. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalTitle">상세 내용</h3>
+                <button class="btn-close" onclick="closeModalInternal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const contents = {
+            'budget': {
+                title: '💰 2026년 안전보건 예산 편성(안)',
+                content: `
+                    <h4>총 예산: 284,201,800원 (전년비 +1.77억)</h4>
+                    <p>중대재해처벌법상 경영책임자 면책 요건 확보와 공공입찰 자격 유지를 위한 필수 생존 투자입니다.</p>
+                    
+                    <h4>주요 증액 항목</h4>
+                    <ul>
+                        <li><strong>인건비:</strong> 전담 인력 2명 추가 충원 (총 4명 체제)</li>
+                        <li><strong>시설/장비:</strong> 전담팀 업무 차량 및 노트북 구매, 스마트 관제 설비(CCTV, 영상분석) 도입</li>
+                        <li><strong>시스템:</strong> 웹페이지 호스팅 및 DB 구축 비용 신규 편성</li>
+                    </ul>
+                `
+            },
+            'system': {
+                title: '🏆 ISO 45001 인증 및 시스템 고도화',
+                content: `
+                    <h4>추진 배경</h4>
+                    <p>재해 발생에 따른 PQ 감점 적용으로 공공입찰 참여 제한 위기가 발생했습니다. 이를 타개하기 위해 국제 인증이 필수적입니다.</p>
+                    
+                    <h4>기대 효과</h4>
+                    <ul>
+                        <li>PQ 신인도 가점 획득 (경쟁력 확보)</li>
+                        <li>중대재해처벌법 대응 '안전보건 확보 의무' 증빙 강화</li>
+                        <li>시스템 미인증으로 인한 잠재적 사고 리스크 제거</li>
+                    </ul>
+                `
+            },
+            'voice': {
+                title: '👷 안전보건협의체 조치 결과',
+                content: `
+                    <h4>현장의 목소리를 즉시 반영했습니다</h4>
+                    
+                    <ul>
+                        <li><strong>[개인보호구]</strong> 노후 안전모 전면 교체 완료 (오염 및 기능 상실품 폐기)</li>
+                        <li><strong>[환경위생]</strong> 화장실 청소 횟수 증가 및 개수대 확충</li>
+                        <li><strong>[작업시간]</strong> 혹서기 체감온도에 따른 휴게시간 연장 조치</li>
+                    </ul>
+                    <p class="comment">아차사고 신고가 전년 대비 20% 증가한 것은 현장의 안전 의식이 높아졌다는 긍정적 신호입니다.</p>
+                `
+            }
+        };
+
+        function viewDetail(key) {
+            const data = contents[key];
+            if(data) {
+                document.getElementById('modalTitle').innerText = data.title;
+                document.getElementById('modalContent').innerHTML = data.content;
+                const modal = document.getElementById('modalOverlay');
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModalInternal() {
+            const modal = document.getElementById('modalOverlay');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+            document.body.style.overflow = 'auto';
+        }
+
+        function closeModal(e) {
+            if(e.target === document.getElementById('modalOverlay')) {
+                closeModalInternal();
+            }
+        }
+    </script>
+
+</body>
+</html>

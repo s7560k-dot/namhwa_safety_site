@@ -20,7 +20,8 @@ import {
     Trash2,
     LayoutDashboard,
     Plus,
-    X
+    X,
+    Edit
 } from 'lucide-react';
 import firebase from 'firebase/compat/app';
 import { initializeApp } from "firebase/app";
@@ -44,6 +45,8 @@ const Admin = () => {
     const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, users, posts, inquiries
     const [posts, setPosts] = useState([]);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [currentPost, setCurrentPost] = useState(null);
     const [inquiries, setInquiries] = useState([]);
     const [stats, setStats] = useState({
         totalUsers: 0,
@@ -175,6 +178,7 @@ const Admin = () => {
     };
 
     const handleCreatePost = async (e) => {
+        // ... (기존 create post 로직 유지)
         e.preventDefault();
         setActionLoading(true);
         const title = e.target.postTitle.value;
@@ -196,6 +200,38 @@ const Admin = () => {
         } catch (err) {
             console.error("Post create error:", err);
             setError("게시물 등록 중 오류가 발생했습니다.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleOpenEditModal = (post) => {
+        setCurrentPost(post);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdatePost = async (e) => {
+        e.preventDefault();
+        if (!currentPost) return;
+        setActionLoading(true);
+        const title = e.target.editTitle.value;
+        const type = e.target.editType.value;
+        const content = e.target.editContent.value;
+
+        try {
+            await db.collection('posts').doc(currentPost.id).update({
+                title,
+                type,
+                content,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            setSuccess("✅ 게시물이 성공적으로 수정되었습니다.");
+            setIsEditModalOpen(false);
+            setCurrentPost(null);
+            fetchPosts();
+        } catch (err) {
+            console.error("Post update error:", err);
+            setError("게시물 수정 중 오류가 발생했습니다.");
         } finally {
             setActionLoading(false);
         }
@@ -565,6 +601,74 @@ const Admin = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* [MODAL] 게시물 수정 폼 */}
+                        {isEditModalOpen && currentPost && (
+                            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)}></div>
+                                <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+                                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                        <h3 className="text-xl font-black">게시물 수정</h3>
+                                        <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-all">
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+                                    <form onSubmit={handleUpdatePost} className="p-8 space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                            <div className="md:col-span-1 space-y-1.5">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">분류</label>
+                                                <select
+                                                    name="editType"
+                                                    defaultValue={currentPost.type}
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                                                >
+                                                    <option value="공지">공지사항</option>
+                                                    <option value="자료">자료실</option>
+                                                    <option value="안전">안전지침</option>
+                                                </select>
+                                            </div>
+                                            <div className="md:col-span-3 space-y-1.5">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">제목</label>
+                                                <input
+                                                    type="text"
+                                                    name="editTitle"
+                                                    defaultValue={currentPost.title}
+                                                    required
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                                                    placeholder="게시물 제목을 입력하세요"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">내용</label>
+                                            <textarea
+                                                name="editContent"
+                                                defaultValue={currentPost.content}
+                                                required
+                                                rows="10"
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium leading-relaxed"
+                                            ></textarea>
+                                        </div>
+                                        <div className="flex justify-end gap-3 pt-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditModalOpen(false)}
+                                                className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+                                            >
+                                                취소
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={actionLoading}
+                                                className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black text-sm hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                                            >
+                                                {actionLoading ? '수정 중...' : '변경 사항 저장'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50/50">
@@ -572,7 +676,7 @@ const Admin = () => {
                                         <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">분류 / 제목</th>
                                         <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">현장명</th>
                                         <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">일시</th>
-                                        <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">삭제</th>
+                                        <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">동작</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
@@ -591,9 +695,14 @@ const Admin = () => {
                                                 {post.createdAt ? new Date(post.createdAt?.seconds * 1000).toLocaleDateString() : '-'}
                                             </td>
                                             <td className="px-8 py-5 text-center">
-                                                <button onClick={() => handleDeletePost(post.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <div className="flex justify-center gap-2">
+                                                    <button onClick={() => handleOpenEditModal(post)} className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="수정">
+                                                        <Edit size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleDeletePost(post.id)} className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="삭제">
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

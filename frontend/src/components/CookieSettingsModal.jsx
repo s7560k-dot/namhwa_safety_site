@@ -56,24 +56,27 @@ const CookieSettingsModal = ({ isOpen, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[100] flex items-end justify-end p-6 md:p-12 pointer-events-none">
+            {/* Backdrop - 클릭 시 닫기 위해 별도로 배치하거나 팝업형이라 제거/축소 */}
+            <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px] pointer-events-auto cursor-pointer" onClick={onClose}></div>
+
+            <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden border border-slate-200 pointer-events-auto animate-in slide-in-from-bottom-20 duration-500 relative z-20">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
                     <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded-xl text-blue-600">
-                            <ShieldCheck size={24} />
+                        <div className="bg-slate-900 p-2 rounded-xl text-white">
+                            <ShieldCheck size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-slate-900 tracking-tight">쿠키 설정</h2>
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Cookie Preference Center</p>
+                            <h2 className="text-lg font-black text-slate-900 tracking-tight">쿠키 설정</h2>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-slate-400">Settings</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"
+                        className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-300"
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
 
@@ -135,20 +138,20 @@ const CookieSettingsModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-8 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaved}
-                        className={`flex-1 flex justify-center items-center gap-2 h-14 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-95 ${isSaved ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
-                    >
-                        {isSaved ? <><Check size={18} /> 설정 저장됨</> : '선택 항목 저장'}
-                    </button>
+                <div className="px-6 py-6 border-t border-slate-50 flex flex-col gap-2">
                     <button
                         onClick={handleAcceptAll}
                         disabled={isSaved}
-                        className="flex-1 h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm transition-all shadow-lg shadow-blue-200 active:scale-95 disabled:opacity-50"
+                        className="h-12 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs transition-all shadow-lg shadow-blue-200 active:scale-95 disabled:opacity-50"
                     >
                         모든 쿠키 허용
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaved}
+                        className={`h-12 rounded-2xl font-black text-xs transition-all active:scale-95 ${isSaved ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'}`}
+                    >
+                        {isSaved ? <><Check size={14} /> 설정 저장됨</> : '기본 설정 유지 및 저장'}
                     </button>
                 </div>
             </div>

@@ -6,7 +6,7 @@ import PrintReport from './components/PrintReport';
 import {
     CalendarIcon, Bell, Settings, Edit2, Users, MoreHorizontal, AlertTriangle,
     AlertOctagon, Save, Plus, ClipboardCheck, MessageSquare, CheckCircle,
-    Activity, Truck, Tool, FlaskConical, LinkIcon, Printer, Trash, Upload
+    Activity, Truck, Tool, FlaskConical, LinkIcon, Printer, Trash, Upload, ArrowRight
 } from './components/Icons';
 import * as Modals from './components/Modals';
 
@@ -93,9 +93,10 @@ const SafetyDashboardInner = () => {
         e.preventDefault();
         const newStartDate = e.target.startDate.value;
         const newTargetDays = parseInt(e.target.targetDays.value);
+        const newCctvUrl = e.target.cctvUrl.value;
         if (db) {
             db.collection('sites').doc(siteId).set({
-                startDate: newStartDate, targetDays: newTargetDays
+                startDate: newStartDate, targetDays: newTargetDays, cctvUrl: newCctvUrl
             }, { merge: true });
         }
         setShowSettingsModal(false);
@@ -498,6 +499,41 @@ const SafetyDashboardInner = () => {
 
                         {/* Right Column */}
                         <div className="space-y-6">
+                            {/* CCTV Section */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in overflow-hidden relative group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-gray-800 flex items-center">
+                                            <Activity className="text-blue-500 mr-2" size={20} /> 실시간 CCTV 모니터링
+                                        </h3>
+                                        <span className="flex h-2 w-2 relative">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                        </span>
+                                    </div>
+                                    <div className="bg-slate-900 rounded-xl aspect-video mb-4 flex flex-col items-center justify-center border border-slate-800 shadow-inner relative overflow-hidden">
+                                        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                                        <div className="flex flex-col items-center gap-3 relative z-10 text-center px-4">
+                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-1">
+                                                <Activity size={24} className="text-blue-400" />
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">ADT Caps Viewguard</p>
+                                            <p className="text-[10px] text-slate-500 leading-tight">보안 정책으로 인해 외부 창에서<br />실시간 영상을 확인하실 수 있습니다.</p>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={data.cctvUrl || 'https://capslive.co.kr'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2 group/btn"
+                                    >
+                                        <span>현장 CCTV 확인하기</span>
+                                        <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                                    </a>
+                                </div>
+                            </div>
+
                             {/* Issues Section */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><CheckCircle className="text-green-500 mr-2" size={20} /> 안전 부적합 조치</h3>
@@ -541,7 +577,7 @@ const SafetyDashboardInner = () => {
                 </footer>
 
                 {/* Modals */}
-                <Modals.SettingsModal show={showSettingsModal} onClose={() => setShowSettingsModal(false)} onSave={handleSaveSettings} startDate={data.startDate} targetDays={data.targetDays} />
+                <Modals.SettingsModal show={showSettingsModal} onClose={() => setShowSettingsModal(false)} onSave={handleSaveSettings} startDate={data.startDate} targetDays={data.targetDays} cctvUrl={data.cctvUrl} />
                 <Modals.WorkerModal show={showWorkerModal} onClose={() => setShowWorkerModal(false)} workerList={data.workerList} onChange={handleWorkerChangeByIndex} onAdd={handleAddWorker} onDelete={handleDeleteWorker} onSave={saveWorkersToDB} />
                 <Modals.IssueModal show={showIssueModal} onClose={() => setShowIssueModal(false)} issues={data.issueList} type={selectedIssueType} onAdd={handleAddIssue} onChange={handleIssueChange} onImageUpload={handleIssueImageUpload} onSave={saveIssueChanges} onStatusChange={changeIssueStatus} />
                 <Modals.InspectionModal show={showInspectionModal} onClose={() => setShowInspectionModal(false)} type={inspectionType} onSave={handleSaveInspection} images={inspectionImages} onImageUpload={handleInspectionImageUpload} onRemoveImage={handleRemoveInspectionImage} setPreview={setPreviewFile} />

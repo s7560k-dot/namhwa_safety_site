@@ -29,6 +29,7 @@ export const useDashboardData = (siteId) => {
 
     const [startDate, setStartDate] = useState("");
     const [targetDays, setTargetDays] = useState(500);
+    const [cctvUrl, setCctvUrl] = useState("https://capslive.co.kr");
     const [headerInfo, setHeaderInfo] = useState(null);
     const [kpiData, setKpiData] = useState([]);
 
@@ -54,6 +55,7 @@ export const useDashboardData = (siteId) => {
                 const data = doc.data();
                 setStartDate(data.startDate || "2024-01-01");
                 setTargetDays(data.targetDays || 500);
+                setCctvUrl(data.cctvUrl || "https://capslive.co.kr");
                 setHeaderInfo(data.headerInfo || null);
                 setKpiData(data.kpiData || []);
             }
@@ -202,6 +204,7 @@ export const useDashboardData = (siteId) => {
         siteId,
         startDate, setStartDate,
         targetDays, setTargetDays,
+        cctvUrl, setCctvUrl,
         headerInfo, setHeaderInfo,
         kpiData, setKpiData,
         workerList, setWorkerList,

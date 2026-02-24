@@ -34,10 +34,12 @@ const GlobalBoard = () => {
         }
     };
 
-    const filteredPosts = posts.filter(p =>
-        p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.content?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredPosts = posts.filter(p => {
+        const title = (p.title || '').toLowerCase();
+        const content = (p.content || '').toLowerCase();
+        const query = (searchQuery || '').toLowerCase();
+        return title.includes(query) || content.includes(query);
+    });
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased">
@@ -105,7 +107,7 @@ const GlobalBoard = () => {
                                         </h3>
                                     </div>
                                     <p className="text-slate-500 text-sm leading-relaxed whitespace-pre-wrap">
-                                        {post.content}
+                                        {(post.content || '').replace(/\/notices\/[a-zA-Z0-9_-]+\.html/g, '').trim()}
                                     </p>
 
                                     {/* HTML 링크 감지 및 표시 */}
@@ -117,7 +119,7 @@ const GlobalBoard = () => {
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-900 hover:text-white transition-all border border-slate-100"
                                             >
-                                                <ExternalLink size={14} /> 관련 HTML 페이지 열기
+                                                <ExternalLink size={14} /> 내용보기
                                             </a>
                                         </div>
                                     )}
@@ -126,7 +128,13 @@ const GlobalBoard = () => {
                                 <div className="flex flex-row md:flex-col items-center md:items-end gap-3 text-xs font-bold text-slate-400 shrink-0">
                                     <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
                                         <Calendar size={14} />
-                                        <span>{post.createdAt ? new Date(post.createdAt?.seconds * 1000).toLocaleDateString() : '-'}</span>
+                                        <span>
+                                            {post.createdAt?.seconds
+                                                ? new Date(post.createdAt.seconds * 1000).toLocaleDateString()
+                                                : post.createdAt instanceof Date
+                                                    ? post.createdAt.toLocaleDateString()
+                                                    : '-'}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
                                         <User size={14} />
