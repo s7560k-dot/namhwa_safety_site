@@ -84,11 +84,25 @@ const ResourceCenter = () => {
     };
 
     useEffect(() => {
-        // Firebase Auth 상태 감시
+        // [1] 스크롤 위치 복구 로직 (마운트 시 최초 1회만 실행)
+        // 새로고침이나 뒤로가기 시 이전에 보던 위치를 유지하기 위함
+        const isInitiallyOn = sessionStorage.getItem('safetyOn') === 'true';
+        if (isInitiallyOn) {
+            const savedScroll = sessionStorage.getItem('dashboardScroll');
+            if (savedScroll) {
+                // DOM 렌더링을 고려하여 미세한 지연 후 이동
+                const timer = setTimeout(() => {
+                    window.scrollTo(0, parseInt(savedScroll, 10));
+                }, 50);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, []); // 빈 배열: 최초 마운트 시에만 실행
+
+    useEffect(() => {
+        // [2] Firebase Auth 및 알림 데이터 감시
         const unsubscribe = auth.onAuthStateChanged((user) => {
             setUser(user);
-            // 관리자 여부 판별 (예: 특정 도메인 또는 이메일)
-            // 보안을 위해 실제 서비스에서는 커스텀 클레임(Custom Claims) 등을 권장합니다.
             const isUserAdmin = user && (
                 user.email?.endsWith('@namhwa.com') ||
                 user.email === 'nhs1033@nate.com' ||
@@ -97,17 +111,22 @@ const ResourceCenter = () => {
             setIsAdmin(!!isUserAdmin);
         });
 
-        // 복귀 시(새로고침/뒤로가기)에만 스크롤 위치 복구
-        const isInitiallyOn = sessionStorage.getItem('safetyOn') === 'true';
-        if (isInitiallyOn) {
-            const savedScroll = sessionStorage.getItem('dashboardScroll');
-            if (savedScroll) {
-                setTimeout(() => window.scrollTo(0, parseInt(savedScroll, 10)), 50);
-            }
-        }
+        // [3] 스크롤 상태 감시 (네비게이션 바 디자인 변경용)
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
 
-        // 신규 게시물 알림 로직
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            unsubscribe();
+        };
+    }, []); // 의존성에서 location, isSafetyOn 제거 (불필요한 리렌더링 및 로직 재실행 방지)
+
+    useEffect(() => {
+        // [4] 알림 개수 업데이트 (시스템 가동 상태일 때만 실행)
         const fetchUnreadCount = async () => {
+            if (!isSafetyOn) return;
             try {
                 const lastChecked = localStorage.getItem('lastBoardChecked') || 0;
                 const snapshot = await db.collection('posts')
@@ -119,19 +138,8 @@ const ResourceCenter = () => {
             }
         };
 
-        if (isSafetyOn) {
-            fetchUnreadCount();
-        }
-
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            unsubscribe();
-        };
-    }, [isSafetyOn, location]);
+        fetchUnreadCount();
+    }, [isSafetyOn]); // 시스템 스위치 상태가 바뀔 때만 실행
 
     const handleBoardClick = () => {
         const now = Date.now();
