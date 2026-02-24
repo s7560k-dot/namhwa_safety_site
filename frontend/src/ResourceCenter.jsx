@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 import Footer from './components/Footer';
 import CookieSettingsModal from './components/CookieSettingsModal';
 import {
@@ -71,6 +71,7 @@ const ResourceCenter = () => {
     const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [user, setUser] = useState(null);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     // Background Image URL (Local Asset per user request)
     const BG_IMAGE_URL = "/night_view.jpg";
@@ -104,6 +105,23 @@ const ResourceCenter = () => {
             }
         }
 
+        // 신규 게시물 알림 로직
+        const fetchUnreadCount = async () => {
+            try {
+                const lastChecked = localStorage.getItem('lastBoardChecked') || 0;
+                const snapshot = await db.collection('posts')
+                    .where('createdAt', '>', new firebase.firestore.Timestamp(lastChecked / 1000, 0))
+                    .get();
+                setUnreadCount(snapshot.size);
+            } catch (err) {
+                console.error("Fetch unread count error:", err);
+            }
+        };
+
+        if (isSafetyOn) {
+            fetchUnreadCount();
+        }
+
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
         };
@@ -112,7 +130,14 @@ const ResourceCenter = () => {
             window.removeEventListener('scroll', handleScroll);
             unsubscribe();
         };
-    }, []);
+    }, [isSafetyOn]);
+
+    const handleBoardClick = () => {
+        const now = Date.now();
+        localStorage.setItem('lastBoardChecked', now.toString());
+        setUnreadCount(0);
+        handleLinkClick();
+    };
 
     const handleLinkClick = () => {
         // 다른 페이지 이동 직전 스크롤 위치 저장
@@ -194,7 +219,14 @@ const ResourceCenter = () => {
                         <a href="#sites" className="hover:text-red-500 transition-colors">Sites</a>
                         <a href="#sops" className="hover:text-red-500 transition-colors">Checklists</a>
                         <a href="#tools" className="hover:text-red-500 transition-colors">Tools</a>
-                        <a href="#board" className="hover:text-red-500 transition-colors">Board</a>
+                        <a href="#board" className="relative hover:text-red-500 transition-colors">
+                            Board
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-2 -right-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white shadow-lg shadow-red-500/50">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
+                            )}
+                        </a>
                         {user ? (
                             <button
                                 onClick={handleLogout}
@@ -224,7 +256,14 @@ const ResourceCenter = () => {
                         <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Sites</a>
                         <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Checklists</a>
                         <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Tools</a>
-                        <a href="#board" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Board</a>
+                        <a href="#board" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors flex items-center justify-between">
+                            Board
+                            {unreadCount > 0 && (
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </a>
                         {user ? (
                             <button
                                 onClick={() => {
@@ -472,13 +511,25 @@ const ResourceCenter = () => {
                             ].map((item, index) => (
                                 <a
                                     href={item.link}
-                                    onClick={(e) => { if (!item.isReady) e.preventDefault(); else handleLinkClick(); }}
+                                    onClick={(e) => {
+                                        if (!item.isReady) {
+                                            e.preventDefault();
+                                        } else {
+                                            if (item.link === '/board/global') handleBoardClick();
+                                            else handleLinkClick();
+                                        }
+                                    }}
                                     key={index}
                                     className={`block group relative p-10 rounded-3xl bg-white border border-slate-100 text-left transition-all duration-500 overflow-hidden ${item.isReady ? 'hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer' : 'opacity-70 cursor-not-allowed'}`}
                                 >
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -z-10 group-hover:bg-blue-50 transition-colors duration-500"></div>
-                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-sm transition-colors duration-500 ${item.isReady ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 shadow-sm transition-colors duration-500 relative ${item.isReady ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-slate-100 text-slate-400'}`}>
                                         {React.cloneElement(item.icon, { size: 32 })}
+                                        {item.link === '/board/global' && unreadCount > 0 && (
+                                            <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white shadow-lg shadow-red-500/50 border-2 border-white">
+                                                {unreadCount}
+                                            </span>
+                                        )}
                                     </div>
                                     <h4 className="text-2xl font-black text-slate-900 mb-2">{item.title}</h4>
                                     <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{item.sub}</p>

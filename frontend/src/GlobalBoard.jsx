@@ -20,6 +20,8 @@ const GlobalBoard = () => {
 
     useEffect(() => {
         fetchPosts();
+        // 게시판 확인 시간 업데이트 (알림 배지 제거용)
+        localStorage.setItem('lastBoardChecked', Date.now().toString());
     }, []);
 
     const fetchPosts = async () => {
