@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { db, storage } from './firebase';
 import { useDashboardData } from './hooks/useDashboardData';
 import PrintReport from './components/PrintReport';
@@ -281,9 +281,12 @@ const SafetyDashboardInner = () => {
             <div id="screen-area">
                 <header className={`bg-white shadow-sm sticky top-0 z-30 border-b-4 ${siteId === 'siteA' ? 'border-blue-500' : 'border-purple-500'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                        <div className="flex items-center w-1/4">
-                            <div><h1 className="text-xl font-bold text-gray-900 leading-tight">Safety ON</h1><p className="text-xs text-gray-500">스마트 안전보건 플랫폼</p></div>
-                        </div>
+                        <Link to="/" className="flex items-center w-1/4 group cursor-pointer transition-transform hover:scale-105">
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">Safety ON</h1>
+                                <p className="text-xs text-gray-500">스마트 안전보건 플랫폼</p>
+                            </div>
+                        </Link>
                         <div className="flex-1 text-center">
                             <h2 className={`text-2xl font-extrabold tracking-wide drop-shadow-sm ${currentSiteInfo.text}`}>{currentSiteInfo.name}</h2>
                             <p className="text-xs text-gray-400 mt-1">" 남화의 미래를 켜다 "</p>
