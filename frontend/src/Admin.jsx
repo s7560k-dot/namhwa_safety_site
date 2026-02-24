@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from './firebase';
+import { auth, db, storage } from './firebase';
 import {
     Users,
     UserPlus,
@@ -54,6 +54,10 @@ const Admin = () => {
         totalSites: 0,
         unreadInquiries: 0
     });
+
+    // File Upload State
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const navigate = useNavigate();
 
@@ -177,25 +181,57 @@ const Admin = () => {
         }
     };
 
+    const handleFileUpload = async (file) => {
+        if (!file) return null;
+        return new Promise((resolve, reject) => {
+            const fileRef = storage.ref(`notices/${Date.now()}_${file.name}`);
+            const uploadTask = fileRef.put(file);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    setUploadProgress(progress);
+                },
+                (error) => {
+                    console.error("Upload error:", error);
+                    reject(error);
+                },
+                async () => {
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    resolve(downloadURL);
+                }
+            );
+        });
+    };
+
     const handleCreatePost = async (e) => {
-        // ... (기존 create post 로직 유지)
         e.preventDefault();
         setActionLoading(true);
+        setUploadProgress(0);
+
         const title = e.target.postTitle.value;
         const type = e.target.postType.value;
         const content = e.target.postContent.value;
 
         try {
+            let attachmentUrl = null;
+            if (selectedFile) {
+                attachmentUrl = await handleFileUpload(selectedFile);
+            }
+
             await db.collection('posts').add({
                 title,
                 type,
                 content,
+                attachmentUrl,
                 siteName: '본사',
                 author: '관리자',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             setSuccess("✅ 게시물이 성공적으로 등록되었습니다.");
             setIsPostModalOpen(false);
+            setSelectedFile(null);
+            setUploadProgress(0);
             fetchPosts();
         } catch (err) {
             console.error("Post create error:", err);
@@ -214,20 +250,30 @@ const Admin = () => {
         e.preventDefault();
         if (!currentPost) return;
         setActionLoading(true);
+        setUploadProgress(0);
+
         const title = e.target.editTitle.value;
         const type = e.target.editType.value;
         const content = e.target.editContent.value;
 
         try {
+            let attachmentUrl = currentPost.attachmentUrl || null;
+            if (selectedFile) {
+                attachmentUrl = await handleFileUpload(selectedFile);
+            }
+
             await db.collection('posts').doc(currentPost.id).update({
                 title,
                 type,
                 content,
+                attachmentUrl,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             setSuccess("✅ 게시물이 성공적으로 수정되었습니다.");
             setIsEditModalOpen(false);
             setCurrentPost(null);
+            setSelectedFile(null);
+            setUploadProgress(0);
             fetchPosts();
         } catch (err) {
             console.error("Post update error:", err);
@@ -576,11 +622,33 @@ const Admin = () => {
                                             <textarea
                                                 name="postContent"
                                                 required
-                                                rows="8"
+                                                rows="6"
                                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm font-medium leading-relaxed"
                                                 placeholder="공지 내용을 입력하세요. HTML 페이지를 게시하려는 경우 해당 경로(/notices/notice.html 등)의 링크를 본문에 포함하세요."
                                             ></textarea>
                                         </div>
+
+                                        {/* [NEW] File Upload Input */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">문서 첨부 (PDF)</label>
+                                            <div className="flex flex-col gap-3">
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,image/*"
+                                                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                                                    className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-red-50 file:text-red-600 hover:file:bg-red-100 transition-all"
+                                                />
+                                                {uploadProgress > 0 && (
+                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div
+                                                            className="bg-red-600 h-full transition-all duration-300"
+                                                            style={{ width: `${uploadProgress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="flex justify-end gap-3 pt-4">
                                             <button
                                                 type="button"
@@ -645,10 +713,37 @@ const Admin = () => {
                                                 name="editContent"
                                                 defaultValue={currentPost.content}
                                                 required
-                                                rows="10"
+                                                rows="6"
                                                 className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium leading-relaxed"
                                             ></textarea>
                                         </div>
+
+                                        {/* [NEW] File Upload Input (Edit) */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">문서 교체/첨부 (PDF)</label>
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf,image/*"
+                                                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                                                        className="flex-1 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition-all"
+                                                    />
+                                                    {currentPost.attachmentUrl && !selectedFile && (
+                                                        <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded">기존 파일 있음</span>
+                                                    )}
+                                                </div>
+                                                {uploadProgress > 0 && (
+                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div
+                                                            className="bg-blue-600 h-full transition-all duration-300"
+                                                            style={{ width: `${uploadProgress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="flex justify-end gap-3 pt-4">
                                             <button
                                                 type="button"

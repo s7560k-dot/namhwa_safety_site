@@ -110,16 +110,17 @@ const GlobalBoard = () => {
                                         {(post.content || '').replace(/\/notices\/[a-zA-Z0-9_-]+\.html/g, '').trim()}
                                     </p>
 
-                                    {/* HTML 링크 감지 및 표시 */}
-                                    {post.content && post.content.includes('.html') && (
+                                    {/* 첨부파일 또는 HTML 링크 감지 및 표시 */}
+                                    {(post.attachmentUrl || (post.content && post.content.includes('.html'))) && (
                                         <div className="mt-4 pt-4 border-t border-slate-50">
                                             <a
-                                                href={post.content.match(/\/notices\/[a-zA-Z0-9_-]+\.html/)?.[0] || post.content}
+                                                href={post.attachmentUrl || post.content.match(/\/notices\/[a-zA-Z0-9_-]+\.html/)?.[0] || post.content}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-900 hover:text-white transition-all border border-slate-100"
+                                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${post.attachmentUrl ? 'bg-red-600 text-white border-red-500 hover:bg-red-700' : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-900 hover:text-white'}`}
                                             >
-                                                <ExternalLink size={14} /> 내용보기
+                                                {post.attachmentUrl ? <FileText size={14} /> : <ExternalLink size={14} />}
+                                                {post.attachmentUrl ? '문서 다운로드' : '내용보기'}
                                             </a>
                                         </div>
                                     )}
