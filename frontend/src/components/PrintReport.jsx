@@ -54,7 +54,9 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                     <tbody>
                         {data.riskWorks.length > 0 ? data.riskWorks.map(work => (
                             <tr key={work.id}><td className="text-center font-bold">{work.team}</td><td>{work.task}</td><td className="text-center"><span className={work.risk === '상' ? 'text-red-600 font-bold' : ''}>{work.risk}</span></td><td className="text-center font-bold">{work.eduCompleted} / {work.workerCount}</td><td className="text-left text-xs leading-relaxed">{work.assessment || '-'}</td></tr>
-                        )) : <tr><td colSpan="5" className="text-center py-6 border">금일 고위험 작업 없음</td></tr>}
+                        )) : [1, 2, 3].map((_, i) => (
+                            <tr key={`empty-risk-${i}`}><td className="h-10"></td><td></td><td></td><td></td><td></td></tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -66,7 +68,9 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                     <tbody>
                         {data.noticeData.length > 0 ? data.noticeData.map(notice => (
                             <tr key={notice.id}><td className="text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${notice.type === '공지' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{notice.type}</span></td><td><div className="font-bold mb-1">{notice.title}</div><div className="text-[10px] text-gray-500 line-clamp-2">{notice.content}</div></td><td className="text-center">{notice.author}</td><td className="text-center">{notice.date}</td></tr>
-                        )) : <tr><td colSpan="4" className="text-center py-6 border">등록된 공지사항 없음</td></tr>}
+                        )) : [1, 2, 3].map((_, i) => (
+                            <tr key={`empty-notice-${i}`}><td className="h-10"></td><td></td><td></td><td></td></tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -104,7 +108,23 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                                     </div>
                                 </td>
                             </tr>
-                        )) : <tr><td colSpan="5" className="text-center py-8 border">금일 부적합 사항 없음</td></tr>}
+                        )) : [1, 2].map((_, i) => (
+                            <tr key={`empty-issue-${i}`} className="avoid-break">
+                                <td className="text-center font-bold text-gray-300">{i + 1}</td>
+                                <td className="bg-gray-50 h-32"></td>
+                                <td></td>
+                                <td className="p-1">
+                                    <div className="w-full h-32 border border-dashed border-gray-200 flex items-center justify-center bg-gray-50/50">
+                                        <span className="text-[8px] text-gray-300 italic">PHOTO</span>
+                                    </div>
+                                </td>
+                                <td className="p-1">
+                                    <div className="w-full h-32 border border-dashed border-gray-200 flex items-center justify-center bg-gray-50/50">
+                                        <span className="text-[8px] text-gray-300 italic">PHOTO</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -134,7 +154,9 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                                 <td className="text-center font-bold">{log.status}</td>
                                 <td className="text-center text-gray-400">(서명)</td>
                             </tr>
-                        )) : <tr><td colSpan="5" className="text-center py-4">금일 점검 내역 없음</td></tr>}
+                        )) : [1, 2, 3].map((_, i) => (
+                            <tr key={`empty-inspect-${i}`}><td className="h-10"></td><td></td><td></td><td></td><td></td></tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
