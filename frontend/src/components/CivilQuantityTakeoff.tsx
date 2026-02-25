@@ -26,8 +26,13 @@ const CivilQuantityTakeoff: React.FC = () => {
             const uploadedFile = e.target.files[0];
             const fileName = uploadedFile.name.toLowerCase();
 
-            if (!fileName.endsWith('.dxf') && !fileName.endsWith('.dwg')) {
-                alert("DXF 또는 DWG 파일만 업로드 가능합니다.");
+            if (fileName.endsWith('.dwg')) {
+                alert("DWG 파일은 분석할 수 없습니다. DXF 형식으로 변환 후 업로드해주세요!");
+                return;
+            }
+
+            if (!fileName.endsWith('.dxf')) {
+                alert("DXF 형식의 도면 파일만 업로드 가능합니다.");
                 return;
             }
 
@@ -139,10 +144,10 @@ const CivilQuantityTakeoff: React.FC = () => {
                             <label className="group relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all">
                                 <FileUp className="w-12 h-12 text-gray-300 group-hover:text-blue-500 transition-colors" />
                                 <div className="mt-4 flex flex-col items-center">
-                                    <span className="text-sm font-black text-gray-600">CAD 도면 업로드</span>
-                                    <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">DXF, DWG 지원</span>
+                                    <span className="text-sm font-black text-gray-600">DXF 도면 업로드</span>
+                                    <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">DXF 형식 권장 (R2018)</span>
                                 </div>
-                                <input type="file" className="hidden" accept=".dxf,.dwg" onChange={handleFileUpload} />
+                                <input type="file" className="hidden" accept=".dxf" onChange={handleFileUpload} />
                             </label>
 
                             {file && (
