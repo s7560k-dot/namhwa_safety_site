@@ -89,7 +89,7 @@ const PrintReport = ({ data, siteName, currentDate, accidentFreeDays, targetDays
                         </tr>
                     </thead>
                     <tbody>
-                        {data.issueList.length > 0 ? data.issueList.map((issue, idx) => (
+                        {data.issueList.filter(i => !i.archived).length > 0 ? data.issueList.filter(i => !i.archived).map((issue, idx) => (
                             <tr key={issue.id} className="avoid-break">
                                 <td className="text-center font-bold">{idx + 1}</td>
                                 <td className="text-center font-bold bg-gray-50">{issue.loc}</td>

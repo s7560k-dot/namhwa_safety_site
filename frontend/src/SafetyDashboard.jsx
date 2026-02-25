@@ -9,6 +9,8 @@ import {
     Activity, Truck, Tool, FlaskConical, LinkIcon, Printer, Trash, Upload, ArrowRight
 } from './components/Icons';
 import * as Modals from './components/Modals';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, errorInfo: null, error: null }; }
@@ -188,7 +190,7 @@ const SafetyDashboardInner = () => {
     const handleIssueImageUpload = async (id, field, e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const ref = storage.ref(`site_issues/${Date.now()}_${file.name}`);
+        const ref = storage.ref(`sites/${siteId}/issues/${Date.now()}_${file.name}`);
         await ref.put(file);
         const url = await ref.getDownloadURL();
         handleIssueChange(id, field, url);
@@ -206,6 +208,49 @@ const SafetyDashboardInner = () => {
         await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ status });
     };
 
+    const archiveIssue = async (id) => {
+        if (confirm("이 항목을 조치 완료 목록에서 제외하시겠습니까?\n(데이터는 서버에 안전하게 보관됩니다.)")) {
+            await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ archived: true });
+        }
+    };
+
+    const handlePrintAndSave = async () => {
+        // 1. 브라우저 인쇄창 호출 (기존 기능 유지)
+        window.print();
+
+        // 2. 서버 자동 저장 (백그라운드 처리)
+        try {
+            const printElement = document.getElementById('print-area');
+            if (!printElement) return;
+
+            // 잠시 hidden 클래스 제거하여 캡처 가능하게 함
+            printElement.classList.remove('hidden');
+            const canvas = await html2canvas(printElement, {
+                scale: 2,
+                useCORS: true // 외부 도메인 이미지(Firebase Storage) 캡처 허용
+            });
+            const imgData = canvas.toDataURL('image/png');
+            printElement.classList.add('hidden');
+
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            const blob = pdf.output('blob');
+            const now = new Date();
+            const timestamp = now.getFullYear() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + "_" + now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
+            const fileName = `${currentSiteInfo.name}_안전보건일일리포트_${timestamp}.pdf`;
+
+            const storageRef = storage.ref(`sites/${siteId}/reports/${fileName}`);
+            await storageRef.put(blob);
+            console.log("✅ PDF 리포트가 서버에 자동 저장되었습니다:", fileName);
+        } catch (error) {
+            console.error("❌ PDF 자동 저장 중 오류 발생:", error);
+        }
+    };
+
     // Inspection Handlers
     const openInspectionModal = (type) => {
         setInspectionType(type);
@@ -215,7 +260,7 @@ const SafetyDashboardInner = () => {
     const handleInspectionImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         const newAttachments = await Promise.all(files.map(async file => {
-            const ref = storage.ref(`site_inspections/${Date.now()}_${file.name}`);
+            const ref = storage.ref(`sites/${siteId}/inspections/${Date.now()}_${file.name}`);
             await ref.put(file);
             const url = await ref.getDownloadURL();
             return { type: file.type.includes('pdf') ? 'pdf' : 'image', url, name: file.name };
@@ -247,7 +292,7 @@ const SafetyDashboardInner = () => {
         e.preventDefault();
         let attachment = null;
         if (noticeFile) {
-            const ref = storage.ref(`site_notices/${Date.now()}_${noticeFile.name}`);
+            const ref = storage.ref(`sites/${siteId}/notices/${Date.now()}_${noticeFile.name}`);
             await ref.put(noticeFile);
             const url = await ref.getDownloadURL();
             attachment = { url, type: noticeFile.type.includes('pdf') ? 'pdf' : 'image', name: noticeFile.name };
@@ -574,7 +619,7 @@ const SafetyDashboardInner = () => {
                 <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-gray-200 mt-8 relative flex justify-center items-center">
                     <p className="text-gray-400 text-sm font-medium">남화토건(주) 안전보건팀</p>
                     <div className="absolute right-4 flex space-x-2">
-                        <button onClick={() => window.print()} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
+                        <button onClick={handlePrintAndSave} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
                         <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap border border-purple-400/30"><LinkIcon size={18} className="mr-2" /> 예정공정표 바로가기</a>
                     </div>
                 </footer>
@@ -582,7 +627,7 @@ const SafetyDashboardInner = () => {
                 {/* Modals */}
                 <Modals.SettingsModal show={showSettingsModal} onClose={() => setShowSettingsModal(false)} onSave={handleSaveSettings} startDate={data.startDate} targetDays={data.targetDays} cctvUrl={data.cctvUrl} />
                 <Modals.WorkerModal show={showWorkerModal} onClose={() => setShowWorkerModal(false)} workerList={data.workerList} onChange={handleWorkerChangeByIndex} onAdd={handleAddWorker} onDelete={handleDeleteWorker} onSave={saveWorkersToDB} />
-                <Modals.IssueModal show={showIssueModal} onClose={() => setShowIssueModal(false)} issues={data.issueList} type={selectedIssueType} onAdd={handleAddIssue} onChange={handleIssueChange} onImageUpload={handleIssueImageUpload} onSave={saveIssueChanges} onStatusChange={changeIssueStatus} />
+                <Modals.IssueModal show={showIssueModal} onClose={() => setShowIssueModal(false)} issues={data.issueList} type={selectedIssueType} onAdd={handleAddIssue} onChange={handleIssueChange} onImageUpload={handleIssueImageUpload} onSave={saveIssueChanges} onStatusChange={changeIssueStatus} onArchive={archiveIssue} />
                 <Modals.InspectionModal show={showInspectionModal} onClose={() => setShowInspectionModal(false)} type={inspectionType} onSave={handleSaveInspection} images={inspectionImages} onImageUpload={handleInspectionImageUpload} onRemoveImage={handleRemoveInspectionImage} setPreview={setPreviewFile} />
                 <Modals.NoticeModal show={!!selectedNotice} onClose={() => setSelectedNotice(null)} notice={selectedNotice} />
                 <Modals.NoticeWriteModal show={showNoticeWriteModal} onClose={() => setShowNoticeWriteModal(false)} onSave={handleSaveNotice} setFile={setNoticeFile} />

@@ -129,8 +129,16 @@ export const useDashboardData = (siteId) => {
         };
     }, [siteId]);
 
-    // [New] Notification Logic
     useEffect(() => {
+        const counts = { new: 0, processing: 0, done: 0 };
+        issueList.forEach(issue => {
+            if (issue.archived) return; // 아카이브된 항목은 카운트 제외
+            if (issue.status === 'new') counts.new++;
+            else if (issue.status === 'processing') counts.processing++;
+            else if (issue.status === 'done') counts.done++;
+        });
+        setIssueCounts(counts);
+
         const newNotifications = [];
 
         // 1. New Notices (within 7 days)

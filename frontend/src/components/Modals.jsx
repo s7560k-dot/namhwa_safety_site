@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Plus, Upload, Trash, ArrowRight, CheckCircle, AlertTriangle } from './Icons';
+import { X, Plus, Upload, Trash, ArrowRight, CheckCircle, AlertTriangle, Download } from './Icons';
 
 export const SettingsModal = ({ show, onClose, onSave, startDate, targetDays, cctvUrl }) => {
     if (!show) return null;
@@ -48,7 +48,7 @@ export const WorkerModal = ({ show, onClose, workerList, onChange, onAdd, onDele
 
 export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onImageUpload, onSave, onStatusChange }) => {
     if (!show) return null;
-    const filteredIssues = issues.filter(i => i.status === type);
+    const filteredIssues = issues.filter(i => i.status === type && !i.archived);
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
@@ -77,23 +77,32 @@ export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onIma
                             </div>
                             <textarea className="w-full border border-gray-200 rounded-lg p-4 text-gray-700 text-sm focus:outline-none h-28 mb-5 resize-none" value={issue.desc} onChange={(e) => onChange(issue.id, 'desc', e.target.value)} placeholder="안전 부적합 사항을 상세히 입력하세요." />
 
-                            {/* Images */}
                             <div className="grid grid-cols-2 gap-4 mb-6">
-                                <label className="group border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50 hover:bg-white overflow-hidden relative">
-                                    {issue.beforeImg ? <img src={issue.beforeImg} alt="조치 전" className="w-full h-full object-cover" /> : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">조치 전 사진</span></div>}
-                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'beforeImg', e)} />
-                                </label>
-                                <label className="group border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition-colors bg-gray-50 hover:bg-white overflow-hidden relative">
-                                    {issue.afterImg ? <img src={issue.afterImg} alt="조치 후" className="w-full h-full object-cover" /> : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">조치 후 사진</span></div>}
-                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'afterImg', e)} />
-                                </label>
+                                <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 h-32 bg-gray-50 flex items-center justify-center">
+                                    {issue.beforeImg ? (
+                                        <>
+                                            <img src={issue.beforeImg} alt="조치 전" className="w-full h-full object-cover" />
+                                            <a href={issue.beforeImg} download target="_blank" className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Download size={14} /></a>
+                                        </>
+                                    ) : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">조치 전 사진</span></div>}
+                                    <label className="absolute inset-0 cursor-pointer"><input type="file" className="hidden" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'beforeImg', e)} /></label>
+                                </div>
+                                <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 h-32 bg-gray-50 flex items-center justify-center">
+                                    {issue.afterImg ? (
+                                        <>
+                                            <img src={issue.afterImg} alt="조치 후" className="w-full h-full object-cover" />
+                                            <a href={issue.afterImg} download target="_blank" className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Download size={14} /></a>
+                                        </>
+                                    ) : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">조치 후 사진</span></div>}
+                                    <label className="absolute inset-0 cursor-pointer"><input type="file" className="hidden" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'afterImg', e)} /></label>
+                                </div>
                             </div>
 
                             <div className="flex gap-3">
                                 <button className="flex-1 bg-gray-100 text-gray-600 py-3.5 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors" onClick={() => onSave(issue.id)}>내용 저장</button>
                                 {type === 'new' && <button className="flex-1 bg-yellow-500 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-yellow-600 transition-colors flex items-center justify-center" onClick={() => onStatusChange(issue.id, 'processing')}>조치 착수 <ArrowRight size={16} className="ml-2" /></button>}
                                 {type === 'processing' && <button className="flex-1 bg-green-500 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-green-600 transition-colors flex items-center justify-center" onClick={() => onStatusChange(issue.id, 'done')}>조치 완료 승인 <CheckCircle size={16} className="ml-2" /></button>}
-                                {type === 'done' && <div className="flex-1 bg-gray-50 border border-gray-200 text-green-600 py-3.5 rounded-lg text-sm font-bold flex items-center justify-center cursor-default">완료된 항목 <CheckCircle size={16} className="ml-2" /></div>}
+                                {type === 'done' && <button className="flex-1 bg-blue-600 text-white py-3.5 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center" onClick={() => onArchive(issue.id)}>확인 및 목록에서 제거 <CheckCircle size={16} className="ml-2" /></button>}
                             </div>
                         </div>
                     )) : (
