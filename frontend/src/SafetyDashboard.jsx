@@ -295,7 +295,7 @@ const SafetyDashboardInner = () => {
                 <header className={`bg-white shadow-sm sticky top-0 z-30 border-b-4 ${siteId === 'siteA' ? 'border-blue-500' : 'border-purple-500'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                         <Link to="/" className="flex items-center w-1/4 group cursor-pointer transition-transform hover:scale-105">
-                            <NamhwaSymbol className="w-12 h-12 mr-3 text-red-800" />
+                            <NamhwaSymbol className="h-12 w-auto object-contain mr-3 text-red-800" />
                             <div>
                                 <h1 className="text-xl font-black text-gray-900 leading-tight group-hover:text-red-700 transition-colors uppercase tracking-tight">Safety ON</h1>
                                 <p className="text-[10px] font-bold text-gray-400 -mt-0.5 tracking-widest uppercase">Smart Platform</p>
@@ -675,7 +675,7 @@ const SafetyDashboardInner = () => {
 
                 <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-100 mt-20 relative flex flex-col md:flex-row justify-between items-center opacity-60 hover:opacity-100 transition-all duration-700">
                     <div className="flex items-center mb-8 md:mb-0 transform hover:scale-105 transition-transform duration-500 group">
-                        <NamhwaSymbol className="w-10 h-10 mr-4 text-gray-400 grayscale group-hover:grayscale-0 transition-all duration-500" />
+                        <NamhwaSymbol className="h-10 w-auto object-contain mr-4 text-gray-400 grayscale group-hover:grayscale-0 transition-all duration-500" />
                         <div>
                             <p className="text-gray-800 text-sm font-black tracking-tight uppercase leading-none mb-1">남화토건(주)</p>
                             <p className="text-gray-400 text-[10px] font-bold tracking-[0.3em] uppercase leading-none opacity-80">안전보건팀</p>
