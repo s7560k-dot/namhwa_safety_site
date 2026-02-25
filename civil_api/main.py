@@ -46,13 +46,40 @@ async def calculate_earthwork(length: float, width: float, depth: float, slope_r
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# --- [Phase 2] DXF 도면 분석 ---
+# --- [Phase 2] DXF/DWG 도면 분석 ---
 @app.post("/analyze/dxf")
 async def analyze_dxf(file: UploadFile = File(...), layer_filter: Optional[str] = None):
-    """DXF 도면에서 선 길이 및 면적 추출"""
+    """DXF/DWG 도면에서 선 길이 및 면적 추출"""
+    temp_dxf_path = None
     try:
+        filename = file.filename.lower()
         content = await file.read()
-        doc = ezdxf.read(io.BytesIO(content))
+        
+        # DWG 처리 (DXF로 변환)
+        if filename.endswith(".dwg"):
+            try:
+                import aspose.cad as cad
+                from aspose.cad import Image
+                from aspose.cad.imageoptions import DxfOptions
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".dwg") as tmp_dwg:
+                    tmp_dwg.write(content)
+                    tmp_dwg_path = tmp_dwg.name
+                
+                temp_dxf_path = tmp_dwg_path.replace(".dwg", "_converted.dxf")
+                image = Image.load(tmp_dwg_path)
+                image.save(temp_dxf_path, DxfOptions())
+                
+                doc = ezdxf.readfile(temp_dxf_path)
+                os.remove(tmp_dwg_path)
+            except ImportError:
+                raise HTTPException(status_code=400, detail="DWG 변환을 위해 aspose-cad 라이브러리가 필요합니다. (Python 3.12 이하 권장)")
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"DWG 변환 실패: {str(e)}")
+        else:
+            # DXF 직접 처리
+            doc = ezdxf.read(io.BytesIO(content))
+
         msp = doc.modelspace()
         results = {}
         
@@ -83,7 +110,10 @@ async def analyze_dxf(file: UploadFile = File(...), layer_filter: Optional[str] 
             
         return {"filename": file.filename, "layers": results}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"DXF Parsing Error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"도면 분석 에러: {str(e)}")
+    finally:
+        if temp_dxf_path and os.path.exists(temp_dxf_path):
+            os.remove(temp_dxf_path)
 
 # --- [Phase 3] AI 기반 근거 추천 (RAG 준비) ---
 @app.get("/ai/recommend-basis")

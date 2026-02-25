@@ -24,9 +24,16 @@ const CivilQuantityTakeoff: React.FC = () => {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const uploadedFile = e.target.files[0];
+            const fileName = uploadedFile.name.toLowerCase();
+
+            if (!fileName.endsWith('.dxf') && !fileName.endsWith('.dwg')) {
+                alert("DXF 또는 DWG 파일만 업로드 가능합니다.");
+                return;
+            }
+
             setFile(uploadedFile);
 
-            // DXF 분석 API 호출
+            // 도면 분석 API 호출
             setIsAnalyzing(true);
             const formData = new FormData();
             formData.append('file', uploadedFile);
@@ -37,10 +44,15 @@ const CivilQuantityTakeoff: React.FC = () => {
                     body: formData,
                 });
                 const data = await response.json();
-                setDxfData(data.layers);
+
+                if (response.ok) {
+                    setDxfData(data.layers);
+                } else {
+                    alert(data.detail || "도면 분석 중 오류가 발생했습니다.");
+                }
             } catch (error) {
-                console.error("DXF 분석 실패:", error);
-                alert("도면 분석 중 오류가 발생했습니다.");
+                console.error("도면 분석 실패:", error);
+                alert("서버 연결에 실패했습니다.");
             } finally {
                 setIsAnalyzing(false);
             }
@@ -127,10 +139,10 @@ const CivilQuantityTakeoff: React.FC = () => {
                             <label className="group relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all">
                                 <FileUp className="w-12 h-12 text-gray-300 group-hover:text-blue-500 transition-colors" />
                                 <div className="mt-4 flex flex-col items-center">
-                                    <span className="text-sm font-black text-gray-600">DXF 도면 업로드</span>
-                                    <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">Drag & Drop or Click</span>
+                                    <span className="text-sm font-black text-gray-600">CAD 도면 업로드</span>
+                                    <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-widest">DXF, DWG 지원</span>
                                 </div>
-                                <input type="file" className="hidden" accept=".dxf" onChange={handleFileUpload} />
+                                <input type="file" className="hidden" accept=".dxf,.dwg" onChange={handleFileUpload} />
                             </label>
 
                             {file && (
