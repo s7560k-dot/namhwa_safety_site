@@ -16,11 +16,7 @@ import html2canvas from 'html2canvas';
 // [로고 심볼 컴포넌트] - 브랜드 아이덴티티 강화
 // ----------------------------------------------------------------------
 const NamhwaSymbol = ({ className }) => (
-    <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-        <path d="M10 50L50 10L90 50" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M10 30L50 30" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-        <path d="M50 30L90 30" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-    </svg>
+    <img src="/namhwa_logo.png" alt="Namhwa Logo" className={className} />
 );
 
 class ErrorBoundary extends Component {
@@ -457,7 +453,7 @@ const SafetyDashboardInner = () => {
                                                             </div>
                                                             <div className="space-y-1.5">
                                                                 <p className="text-sm font-black text-gray-600 tracking-tight">현재 등록된 고위험 작업 현황이 없습니다.</p>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-none opacity-80">Safety Standard Operating Procedures</p>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-none opacity-80">안전 표준 작업 절차</p>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -499,7 +495,7 @@ const SafetyDashboardInner = () => {
                                                         </div>
                                                         <div className="flex-1 max-w-sm bg-white p-4 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group/card shadow-blue-500/5">
                                                             <div className="flex justify-between items-center mb-3">
-                                                                <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest italic group-hover/card:text-blue-500 transition-colors">Education Progress</span>
+                                                                <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest italic group-hover/card:text-blue-500 transition-colors">교육 진행 현황</span>
                                                                 <span className={`text-sm font-black transition-colors ${rate >= 100 ? 'text-green-600' : rate >= 80 ? 'text-blue-600' : 'text-orange-500'}`}>
                                                                     {rate}% {isOverflow ? '!' : ''}
                                                                 </span>
@@ -508,9 +504,9 @@ const SafetyDashboardInner = () => {
                                                                 <div className={`h-full rounded-full transition-all duration-1000 ease-out ${rate >= 100 ? 'bg-green-500' : 'bg-blue-600'}`} style={{ width: `${normalWidth}%` }}></div>
                                                             </div>
                                                             <div className="flex justify-between items-center text-[11px] font-bold">
-                                                                <span className="text-gray-400 uppercase">Input: <strong className="text-gray-800 ml-1">{work.workerCount}</strong></span>
+                                                                <span className="text-gray-400 uppercase">대상 인원: <strong className="text-gray-800 ml-1">{work.workerCount}</strong></span>
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="text-gray-400 uppercase leading-none">Complete:</span>
+                                                                    <span className="text-gray-400 uppercase leading-none">이수 완료:</span>
                                                                     <input type="number" min="0" className="w-12 bg-gray-50 border-0 rounded-lg py-1 px-1.5 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all leading-none h-6" value={work.eduCompleted} onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)} onBlur={() => handleWorkSave(work.id)} />
                                                                 </div>
                                                             </div>
@@ -519,7 +515,7 @@ const SafetyDashboardInner = () => {
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
                                                             <AlertTriangle size={12} className="text-red-500/50" />
-                                                            <span>Risk Assessment & Measures</span>
+                                                            <span>위험성 평가 및 안전 대책</span>
                                                         </label>
                                                         <textarea className="w-full p-4 text-sm font-medium border border-gray-100 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-4 focus:ring-blue-50 shadow-inner bg-white/80 backdrop-blur-sm" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(id)}></textarea>
                                                     </div>
@@ -535,7 +531,7 @@ const SafetyDashboardInner = () => {
                                     <h3 className="text-lg font-bold text-gray-800 flex items-center"><MessageSquare className="text-purple-500 mr-2" size={20} /> Safety 알림 게시판</h3>
                                     <button onClick={() => setShowNoticeWriteModal(true)} className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-100 transition-all flex items-center border border-purple-100/50 group">
                                         <Plus size={12} className="mr-1.5 group-hover:rotate-90 transition-transform" />
-                                        <span>Post Notice</span>
+                                        <span>공지 작성</span>
                                     </button>
                                 </div>
                                 <div className="space-y-1">
@@ -587,7 +583,7 @@ const SafetyDashboardInner = () => {
                                         rel="noopener noreferrer"
                                         className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl hover:shadow-blue-500/20 flex items-center justify-center gap-2 group/btn active:scale-95"
                                     >
-                                        <span>Link Live Feed</span>
+                                        <span>실시간 영상 연결</span>
                                         <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                                     </a>
                                 </div>
@@ -596,14 +592,14 @@ const SafetyDashboardInner = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in shadow-xl shadow-gray-200/20">
                                 <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center uppercase tracking-tight gap-2">
                                     <CheckCircle className="text-green-500" size={20} />
-                                    <span>Incident Registry</span>
+                                    <span>이슈 등록 현황</span>
                                 </h3>
                                 <div className="space-y-4">
                                     <div onClick={() => { setSelectedIssueType('new'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-red-50/50 rounded-2xl border border-red-100/50 cursor-pointer hover:bg-red-50 transition-all hover:scale-[1.02] shadow-sm shadow-red-500/5 group">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 mr-3 border border-red-200/50 font-black italic">!</div>
                                             <div>
-                                                <span className="text-xs font-black text-red-900/40 uppercase tracking-widest block leading-none mb-1">Status: New</span>
+                                                <span className="text-xs font-black text-red-900/40 uppercase tracking-widest block leading-none mb-1">상태: 신규</span>
                                                 <span className="text-sm font-black text-gray-700 leading-none block">신규 발견 (접수 대기)</span>
                                             </div>
                                         </div>
@@ -613,7 +609,7 @@ const SafetyDashboardInner = () => {
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center text-yellow-600 mr-3 border border-yellow-200/50"><Activity size={18} /></div>
                                             <div>
-                                                <span className="text-xs font-black text-yellow-900/40 uppercase tracking-widest block leading-none mb-1">Status: In-Progress</span>
+                                                <span className="text-xs font-black text-yellow-900/40 uppercase tracking-widest block leading-none mb-1">상태: 진행 중</span>
                                                 <span className="text-sm font-black text-gray-700 leading-none block">조치 중 (진행 현황)</span>
                                             </div>
                                         </div>
@@ -623,7 +619,7 @@ const SafetyDashboardInner = () => {
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600 mr-3 border border-green-200/50"><CheckCircle size={18} /></div>
                                             <div>
-                                                <span className="text-xs font-black text-green-900/40 uppercase tracking-widest block leading-none mb-1">Status: Resolved</span>
+                                                <span className="text-xs font-black text-green-900/40 uppercase tracking-widest block leading-none mb-1">상태: 조치 완료</span>
                                                 <span className="text-sm font-black text-gray-700 leading-none block">조치 완료 내역</span>
                                             </div>
                                         </div>
@@ -634,26 +630,26 @@ const SafetyDashboardInner = () => {
 
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in relative overflow-hidden group">
                                 <div className="absolute top-0 left-0 w-24 h-1 bg-red-800"></div>
-                                <h3 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-tight">Access Inspection</h3>
+                                <h3 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-tight">출입 통제 및 점검</h3>
                                 <div className="grid grid-cols-1 gap-3 mb-6">
                                     <button onClick={() => openInspectionModal('건설장비')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-50 hover:text-blue-700 transition-all border border-gray-100 flex items-center justify-center gap-3 relative overflow-hidden">
                                         <Truck size={18} className="transition-transform group-hover/btn:-translate-x-1" />
-                                        <span>Eqip Ingress</span>
+                                        <span>건설장비 반입</span>
                                         <ArrowRight size={12} className="opacity-0 group-hover/btn:opacity-100 transition-all" />
                                     </button>
                                     <button onClick={() => openInspectionModal('기계기구')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-orange-50 hover:text-orange-700 transition-all border border-gray-100 flex items-center justify-center gap-3">
                                         <Tool size={18} className="transition-transform group-hover/btn:-translate-x-1" />
-                                        <span>Machine Check</span>
+                                        <span>기계/기구 점검</span>
                                         <ArrowRight size={12} className="opacity-0 group-hover/btn:opacity-100 transition-all" />
                                     </button>
                                     <button onClick={() => openInspectionModal('유해화학물질')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-purple-50 hover:text-purple-700 transition-all border border-gray-100 flex items-center justify-center gap-3">
                                         <FlaskConical size={18} className="transition-transform group-hover/btn:-translate-x-1" />
-                                        <span>HAZMAT Access</span>
+                                        <span>유해화학물질 반입</span>
                                         <ArrowRight size={12} className="opacity-0 group-hover/btn:opacity-100 transition-all" />
                                     </button>
                                 </div>
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 italic">Recent Logs</p>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 italic">최근 점검 이력</p>
                                     {data.inspectionLog.length > 0 ? data.inspectionLog.slice(0, 5).map(log => (
                                         <div key={log.id} className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-gray-100 transition-all hover:bg-white group/log active:scale-[0.98]">
                                             <div className="flex flex-col">
@@ -665,7 +661,7 @@ const SafetyDashboardInner = () => {
                                                 </span>
                                             </div>
                                             <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${log.status === '합격' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                {log.status === '합격' ? 'Pass' : 'Reject'}
+                                                {log.status === '합격' ? '합격' : '불합격'}
                                             </span>
                                         </div>
                                     )) : (
@@ -681,18 +677,18 @@ const SafetyDashboardInner = () => {
                     <div className="flex items-center mb-8 md:mb-0 transform hover:scale-105 transition-transform duration-500 group">
                         <NamhwaSymbol className="w-10 h-10 mr-4 text-gray-400 grayscale group-hover:grayscale-0 transition-all duration-500" />
                         <div>
-                            <p className="text-gray-800 text-sm font-black tracking-tight uppercase leading-none mb-1">Namhwa Construction</p>
-                            <p className="text-gray-400 text-[10px] font-bold tracking-[0.3em] uppercase leading-none opacity-80">Safety & Health Team</p>
+                            <p className="text-gray-800 text-sm font-black tracking-tight uppercase leading-none mb-1">남화토건(주)</p>
+                            <p className="text-gray-400 text-[10px] font-bold tracking-[0.3em] uppercase leading-none opacity-80">안전보건팀</p>
                         </div>
                     </div>
                     <div className="flex flex-col md:flex-row items-center gap-4">
                         <button onClick={handlePrintAndSave} className="flex items-center bg-gray-900 text-white px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-black transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 active:scale-95 whitespace-nowrap group">
                             <Printer size={16} className="mr-2.5 group-hover:rotate-12 transition-transform" />
-                            <span>Export Daily Report</span>
+                            <span>리포트 인쇄</span>
                         </button>
                         <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-white text-gray-900 border border-gray-200 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg hover:-translate-y-1 active:translate-y-0 active:scale-95 whitespace-nowrap group">
                             <LinkIcon size={16} className="mr-2.5 group-hover:scale-110 transition-transform" />
-                            <span>Scheduling Chart</span>
+                            <span>예정공정표</span>
                         </a>
                     </div>
                 </footer>
