@@ -52,7 +52,18 @@ async def analyze_dxf(file: UploadFile = File(...), layer_filter: Optional[str] 
     """DXF 도면에서 선 길이 및 면적 추출"""
     try:
         content = await file.read()
-        doc = ezdxf.read(io.BytesIO(content))
+        # ezdxf.read()는 바이너리 스트림을 받을 때 인코딩 판별에 실패할 수 있음
+        # 임시 파일을 생성하여 읽는 방식이 가장 안정적임
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".dxf") as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        try:
+            doc = ezdxf.readfile(tmp_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
         msp = doc.modelspace()
         results = {}
         
@@ -83,7 +94,10 @@ async def analyze_dxf(file: UploadFile = File(...), layer_filter: Optional[str] 
             
         return {"filename": file.filename, "layers": results}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"DXF Parsing Error: {str(e)}")
+        import traceback
+        error_msg = traceback.format_exc()
+        print(f"Error Analyzing DXF: {error_msg}")
+        raise HTTPException(status_code=400, detail=f"DXF Parsing Error: {str(e)}\n\nTraceback: {error_msg}")
 
 # --- [Phase 3] AI 기반 근거 추천 (RAG 준비) ---
 @app.get("/ai/recommend-basis")
