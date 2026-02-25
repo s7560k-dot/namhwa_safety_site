@@ -46,7 +46,7 @@ export const WorkerModal = ({ show, onClose, workerList, onChange, onAdd, onDele
     );
 };
 
-export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onImageUpload, onSave, onStatusChange }) => {
+export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onImageUpload, onSave, onStatusChange, onArchive }) => {
     if (!show) return null;
     const filteredIssues = issues.filter(i => i.status === type && !i.archived);
 

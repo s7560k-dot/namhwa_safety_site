@@ -17,7 +17,9 @@ import {
     ArrowRight,
     Lock,
     LayoutDashboard,
-    LogOut
+    LogOut,
+    Box,
+    Database
 } from 'lucide-react';
 
 // CI 규정집 색상 (R127 G0 B0)
@@ -477,29 +479,40 @@ const ResourceCenter = () => {
                             <p className="text-emerald-700 font-medium tracking-wide uppercase text-sm">현장 전용 안전율 및 규격 계산기 (Web Tools)</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
-                                { title: "중량물취급 안전율 계산기", sub: "Safety Factor Calc", icon: <Calculator />, link: "/work/index.html" },
-                                { title: "아웃트리거 받침철판 규격 계산기", sub: "Outrigger Plate Calc", icon: <Calculator />, link: "/OUT/index.html" }
-                            ].map((item, index) => (
-                                <a
-                                    href={item.link}
-                                    onClick={handleLinkClick}
-                                    key={index}
-                                    className="block group relative p-10 rounded-3xl bg-white border border-slate-100 text-left hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden"
-                                >
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -z-10 group-hover:bg-red-50 transition-colors duration-500"></div>
-                                    <div className="w-16 h-16 bg-slate-50 text-slate-800 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-red-600 group-hover:text-white transition-colors duration-500 shadow-sm">
-                                        {React.cloneElement(item.icon, { size: 32 })}
-                                    </div>
-                                    <h4 className="text-2xl font-black text-slate-900 mb-2 group-hover:text-red-600 transition-colors">{item.title}</h4>
-                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{item.sub}</p>
+                                { title: "중량물취급 안전율 계산기", sub: "Safety Factor Calc", icon: <Calculator />, link: "/work/index.html", isInternal: false },
+                                { title: "아웃트리거 받침철판 규격 계산기", sub: "Outrigger Plate Calc", icon: <Calculator />, link: "/OUT/index.html", isInternal: false },
+                                { title: "부대토목 수량 산출 파이프라인", sub: "Civil Quantity Takeoff", icon: <Database />, link: "/civil-calc", isInternal: true },
+                                { title: "골조공사 물량 산출기", sub: "Framework Material Calc", icon: <Box />, link: "/calculator", isInternal: true }
+                            ].map((item, index) => {
+                                const CardContent = (
+                                    <>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -z-10 group-hover:bg-red-50 transition-colors duration-500"></div>
+                                        <div className="w-16 h-16 bg-slate-50 text-slate-800 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-red-600 group-hover:text-white transition-colors duration-500 shadow-sm">
+                                            {React.cloneElement(item.icon, { size: 32 })}
+                                        </div>
+                                        <h4 className="text-2xl font-black text-slate-900 mb-2 group-hover:text-red-600 transition-colors">{item.title}</h4>
+                                        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{item.sub}</p>
 
-                                    <div className="mt-8 flex items-center text-slate-300 text-sm font-bold group-hover:text-red-600 transition-colors">
-                                        LAUNCH TOOL <ArrowRight size={16} className="ml-2" />
-                                    </div>
-                                </a>
-                            ))}
+                                        <div className="mt-8 flex items-center text-slate-300 text-sm font-bold group-hover:text-red-600 transition-colors">
+                                            LAUNCH TOOL <ArrowRight size={16} className="ml-2" />
+                                        </div>
+                                    </>
+                                );
+
+                                const baseClass = "block group relative p-10 rounded-3xl bg-white border border-slate-100 text-left hover:border-red-500 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden";
+
+                                return item.isInternal ? (
+                                    <Link to={item.link} onClick={handleLinkClick} key={index} className={baseClass}>
+                                        {CardContent}
+                                    </Link>
+                                ) : (
+                                    <a href={item.link} onClick={handleLinkClick} key={index} className={baseClass}>
+                                        {CardContent}
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>

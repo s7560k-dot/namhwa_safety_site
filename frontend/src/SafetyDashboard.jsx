@@ -6,11 +6,22 @@ import PrintReport from './components/PrintReport';
 import {
     CalendarIcon, Bell, Settings, Edit2, Users, MoreHorizontal, AlertTriangle,
     AlertOctagon, Save, Plus, ClipboardCheck, MessageSquare, CheckCircle,
-    Activity, Truck, Tool, FlaskConical, LinkIcon, Printer, Trash, Upload, ArrowRight
+    Activity, Truck, Tool, FlaskConical, LinkIcon, Printer, Trash, Upload, ArrowRight, CheckSquare
 } from './components/Icons';
 import * as Modals from './components/Modals';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+
+// ----------------------------------------------------------------------
+// [로고 심볼 컴포넌트] - 브랜드 아이덴티티 강화
+// ----------------------------------------------------------------------
+const NamhwaSymbol = ({ className }) => (
+    <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+        <path d="M10 50L50 10L90 50" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M10 30L50 30" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+        <path d="M50 30L90 30" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+    </svg>
+);
 
 class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, errorInfo: null, error: null }; }
@@ -86,7 +97,6 @@ const SafetyDashboardInner = () => {
     const handleToggleNotifications = () => {
         setShowNotifications(!showNotifications);
         if (!showNotifications && data.notificationCount > 0) {
-            // In a real app, we might mark them as read here
             data.setNotificationCount(0);
         }
     };
@@ -109,15 +119,7 @@ const SafetyDashboardInner = () => {
         const newWorker = { trade: '', count: 0 };
         data.setWorkerList([...data.workerList, newWorker]);
     };
-    const handleWorkerChange = (id, field, value) => {
-        data.setWorkerList(data.workerList.map(w => w.id === id ? { ...w, [field]: value } : w));
-        // Note: Logic needs adaptation if id is missing (new item). 
-        // For simplicity in migration, assume we might need a temp ID or handle submit differently.
-        // Actually, let's just update local state and save all on "Save".
-    };
-    // The legacy code used direct DB updates or local state. 
-    // Adapting `handleWorkerChange` to work with the mapped list index if ID is missing is tricky.
-    // Let's rely on index for new items in the modal.
+
     const handleWorkerChangeByIndex = (index, field, value) => {
         const newList = [...data.workerList];
         newList[index] = { ...newList[index], [field]: value };
@@ -131,18 +133,6 @@ const SafetyDashboardInner = () => {
     const saveWorkersToDB = async () => {
         const batch = db.batch();
         const ref = db.collection('sites').doc(siteId).collection('workers');
-        // Delete all and rewrite? Or merge? Legacy logic was vague.
-        // Simplest strategy: delete all existing in subcollection and add current list.
-        // But deleting collection is hard in client SDK.
-        // Let's just update existing documents and add new ones, delete removed ones.
-        // For Migration MVP: Just add/update current ones.
-
-        // Actually, legacy code just did: db.collection...add/set.
-        // Let's try to overwrite properly if possible.
-        // A simple way is to use a fixed document for the list, but it's a collection.
-        // We'll skip complex sync logic for now and just add/update. 
-        // *Correction*: Legacy code used `doc.id` for updates.
-
         for (const worker of data.workerList) {
             if (worker.id) {
                 batch.set(ref.doc(worker.id), { trade: worker.trade, count: worker.count });
@@ -194,7 +184,6 @@ const SafetyDashboardInner = () => {
         await ref.put(file);
         const url = await ref.getDownloadURL();
         handleIssueChange(id, field, url);
-        // Auto save to DB
         await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ [field]: url });
     };
     const saveIssueChanges = async (id) => {
@@ -207,7 +196,6 @@ const SafetyDashboardInner = () => {
     const changeIssueStatus = async (id, status) => {
         await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ status });
     };
-
     const archiveIssue = async (id) => {
         if (confirm("이 항목을 조치 완료 목록에서 제외하시겠습니까?\n(데이터는 서버에 안전하게 보관됩니다.)")) {
             await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ archived: true });
@@ -215,37 +203,25 @@ const SafetyDashboardInner = () => {
     };
 
     const handlePrintAndSave = async () => {
-        // 1. 브라우저 인쇄창 호출 (기존 기능 유지)
         window.print();
-
-        // 2. 서버 자동 저장 (백그라운드 처리)
         try {
             const printElement = document.getElementById('print-area');
             if (!printElement) return;
-
-            // 잠시 hidden 클래스 제거하여 캡처 가능하게 함
             printElement.classList.remove('hidden');
-            const canvas = await html2canvas(printElement, {
-                scale: 2,
-                useCORS: true // 외부 도메인 이미지(Firebase Storage) 캡처 허용
-            });
+            const canvas = await html2canvas(printElement, { scale: 2, useCORS: true });
             const imgData = canvas.toDataURL('image/png');
             printElement.classList.add('hidden');
-
             const pdf = new jsPDF('p', 'mm', 'a4');
             const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
             const blob = pdf.output('blob');
             const now = new Date();
             const timestamp = now.getFullYear() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + "_" + now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
             const fileName = `${currentSiteInfo.name}_안전보건일일리포트_${timestamp}.pdf`;
-
             const storageRef = storage.ref(`sites/${siteId}/reports/${fileName}`);
             await storageRef.put(blob);
-            console.log("✅ PDF 리포트가 서버에 자동 저장되었습니다:", fileName);
         } catch (error) {
             console.error("❌ PDF 자동 저장 중 오류 발생:", error);
         }
@@ -284,10 +260,6 @@ const SafetyDashboardInner = () => {
     };
 
     // Notice Handlers
-    const handleAddNotice = () => {
-        setShowNoticeWriteModal(true);
-        setNoticeFile(null);
-    };
     const handleSaveNotice = async (e) => {
         e.preventDefault();
         let attachment = null;
@@ -327,9 +299,10 @@ const SafetyDashboardInner = () => {
                 <header className={`bg-white shadow-sm sticky top-0 z-30 border-b-4 ${siteId === 'siteA' ? 'border-blue-500' : 'border-purple-500'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                         <Link to="/" className="flex items-center w-1/4 group cursor-pointer transition-transform hover:scale-105">
+                            <NamhwaSymbol className="w-12 h-12 mr-3 text-red-800" />
                             <div>
-                                <h1 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">Safety ON</h1>
-                                <p className="text-xs text-gray-500">스마트 안전보건 플랫폼</p>
+                                <h1 className="text-xl font-black text-gray-900 leading-tight group-hover:text-red-700 transition-colors uppercase tracking-tight">Safety ON</h1>
+                                <p className="text-[10px] font-bold text-gray-400 -mt-0.5 tracking-widest uppercase">Smart Platform</p>
                             </div>
                         </Link>
                         <div className="flex-1 text-center">
@@ -342,7 +315,6 @@ const SafetyDashboardInner = () => {
                                 <Bell className={`hover:text-gray-600 transition ${showNotifications ? 'text-blue-500' : 'text-gray-400'}`} />
                                 {data.notificationCount > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-bounce">{data.notificationCount}</span>}
 
-                                {/* Notification Dropdown */}
                                 {showNotifications && (
                                     <div className="absolute right-0 top-10 w-80 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fade-in z-50">
                                         <div className="px-4 py-2 border-b border-gray-50 flex justify-between items-center">
@@ -376,12 +348,10 @@ const SafetyDashboardInner = () => {
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className={`bg-gradient-to-r ${currentSiteInfo.gradient} rounded-xl shadow-lg p-6 mb-8 text-white flex flex-col md:flex-row items-center justify-between animate-fade-in relative overflow-hidden`}>
-                        {/* 설정 버튼 (절대 위치 우측 고정) */}
                         <button onClick={() => setShowSettingsModal(true)} className="absolute top-1/2 -translate-y-1/2 right-6 w-11 h-11 bg-white/15 rounded-full hover:bg-white/25 transition flex items-center justify-center backdrop-blur-md border border-white/10 z-10 shadow-sm">
                             <Settings size={20} className="text-white opacity-90" />
                         </button>
 
-                        {/* 왼쪽 영역: 무재해 기록 */}
                         <div className="flex-1 mb-6 md:mb-0">
                             <div className="flex items-center mb-2">
                                 <h2 className="text-[17px] font-medium tracking-wide text-white/95">우리 현장 무재해 기록</h2>
@@ -398,9 +368,7 @@ const SafetyDashboardInner = () => {
                             </div>
                         </div>
 
-                        {/* 오른쪽 영역: 금일 출력 인원 및 고위험 작업 */}
                         <div className="flex items-center space-x-6 md:space-x-8 pr-[4.5rem]">
-                            {/* 금일 출력 인원 */}
                             <div className="flex flex-col items-end cursor-pointer group" onClick={() => setShowWorkerModal(true)}>
                                 <p className="text-[13px] text-white/80 mb-2 flex items-center font-medium tracking-wide">
                                     금일 출력 인원 <MoreHorizontal size={14} className="ml-1 opacity-60" />
@@ -410,11 +378,7 @@ const SafetyDashboardInner = () => {
                                     {data.workerList.reduce((acc, cur) => acc + parseInt(cur.count || 0), 0)}명
                                 </p>
                             </div>
-
-                            {/* 세로 구분선 */}
                             <div className="h-12 w-px bg-white/25 mx-2 rounded-full"></div>
-
-                            {/* 고위험 작업 */}
                             <div className="flex flex-col items-start pr-2">
                                 <p className="text-[13px] text-white/80 mb-2 font-medium tracking-wide">고위험 작업</p>
                                 <p className="text-[26px] font-bold flex items-center text-yellow-300 tracking-tight">
@@ -427,7 +391,6 @@ const SafetyDashboardInner = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Risk Works Section */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-bold text-gray-800 flex items-center"><AlertOctagon className="text-red-500 mr-2" size={20} /> 금일 고위험 작업 현황</h3>
@@ -435,46 +398,87 @@ const SafetyDashboardInner = () => {
                                 </div>
                                 <div className="overflow-x-auto mb-2">
                                     <table className="w-full text-sm text-left">
-                                        <thead className="bg-gray-50 text-gray-500"><tr><th className="px-3 py-3 rounded-l-lg">작업팀</th><th className="px-3 py-3">작업 내용</th><th className="px-3 py-3">위험도</th><th className="px-3 py-3">투입 인원</th><th className="px-3 py-3">감독자</th><th className="px-3 py-3">상태</th><th className="px-3 py-3 rounded-r-lg w-16">관리</th></tr></thead>
+                                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                            <tr>
+                                                <th className="px-3 py-4 rounded-l-lg">작업팀</th>
+                                                <th className="px-3 py-4">작업 내용</th>
+                                                <th className="px-3 py-4">위험도</th>
+                                                <th className="px-3 py-4">인원</th>
+                                                <th className="px-3 py-4">감독자</th>
+                                                <th className="px-3 py-4">상태</th>
+                                                <th className="px-3 py-4 rounded-r-lg w-16 text-center">관리</th>
+                                            </tr>
+                                        </thead>
                                         <tbody className="divide-y divide-gray-100">
-                                            {data.riskWorks.map((work) => (
-                                                <tr key={work.id} className="hover:bg-gray-50">
+                                            {data.riskWorks.length > 0 ? data.riskWorks.map((work) => (
+                                                <tr key={work.id} className="hover:bg-gray-50 group transition-colors">
                                                     {editingWorkId === work.id ? (
                                                         <>
-                                                            <td className="px-3 py-2"><input className="border rounded px-1 w-full" value={work.team} onChange={(e) => handleWorkChange(work.id, 'team', e.target.value)} /></td>
-                                                            <td className="px-3 py-2"><input className="border rounded px-1 w-full" value={work.task} onChange={(e) => handleWorkChange(work.id, 'task', e.target.value)} /></td>
-                                                            <td className="px-3 py-2"><select className="border rounded px-1" value={work.risk} onChange={(e) => handleWorkChange(work.id, 'risk', e.target.value)}><option value="상">상</option><option value="중">중</option><option value="하">하</option></select></td>
-                                                            <td className="px-3 py-2"><input type="number" className="border rounded px-1 w-full" value={work.workerCount} onChange={(e) => handleWorkChange(work.id, 'workerCount', e.target.value)} /></td>
-                                                            <td className="px-3 py-2"><input className="border rounded px-1 w-full" value={work.manager} onChange={(e) => handleWorkChange(work.id, 'manager', e.target.value)} /></td>
-                                                            <td className="px-3 py-2"><select className="border rounded px-1" value={work.status} onChange={(e) => handleWorkChange(work.id, 'status', e.target.value)}><option value="예정">예정</option><option value="진행">진행</option><option value="완료">완료</option></select></td>
-                                                            <td className="px-3 py-2 text-center"><button onClick={() => handleWorkSave(work.id)} className="text-green-600 bg-green-100 p-1 rounded"><Save size={16} /></button></td>
+                                                            <td className="px-3 py-2"><input className="border rounded px-1.5 py-1 w-full text-xs" value={work.team} onChange={(e) => handleWorkChange(work.id, 'team', e.target.value)} /></td>
+                                                            <td className="px-3 py-2"><input className="border rounded px-1.5 py-1 w-full text-xs" value={work.task} onChange={(e) => handleWorkChange(work.id, 'task', e.target.value)} /></td>
+                                                            <td className="px-3 py-2"><select className="border rounded px-1.5 py-1 text-xs" value={work.risk} onChange={(e) => handleWorkChange(work.id, 'risk', e.target.value)}><option value="상">상</option><option value="중">중</option><option value="하">하</option></select></td>
+                                                            <td className="px-3 py-2"><input type="number" className="border rounded px-1.5 py-1 w-full text-xs" value={work.workerCount} onChange={(e) => handleWorkChange(work.id, 'workerCount', e.target.value)} /></td>
+                                                            <td className="px-3 py-2"><input className="border rounded px-1.5 py-1 w-full text-xs" value={work.manager} onChange={(e) => handleWorkChange(work.id, 'manager', e.target.value)} /></td>
+                                                            <td className="px-3 py-2"><select className="border rounded px-1.5 py-1 text-xs" value={work.status} onChange={(e) => handleWorkChange(work.id, 'status', e.target.value)}><option value="예정">예정</option><option value="진행">진행</option><option value="완료">완료</option></select></td>
+                                                            <td className="px-3 py-2 text-center"><button onClick={() => handleWorkSave(work.id)} className="text-green-600 bg-green-100 p-1.5 rounded-md hover:bg-green-200 transition"><Save size={16} /></button></td>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <td className="px-3 py-3 font-medium">{work.team}</td>
-                                                            <td className="px-3 py-3">{work.task}</td>
-                                                            <td className="px-3 py-3"><span className={`px-2 py-1 rounded text-xs font-bold ${work.risk === '상' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>{work.risk}</span></td>
-                                                            <td className="px-3 py-3 font-bold text-blue-600">{work.workerCount}명</td>
-                                                            <td className="px-3 py-3">{work.manager}</td>
-                                                            <td className="px-3 py-3"><span className="flex items-center text-gray-500"><span className={`w-2 h-2 rounded-full mr-2 ${work.status === '진행' ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>{work.status}</span></td>
-                                                            <td className="px-3 py-3 text-center">
-                                                                <button onClick={() => handleWorkEdit(work.id)} className="text-blue-500 p-1 rounded hover:bg-blue-50"><Edit2 size={16} /></button>
-                                                                <button onClick={() => handleDeleteWork(work.id)} className="text-red-500 p-1 rounded hover:bg-red-50 ml-1"><Trash size={16} /></button>
+                                                            <td className="px-3 py-4 font-bold text-gray-700">{work.team}</td>
+                                                            <td className="px-3 py-4 text-gray-600 font-medium">{work.task}</td>
+                                                            <td className="px-3 py-4">
+                                                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${work.risk === '상' ? 'bg-red-50 text-red-600 border border-red-100' : work.risk === '중' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                                                                    {work.risk}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-4 font-black text-gray-800">{work.workerCount || 0}<span className="text-[10px] font-bold text-gray-400 ml-0.5">명</span></td>
+                                                            <td className="px-3 py-4 text-gray-600 font-semibold">{work.manager}</td>
+                                                            <td className="px-3 py-4">
+                                                                <span className="flex items-center text-[11px] font-black text-gray-500 uppercase tracking-widest gap-2">
+                                                                    <span className={`w-2 h-2 rounded-full ${work.status === '진행' ? 'bg-green-500 animate-pulse' : work.status === '완료' ? 'bg-gray-300' : 'bg-yellow-400'}`}></span>
+                                                                    {work.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-4 text-center">
+                                                                <div className="flex items-center justify-center space-x-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
+                                                                    <button onClick={() => setEditingWorkId(work.id)} className="text-blue-500 hover:text-blue-700 p-2 transition rounded-xl hover:bg-blue-50/50"><Edit2 size={14} /></button>
+                                                                    <button onClick={() => handleDeleteWork(work.id)} className="text-gray-300 hover:text-red-500 p-2 transition rounded-xl hover:bg-red-50/50"><Trash size={14} /></button>
+                                                                </div>
                                                             </td>
                                                         </>
                                                     )}
                                                 </tr>
-                                            ))}
+                                            )) : (
+                                                <tr>
+                                                    <td colSpan={7} className="px-3 py-16 text-center bg-gray-50/30 rounded-b-xl border-t border-gray-100/50">
+                                                        <div className="flex flex-col items-center justify-center space-y-4">
+                                                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                                                                <CheckSquare size={32} className="text-green-500/40" strokeWidth={1.5} />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <p className="text-sm font-black text-gray-600 tracking-tight">현재 등록된 고위험 작업 현황이 없습니다.</p>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-none opacity-80">Safety Standard Operating Procedures</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
-                                <button onClick={handleAddWork} className="w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-gray-400 hover:border-blue-400 hover:text-blue-500 transition text-sm font-bold flex items-center justify-center"><Plus size={16} className="mr-1" /> 작업 추가하기</button>
+                                <button onClick={handleAddWork} className="w-full py-3.5 border-2 border-dashed border-gray-100 rounded-2xl text-gray-400 hover:border-red-700/20 hover:text-red-700 hover:bg-red-50/30 transition-all text-xs font-black uppercase tracking-widest flex items-center justify-center group mb-2">
+                                    <Plus size={14} className="mr-2 group-hover:rotate-90 transition-transform" />
+                                    <span>작업 추가하기</span>
+                                </button>
                             </div>
 
-                            {/* 2. 안전 교육 및 위험성평가 현황 (Restored) */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                                 <div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-gray-800 flex items-center"><ClipboardCheck className="text-blue-500 mr-2" size={20} /> 고위험 작업 안전 관리 (교육 & 위험성평가)</h3></div>
-                                {data.riskWorks.length === 0 ? <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">등록된 고위험 작업이 없습니다.</div> : (
+                                {data.riskWorks.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl italic font-medium opacity-60">
+                                        고위험 작업이 등록되면 안전 관리 카드가 생성됩니다.
+                                    </div>
+                                ) : (
                                     <div className="space-y-6">
                                         {data.riskWorks.map((work) => {
                                             const eduCompleted = parseInt(work.eduCompleted) || 0;
@@ -482,41 +486,42 @@ const SafetyDashboardInner = () => {
                                             const rate = workerCount > 0 ? Math.round((eduCompleted / workerCount) * 100) : 0;
                                             const isOverflow = rate > 100;
                                             const normalWidth = isOverflow ? 100 : rate;
-                                            const overflowWidth = isOverflow ? (rate - 100) : 0;
 
                                             return (
-                                                <div key={work.id} className="border border-gray-200 rounded-xl p-5 bg-gray-50 hover:bg-white transition hover:shadow-md">
-                                                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-4">
+                                                <div key={work.id} className="border border-gray-100 rounded-2xl p-6 bg-gray-50/50 hover:bg-white transition-all hover:shadow-xl border-l-[6px] border-l-gray-200 hover:border-l-blue-500">
+                                                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-5 gap-6">
                                                         <div>
-                                                            <div className="flex items-center gap-2 mb-1"><span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded font-bold">{work.team}</span><span className={`text-xs px-2 py-0.5 rounded font-bold ${work.risk === '상' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>위험도 {work.risk}</span></div>
-                                                            <h4 className="font-bold text-gray-800 text-lg">{work.task}</h4>
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className="bg-gray-800 text-white text-[10px] px-2.5 py-1 rounded font-black uppercase tracking-widest leading-none">{work.team}</span>
+                                                                <span className={`text-[10px] px-2.5 py-1 rounded font-black uppercase tracking-widest leading-none border ${work.risk === '상' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-yellow-50 text-yellow-600 border-yellow-100'}`}>위험도 {work.risk}</span>
+                                                            </div>
+                                                            <h4 className="font-black text-gray-900 text-xl tracking-tight leading-tight">{work.task}</h4>
                                                         </div>
-                                                        <div className="flex-1 max-w-md bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                            <div className="flex justify-between items-center mb-2">
-                                                                <span className="text-sm font-bold text-gray-600">특별 안전 교육 이수 현황</span>
-                                                                <span className={`text-sm font-bold ${rate >= 100 ? 'text-green-600' : rate >= 80 ? 'text-blue-600' : 'text-orange-500'}`}>
-                                                                    {rate}% {isOverflow ? '(초과 달성!)' : '달성'}
+                                                        <div className="flex-1 max-w-sm bg-white p-4 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group/card shadow-blue-500/5">
+                                                            <div className="flex justify-between items-center mb-3">
+                                                                <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest italic group-hover/card:text-blue-500 transition-colors">Education Progress</span>
+                                                                <span className={`text-sm font-black transition-colors ${rate >= 100 ? 'text-green-600' : rate >= 80 ? 'text-blue-600' : 'text-orange-500'}`}>
+                                                                    {rate}% {isOverflow ? '!' : ''}
                                                                 </span>
                                                             </div>
-                                                            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 relative overflow-hidden">
-                                                                <div className={`h-2.5 ${isOverflow ? 'rounded-l-full' : 'rounded-full'} transition-all duration-500 ${rate >= 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${normalWidth}%` }}></div>
-                                                                {isOverflow && (
-                                                                    <div className="h-2.5 bg-red-400 rounded-r-full transition-all duration-500 absolute left-full -translate-x-full" style={{ width: `${Math.min(overflowWidth, 20)}%` }} title={`초과: ${overflowWidth}%`}></div>
-                                                                )}
+                                                            <div className="w-full bg-gray-100 rounded-full h-3 mb-4 relative overflow-hidden">
+                                                                <div className={`h-full rounded-full transition-all duration-1000 ease-out ${rate >= 100 ? 'bg-green-500' : 'bg-blue-600'}`} style={{ width: `${normalWidth}%` }}></div>
                                                             </div>
-                                                            <div className="flex justify-between items-center text-xs">
-                                                                <span className="text-gray-500">교육 대상: <strong className="text-gray-800">{work.workerCount}명</strong></span>
+                                                            <div className="flex justify-between items-center text-[11px] font-bold">
+                                                                <span className="text-gray-400 uppercase">Input: <strong className="text-gray-800 ml-1">{work.workerCount}</strong></span>
                                                                 <div className="flex items-center gap-2">
-                                                                    <span>이수 완료:</span>
-                                                                    <input type="number" min="0" className="w-16 border rounded px-1 py-0.5 text-center font-bold" value={work.eduCompleted} onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)} onBlur={() => handleWorkSave(work.id)} />
-                                                                    <span>명</span>
+                                                                    <span className="text-gray-400 uppercase leading-none">Complete:</span>
+                                                                    <input type="number" min="0" className="w-12 bg-gray-50 border-0 rounded-lg py-1 px-1.5 text-center font-black text-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all leading-none h-6" value={work.eduCompleted} onChange={(e) => handleWorkChange(work.id, 'eduCompleted', parseInt(e.target.value) || 0)} onBlur={() => handleWorkSave(work.id)} />
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="mt-3">
-                                                        <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">사전 위험성평가 및 중점 관리 대책</label>
-                                                        <textarea className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 resize-none bg-white" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(work.id)}></textarea>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1">
+                                                            <AlertTriangle size={12} className="text-red-500/50" />
+                                                            <span>Risk Assessment & Measures</span>
+                                                        </label>
+                                                        <textarea className="w-full p-4 text-sm font-medium border border-gray-100 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-4 focus:ring-blue-50 shadow-inner bg-white/80 backdrop-blur-sm" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(id)}></textarea>
                                                     </div>
                                                 </div>
                                             );
@@ -525,29 +530,35 @@ const SafetyDashboardInner = () => {
                                 )}
                             </div>
 
-                            {/* Notice Section */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-bold text-gray-800 flex items-center"><MessageSquare className="text-purple-500 mr-2" size={20} /> Safety 알림 게시판</h3>
-                                    <button onClick={handleAddNotice} className="text-sm px-3 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex items-center"><Plus size={12} className="mr-1" /> 글쓰기</button>
+                                    <button onClick={() => setShowNoticeWriteModal(true)} className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-100 transition-all flex items-center border border-purple-100/50 group">
+                                        <Plus size={12} className="mr-1.5 group-hover:rotate-90 transition-transform" />
+                                        <span>Post Notice</span>
+                                    </button>
                                 </div>
-                                <div className="space-y-3">
-                                    {data.noticeData.map((notice) => (
-                                        <div key={notice.id} onClick={() => setSelectedNotice(notice)} className="flex items-center justify-between p-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer group">
-                                            <div className="flex items-center gap-3"><span className={`text-xs font-bold px-2 py-1 rounded ${notice.type === '공지' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{notice.type}</span><span className="text-sm font-medium text-gray-800 hover:text-blue-600 transition">{notice.title}</span></div>
-                                            <div className="flex items-center text-xs text-gray-400 gap-3">
-                                                <span>{notice.author}</span><span>{notice.date}</span>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteNotice(notice.id); }} className="p-1 hover:bg-red-100 rounded text-gray-400 hover:text-red-500 transition ml-2"><Trash size={14} /></button>
+                                <div className="space-y-1">
+                                    {data.noticeData.length > 0 ? data.noticeData.map((notice) => (
+                                        <div key={notice.id} onClick={() => setSelectedNotice(notice)} className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group active:scale-[0.99] border-b border-gray-50 last:border-0">
+                                            <div className="flex items-center gap-4">
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${notice.type === '공지' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{notice.type}</span>
+                                                <span className="text-sm font-bold text-gray-800 group-hover:text-purple-700 transition-colors">{notice.title}</span>
+                                            </div>
+                                            <div className="flex items-center text-[11px] font-bold text-gray-400 gap-4">
+                                                <span className="opacity-60">{notice.author}</span>
+                                                <span className="opacity-60">{notice.date}</span>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteNotice(notice.id); }} className="p-2 hover:bg-red-50 rounded-xl text-gray-200 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash size={14} /></button>
                                             </div>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <div className="py-10 text-center text-gray-300 font-bold italic text-sm">등록된 게시물이 없습니다.</div>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Right Column */}
                         <div className="space-y-6">
-                            {/* CCTV Section */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in overflow-hidden relative group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                                 <div className="relative z-10">
@@ -560,67 +571,129 @@ const SafetyDashboardInner = () => {
                                             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                                         </span>
                                     </div>
-                                    <div className="bg-slate-900 rounded-xl aspect-video mb-4 flex flex-col items-center justify-center border border-slate-800 shadow-inner relative overflow-hidden">
+                                    <div className="bg-slate-900 rounded-xl aspect-video mb-4 flex flex-col items-center justify-center border border-slate-800 shadow-inner relative overflow-hidden group/cctv">
                                         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                                        <div className="flex flex-col items-center gap-3 relative z-10 text-center px-4">
-                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-1">
+                                        <div className="flex flex-col items-center gap-3 relative z-10 text-center px-4 transform transition-all group-hover/cctv:scale-105">
+                                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-1 border border-white/5 backdrop-blur-md">
                                                 <Activity size={24} className="text-blue-400" />
                                             </div>
-                                            <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">ADT Caps Viewguard</p>
-                                            <p className="text-[10px] text-slate-500 leading-tight">보안 정책으로 인해 외부 창에서<br />실시간 영상을 확인하실 수 있습니다.</p>
+                                            <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase opacity-70">ADT CAPS VIEWGUARD</p>
+                                            <p className="text-[10px] text-slate-500 font-bold leading-relaxed px-2">보안 정책으로 인해 외부 창에서<br />실시간 영상을 확인하실 수 있습니다.</p>
                                         </div>
                                     </div>
                                     <a
                                         href={data.cctvUrl || 'https://capslive.co.kr'}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-black text-sm hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2 group/btn"
+                                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl hover:shadow-blue-500/20 flex items-center justify-center gap-2 group/btn active:scale-95"
                                     >
-                                        <span>현장 CCTV 확인하기</span>
-                                        <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+                                        <span>Link Live Feed</span>
+                                        <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                                     </a>
                                 </div>
                             </div>
 
-                            {/* Issues Section */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><CheckCircle className="text-green-500 mr-2" size={20} /> 안전 부적합 조치</h3>
-                                <div className="space-y-3">
-                                    <div onClick={() => { setSelectedIssueType('new'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-100 cursor-pointer hover:-translate-y-1 transition"><div className="flex items-center"><div className="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center text-red-600 mr-3"><AlertTriangle size={16} /></div><span className="text-sm font-bold text-gray-700">신규 발견 (접수 대기)</span></div><span className="text-xl font-bold text-red-600">{data.issueCounts.new}</span></div>
-                                    <div onClick={() => { setSelectedIssueType('processing'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-100 cursor-pointer hover:-translate-y-1 transition"><div className="flex items-center"><div className="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-600 mr-3"><Activity size={16} /></div><span className="text-sm font-bold text-gray-700">조치 중 (진행)</span></div><span className="text-xl font-bold text-yellow-600">{data.issueCounts.processing}</span></div>
-                                    <div onClick={() => { setSelectedIssueType('done'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-100 cursor-pointer hover:-translate-y-1 transition"><div className="flex items-center"><div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-green-600 mr-3"><CheckCircle size={16} /></div><span className="text-sm font-bold text-gray-700">조치 완료</span></div><span className="text-xl font-bold text-green-600">{data.issueCounts.done}</span></div>
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in shadow-xl shadow-gray-200/20">
+                                <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center uppercase tracking-tight gap-2">
+                                    <CheckCircle className="text-green-500" size={20} />
+                                    <span>Incident Registry</span>
+                                </h3>
+                                <div className="space-y-4">
+                                    <div onClick={() => { setSelectedIssueType('new'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-red-50/50 rounded-2xl border border-red-100/50 cursor-pointer hover:bg-red-50 transition-all hover:scale-[1.02] shadow-sm shadow-red-500/5 group">
+                                        <div className="flex items-center">
+                                            <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 mr-3 border border-red-200/50 font-black italic">!</div>
+                                            <div>
+                                                <span className="text-xs font-black text-red-900/40 uppercase tracking-widest block leading-none mb-1">Status: New</span>
+                                                <span className="text-sm font-black text-gray-700 leading-none block">신규 발견 (접수 대기)</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-2xl font-black text-red-600 tracking-tighter">{data.issueCounts.new}</span>
+                                    </div>
+                                    <div onClick={() => { setSelectedIssueType('processing'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-yellow-50/50 rounded-2xl border border-yellow-100/50 cursor-pointer hover:bg-yellow-50 transition-all hover:scale-[1.02] shadow-sm shadow-yellow-500/5 group">
+                                        <div className="flex items-center">
+                                            <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center text-yellow-600 mr-3 border border-yellow-200/50"><Activity size={18} /></div>
+                                            <div>
+                                                <span className="text-xs font-black text-yellow-900/40 uppercase tracking-widest block leading-none mb-1">Status: In-Progress</span>
+                                                <span className="text-sm font-black text-gray-700 leading-none block">조치 중 (진행 현황)</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-2xl font-black text-yellow-600 tracking-tighter">{data.issueCounts.processing}</span>
+                                    </div>
+                                    <div onClick={() => { setSelectedIssueType('done'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-green-50/50 rounded-2xl border border-green-100/50 cursor-pointer hover:bg-green-50 transition-all hover:scale-[1.02] shadow-sm shadow-green-500/5 group">
+                                        <div className="flex items-center">
+                                            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600 mr-3 border border-green-200/50"><CheckCircle size={18} /></div>
+                                            <div>
+                                                <span className="text-xs font-black text-green-900/40 uppercase tracking-widest block leading-none mb-1">Status: Resolved</span>
+                                                <span className="text-sm font-black text-gray-700 leading-none block">조치 완료 내역</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-2xl font-black text-green-600 tracking-tighter">{data.issueCounts.done}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Inspections Section */}
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">반입 점검 및 알림</h3>
-                                <div className="grid grid-cols-1 gap-2 mb-4">
-                                    <button onClick={() => openInspectionModal('건설장비')} className="py-2.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold hover:bg-blue-100 flex items-center justify-center border border-blue-100"><Truck size={16} className="mr-2" /> 건설장비 점검</button>
-                                    <button onClick={() => openInspectionModal('기계기구')} className="py-2.5 bg-orange-50 text-orange-700 rounded-lg text-sm font-bold hover:bg-orange-100 flex items-center justify-center border border-orange-100"><Tool size={16} className="mr-2" /> 기계기구 점검</button>
-                                    <button onClick={() => openInspectionModal('유해화학물질')} className="py-2.5 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold hover:bg-purple-100 flex items-center justify-center border border-purple-100"><FlaskConical size={16} className="mr-2" /> 유해화학물질 점검</button>
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-24 h-1 bg-red-800"></div>
+                                <h3 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-tight">Access Inspection</h3>
+                                <div className="grid grid-cols-1 gap-3 mb-6">
+                                    <button onClick={() => openInspectionModal('건설장비')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-50 hover:text-blue-700 transition-all border border-gray-100 flex items-center justify-center gap-3 relative overflow-hidden">
+                                        <Truck size={18} className="transition-transform group-hover/btn:-translate-x-1" />
+                                        <span>Eqip Ingress</span>
+                                        <ArrowRight size={12} className="opacity-0 group-hover/btn:opacity-100 transition-all" />
+                                    </button>
+                                    <button onClick={() => openInspectionModal('기계기구')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-orange-50 hover:text-orange-700 transition-all border border-gray-100 flex items-center justify-center gap-3">
+                                        <Tool size={18} className="transition-transform group-hover/btn:-translate-x-1" />
+                                        <span>Machine Check</span>
+                                        <ArrowRight size={12} className="opacity-0 group-hover/btn:opacity-100 transition-all" />
+                                    </button>
+                                    <button onClick={() => openInspectionModal('유해화학물질')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-purple-50 hover:text-purple-700 transition-all border border-gray-100 flex items-center justify-center gap-3">
+                                        <FlaskConical size={18} className="transition-transform group-hover/btn:-translate-x-1" />
+                                        <span>HAZMAT Access</span>
+                                        <ArrowRight size={12} className="opacity-0 group-hover/btn:opacity-100 transition-all" />
+                                    </button>
                                 </div>
-                                <ul className="space-y-3 mt-4">
-                                    {data.inspectionLog.slice(0, 5).map(log => (
-                                        <li key={log.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-100 text-sm">
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 italic">Recent Logs</p>
+                                    {data.inspectionLog.length > 0 ? data.inspectionLog.slice(0, 5).map(log => (
+                                        <div key={log.id} className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-gray-100 transition-all hover:bg-white group/log active:scale-[0.98]">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-gray-700">{log.item}</span>
-                                                <span className="text-xs text-gray-500">{log.type} | {log.date}</span>
+                                                <span className="text-[11px] font-black text-gray-900 tracking-tight group-hover/log:text-blue-600 transition-colors uppercase">{log.item}</span>
+                                                <span className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
+                                                    <span>{log.type}</span>
+                                                    <span className="w-0.5 h-0.5 rounded-full bg-gray-300"></span>
+                                                    <span>{log.date}</span>
+                                                </span>
                                             </div>
-                                            <span className={`text-xs px-2 py-1 rounded font-bold ${log.status === '합격' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{log.status}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                            <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${log.status === '합격' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {log.status === '합격' ? 'Pass' : 'Reject'}
+                                            </span>
+                                        </div>
+                                    )) : (
+                                        <div className="py-6 text-center text-gray-300 font-bold italic text-xs">최근 점검 이력이 없습니다.</div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </main>
 
-                <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-gray-200 mt-8 relative flex justify-center items-center">
-                    <p className="text-gray-400 text-sm font-medium">남화토건(주) 안전보건팀</p>
-                    <div className="absolute right-4 flex space-x-2">
-                        <button onClick={handlePrintAndSave} className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm whitespace-nowrap"><Printer size={16} className="mr-2" /> PDF 보고서 출력</button>
-                        <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap border border-purple-400/30"><LinkIcon size={18} className="mr-2" /> 예정공정표 바로가기</a>
+                <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-100 mt-20 relative flex flex-col md:flex-row justify-between items-center opacity-60 hover:opacity-100 transition-all duration-700">
+                    <div className="flex items-center mb-8 md:mb-0 transform hover:scale-105 transition-transform duration-500 group">
+                        <NamhwaSymbol className="w-10 h-10 mr-4 text-gray-400 grayscale group-hover:grayscale-0 transition-all duration-500" />
+                        <div>
+                            <p className="text-gray-800 text-sm font-black tracking-tight uppercase leading-none mb-1">Namhwa Construction</p>
+                            <p className="text-gray-400 text-[10px] font-bold tracking-[0.3em] uppercase leading-none opacity-80">Safety & Health Team</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <button onClick={handlePrintAndSave} className="flex items-center bg-gray-900 text-white px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-black transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 active:scale-95 whitespace-nowrap group">
+                            <Printer size={16} className="mr-2.5 group-hover:rotate-12 transition-transform" />
+                            <span>Export Daily Report</span>
+                        </button>
+                        <a href={currentSiteInfo.link} target="_blank" className="flex items-center bg-white text-gray-900 border border-gray-200 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg hover:-translate-y-1 active:translate-y-0 active:scale-95 whitespace-nowrap group">
+                            <LinkIcon size={16} className="mr-2.5 group-hover:scale-110 transition-transform" />
+                            <span>Scheduling Chart</span>
+                        </a>
                     </div>
                 </footer>
 

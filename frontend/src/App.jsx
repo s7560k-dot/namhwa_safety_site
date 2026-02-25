@@ -4,16 +4,16 @@ import SafetyDashboard from './SafetyDashboard';
 import ResourceCenter from './ResourceCenter';
 import Login from './Login';
 import Admin from './Admin';
+import GlobalBoard from './GlobalBoard';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfUse from './components/TermsOfUse';
 import ContactSupport from './components/ContactSupport';
-import FirestoreScanner from './components/FirestoreScanner';
-import GlobalBoard from './GlobalBoard';
+import MaterialCalculator from './components/MaterialCalculator';
+import CivilQuantityTakeoff from './components/CivilQuantityTakeoff';
 
 function App() {
   return (
     <Router>
-      <FirestoreScanner />
       <Routes>
         <Route path="/" element={<ResourceCenter />} />
         <Route path="/login" element={<Login />} />
@@ -23,6 +23,8 @@ function App() {
         <Route path="/support" element={<ContactSupport />} />
         <Route path="/dashboard/:siteId" element={<SafetyDashboard />} />
         <Route path="/board/global" element={<GlobalBoard />} />
+        <Route path="/calculator" element={<MaterialCalculator />} />
+        <Route path="/civil-calc" element={<CivilQuantityTakeoff />} />
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
