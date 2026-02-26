@@ -23,6 +23,95 @@ def set_cors_headers(resp: https_fn.Response):
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
 
+@https_fn.on_request(max_instances=10, timeout_sec=120)
+def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
+    """프론트엔드에서 2D 3D 변환기의 Gemini 호출을 중계 (API Key 보호)"""
+    if req.method == "OPTIONS":
+        return set_cors_headers(https_fn.Response(status=204))
+    
+    if req.method != "POST":
+        resp = https_fn.Response(json.dumps({"detail": "Only POST method is supported"}), status=405)
+        return set_cors_headers(resp)
+        
+    try:
+        data = req.get_json(silent=True)
+        if not data or "imageBase64" not in data or "mimeType" not in data:
+            return set_cors_headers(https_fn.Response(json.dumps({"detail": "Missing imageBase64 or mimeType"}), status=400, content_type="application/json"))
+            
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+             raise ValueError("GEMINI_API_KEY environment variable is missing on server")
+             
+        genai.configure(api_key=api_key)
+        
+        system_instruction = """
+          너는 전문 건축 CAD AI다. 주어진 평면도 이미지를 분석하여 
+          벽(walls), 문(doors), 창문(windows)의 상대적 좌표(x, y)와 크기를 극도로 정확하게 추출하라.
+          
+          원점(0, 0)은 도면의 좌측 상단 또는 좌측 하단을 기준으로 일관되게 적용하라.
+          좌표 단위는 밀리미터(mm)를 가정하고 논리적인 픽셀 비율로 환산해서 제공하라.
+          
+          반드시 아래의 JSON 스키마 구조와 100% 일치하게 반환해야 하며, 마크다운 코드 블록(```json) 등 그 어떤 부가적인 텍스트도 포함하지 마라.
+          
+          [JSON 스키마]
+          {
+            "walls": [
+              {
+                "id": "고유문자열 (예: wall-1)",
+                "start": { "x": 숫자, "y": 숫자 },
+                "end": { "x": 숫자, "y": 숫자 },
+                "thickness": 숫자 (벽 두께),
+                "height": 숫자 (벽 높이, 기본값 2800)
+              }
+            ],
+            "doors": [
+               // 생략 (프론트엔드와 동일)
+            ],
+            "windows": [
+               // 생략
+            ]
+          }
+        """
+        
+        # 모델 설정 (JSON 반환 설정 파이썬 SDK 방식)
+        model = genai.GenerativeModel(
+            model_name='gemini-2.5-flash',
+            generation_config=genai.types.GenerationConfig(
+                response_mime_type="application/json",
+                temperature=0.1,
+            ),
+            system_instruction=system_instruction
+        )
+        
+        # Base64 처리 모듈(안전하게 bytes로 디코딩)
+        import base64
+        base64_data = data["imageBase64"].replace("data:image/jpeg;base64,", "").replace("data:image/png;base64,", "")
+        image_bytes = base64.b64decode(base64_data)
+        
+        prompt = "첨부된 평면도 이미지를 분석하여 지정된 JSON 포맷으로 구조화된 공간 데이터를 추출해 줘."
+        
+        # 파이썬 SDK에서는 MIME dict(Blob) 형태로 전송
+        image_blob = {
+            "mime_type": data["mimeType"],
+            "data": image_bytes
+        }
+        
+        response = model.generate_content([prompt, image_blob])
+        ai_response_text = response.text.strip()
+        
+        # 불필요한 마크다운 제거
+        clean_json_text = ai_response_text.replace("```json", "").replace("```", "").strip()
+        
+        # 파싱 가능한 JSON인지 체크 후 리턴 (실패하더라도 일단 클라이언트로 전달 후 클라이언트에서 에러 처리)
+        resp = https_fn.Response(json.dumps({"success": True, "data": json.loads(clean_json_text)}), content_type="application/json")
+        return set_cors_headers(resp)
+        
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        print(f"Gemini API 3D Converter Error: {error_msg}")
+        resp = https_fn.Response(json.dumps({"detail": f"AI Parsing Failed: {str(e)}"}), status=500, content_type="application/json")
+        return set_cors_headers(resp)
+
 @https_fn.on_request(max_instances=10, memory=1024)
 def analyze_dxf(req: https_fn.Request) -> https_fn.Response:
     """DXF 도면 파일 파싱 및 수량(길이, 면적) 추출 클라우드 함수"""

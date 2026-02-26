@@ -2,17 +2,8 @@ import React, { useState, useRef } from "react";
 import { ArrowLeft, UploadCloud, RefreshCw, AlertTriangle, Box as BoxIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import FloorPlan3DViewer from "./FloorPlan3DViewer";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// 1. 계획 (상태 정의)
-// - 업로드된 이미지 파일(base64) 상태
-// - API 로딩(분석 중) 상태
-// - 에러 메시지 상태
-// - Gemini API로부터 완성되어 돌아온 파싱 데이터(JSON) 상태
-
-// Vite 환경이므로 import.meta.env 사용 (주의: .env에 VITE_GEMINI_API_KEY 설정 필요)
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(API_KEY);
+// 클라이언트에서 Gemini SDK를 직접 호출하지 않고 Firebase Functions(백엔드)를 경유합니다.
+// 이렇게 하면 API 키를 안전하게 서버에만 보관할 수 있습니다.
 
 export default function FloorPlanTo3DApp() {
     const [imageSrc, setImageSrc] = useState(null);
@@ -44,90 +35,43 @@ export default function FloorPlanTo3DApp() {
             return;
         }
 
-        if (!API_KEY) {
-            setError("VITE_GEMINI_API_KEY 환경변수가 설정되지 않았습니다. 관리자에게 문의하세요.");
-            return;
-        }
-
         setIsLoading(true);
         setError(null);
 
         try {
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    temperature: 0.1,
-                },
-                systemInstruction: `
-          너는 전문 건축 CAD AI다. 주어진 평면도 이미지를 분석하여 
-          벽(walls), 문(doors), 창문(windows)의 상대적 좌표(x, y)와 크기를 극도로 정확하게 추출하라.
-          
-          원점(0, 0)은 도면의 좌측 상단 또는 좌측 하단을 기준으로 일관되게 적용하라.
-          좌표 단위는 밀리미터(mm)를 가정하고 논리적인 픽셀 비율로 환산해서 제공하라.
-          
-          반드시 아래의 JSON 스키마 구조와 100% 일치하게 반환해야 하며, 마크다운 코드 블록(\`\`\`json) 등 그 어떤 부가적인 텍스트도 포함하지 마라.
-          
-          [JSON 스키마]
-          {
-            "walls": [
-              {
-                "id": "고유문자열 (예: wall-1)",
-                "start": { "x": 숫자, "y": 숫자 },
-                "end": { "x": 숫자, "y": 숫자 },
-                "thickness": 숫자 (벽 두께),
-                "height": 숫자 (벽 높이, 기본값 2800)
-              }
-            ],
-            "doors": [
-              {
-                "id": "고유문자열",
-                "wallId": "이 문이 위치한 벽체의 id",
-                "start": { "x": 숫자, "y": 숫자 },
-                "end": { "x": 숫자, "y": 숫자 },
-                "thickness": 숫자,
-                "height": 숫자 (기본값 2100)
-              }
-            ],
-            "windows": [
-              {
-                "id": "고유문자열",
-                "wallId": "이 창문이 위치한 벽체의 id",
-                "start": { "x": 숫자, "y": 숫자 },
-                "end": { "x": 숫자, "y": 숫자 },
-                "thickness": 숫자,
-                "height": 숫자 (기본값 1200),
-                "elevation": 숫자 (바닥에서 창문 아래까지의 높이, 기본값 900)
-              }
-            ]
-          }
-        `,
-            });
-
-            const base64Data = imageSrc.replace(/^data:image\/\w+;base64,/, "");
             // 업로드된 이미지에서 mimeType을 추출 (data:image/png;base64... 형식에서 추출)
             const mimeMatch = imageSrc.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
             const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-            const prompt = "첨부된 평면도 이미지를 분석하여 지정된 JSON 포맷으로 구조화된 공간 데이터를 추출해 줘.";
+            // 새로운 Firebase Functions 백엔드 게이트웨이 정대경로 호출
+            // firebase.json의 rewrites 정책을 통해 /api/* 요청이 백엔드 함수로 라우팅되도록 설정하여 CORS 문제를 원천 차단했습니다.
+            const CLOUD_FUNCTION_URL = "/api/analyze_floorplan_3d";
 
-            const result = await model.generateContent([
-                prompt,
-                { inlineData: { data: base64Data, mimeType } }
-            ]);
-            const responseText = result.response.text();
+            const response = await fetch(CLOUD_FUNCTION_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    imageBase64: imageSrc,
+                    mimeType: mimeType
+                })
+            });
 
-            const cleanJsonText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-            const parsed = JSON.parse(cleanJsonText);
+            const result = await response.json();
 
-            if (!parsed.walls || !Array.isArray(parsed.walls)) {
-                throw new Error("응답에 walls 배열이 없습니다.");
+            if (!response.ok) {
+                throw new Error(result.detail || "서버에서 도면을 분석하는 중 오류가 발생했습니다.");
             }
 
-            setParsedData(parsed);
+            if (!result.data || !result.data.walls || !Array.isArray(result.data.walls)) {
+                throw new Error("서버 응답 형식이 올바르지 않습니다.");
+            }
+
+            setParsedData(result.data);
         } catch (err) {
             console.error("분석 에러:", err);
-            setError("AI가 도면을 분석하는 데 실패했습니다: " + (err.message || "Unknown error"));
+            setError("AI 변환 실패: " + (err.message || "Unknown error"));
         } finally {
             setIsLoading(false);
         }
@@ -159,64 +103,67 @@ export default function FloorPlanTo3DApp() {
             {/* 메인 컨텐츠 영역 */}
             <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 h-auto lg:h-[700px]">
 
-                {/* 왼쪽: 컨트롤 패널 (업로드 & 미리보기) - lg:col-span-4 */}
-                <div className="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col">
-                    <h2 className="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
-                        <UploadCloud size={20} className="text-indigo-500" /> 도면 업로드
-                    </h2>
+                {/* 왼쪽: 컨트롤 패널 (업로드 & 설정) - lg:col-span-4 */}
+                <div className="lg:col-span-4 flex flex-col gap-6">
+                    {/* 도면 업로드 카드 */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col h-full">
+                        <h2 className="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
+                            <UploadCloud size={20} className="text-indigo-500" /> 도면 업로드
+                        </h2>
 
-                    {/* 파일 업로드 박스 */}
-                    <div
-                        className={`w-full h-48 md:h-64 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${imageSrc ? "border-indigo-400 bg-indigo-50/50 p-2" : "border-slate-300 hover:border-indigo-300 bg-slate-50"}`}
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <input
-                            type="file"
-                            accept="image/jpeg, image/png, image/webp"
-                            className="hidden"
-                            ref={fileInputRef}
-                            onChange={handleImageUpload}
-                        />
-                        {imageSrc ? (
-                            <img src={imageSrc} alt="uploaded floorplan" className="h-full w-full object-contain rounded-lg" />
-                        ) : (
-                            <div className="text-center p-4">
-                                <UploadCloud className="mx-auto h-10 w-10 text-slate-400 mb-2" />
-                                <p className="text-sm text-slate-600 font-bold">도면 이미지를 선택하세요</p>
-                                <p className="mt-1 text-xs text-slate-400">JPG, PNG 파일 지원</p>
+                        {/* 파일 업로드 박스 */}
+                        <div
+                            className={`w-full h-48 md:h-64 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all ${imageSrc ? "border-indigo-400 bg-indigo-50/50 p-2" : "border-slate-300 hover:border-indigo-300 bg-slate-50"}`}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <input
+                                type="file"
+                                accept="image/jpeg, image/png, image/webp"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleImageUpload}
+                            />
+                            {imageSrc ? (
+                                <img src={imageSrc} alt="uploaded floorplan" className="h-full w-full object-contain rounded-lg" />
+                            ) : (
+                                <div className="text-center p-4">
+                                    <UploadCloud className="mx-auto h-10 w-10 text-slate-400 mb-2" />
+                                    <p className="text-sm text-slate-600 font-bold">도면 이미지를 선택하세요</p>
+                                    <p className="mt-1 text-xs text-slate-400">JPG, PNG 파일 지원</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 에러 메시지 */}
+                        {error && (
+                            <div className="w-full mt-4 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-start gap-2 leading-relaxed font-medium">
+                                <AlertTriangle className="shrink-0 mt-0.5" size={16} /> {error}
                             </div>
                         )}
-                    </div>
 
-                    {/* 에러 메시지 */}
-                    {error && (
-                        <div className="w-full mt-4 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-start gap-2 leading-relaxed font-medium">
-                            <AlertTriangle className="shrink-0 mt-0.5" size={16} /> {error}
-                        </div>
-                    )}
-
-                    <div className="mt-auto pt-6">
-                        {/* 분석 버튼 */}
-                        <button
-                            onClick={analyzeFloorplan}
-                            disabled={!imageSrc || isLoading}
-                            className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-md flex items-center justify-center gap-2 ${!imageSrc || isLoading
+                        <div className="mt-auto pt-6">
+                            {/* 분석 버튼 */}
+                            <button
+                                onClick={analyzeFloorplan}
+                                disabled={!imageSrc || isLoading}
+                                className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-md flex items-center justify-center gap-2 ${!imageSrc || isLoading
                                     ? "bg-slate-300 cursor-not-allowed"
                                     : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-0.5"
-                                }`}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <RefreshCw className="animate-spin" size={20} />
-                                    AI 분석 중...
-                                </>
-                            ) : (
-                                <>
-                                    <BoxIcon size={20} />
-                                    3D 모델 생성
-                                </>
-                            )}
-                        </button>
+                                    }`}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <RefreshCw className="animate-spin" size={20} />
+                                        AI 분석 중 (약 5~10초 소요)...
+                                    </>
+                                ) : (
+                                    <>
+                                        <BoxIcon size={20} />
+                                        3D 모델 생성
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
 

@@ -11,6 +11,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/analyze_floorplan_3d",
+        "function": "analyze_floorplan_3d"
+      },
+      {
         "source": "!**/*.{js,css,png,jpg,jpeg,gif,svg,ico,pdf,html,json,txt}",
         "destination": "/index.html"
       }
