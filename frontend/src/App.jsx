@@ -10,6 +10,7 @@ import TermsOfUse from './components/TermsOfUse';
 import ContactSupport from './components/ContactSupport';
 import MaterialCalculator from './components/MaterialCalculator';
 import CivilQuantityTakeoff from './components/CivilQuantityTakeoff';
+import FloorPlanTo3DApp from './components/FloorPlanTo3DApp';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/board/global" element={<GlobalBoard />} />
         <Route path="/calculator" element={<MaterialCalculator />} />
         <Route path="/civil-calc" element={<CivilQuantityTakeoff />} />
+        <Route path="/floorplan-3d" element={<FloorPlanTo3DApp />} />
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
