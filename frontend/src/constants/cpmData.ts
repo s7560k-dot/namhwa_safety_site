@@ -13,6 +13,8 @@ export interface NetworkProjectConfig {
     projectName: string;
 }
 
+export const ALLOWED_SITE_ID = 'siteA'; // 대광새마을금고 골프연습장 전용 공정표 필터링용
+
 export const CPM_CONFIG: NetworkProjectConfig = {
     projectName: "대광새마을금고 골프연습장 신축공사",
     startDate: "2025-12-12",

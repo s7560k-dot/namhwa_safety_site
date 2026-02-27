@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Network, Activity, Layout, ChevronDown, ChevronUp } from 'lucide-react';
 import EvmDashboard from './EvmDashboard';
 import EvmSCurveChart from './EvmSCurveChart';
-import { CPM_CONFIG, CPM_TASKS, NetworkTask, NetworkProjectConfig } from '../../constants/cpmData';
+import { CPM_CONFIG, CPM_TASKS, ALLOWED_SITE_ID, NetworkTask, NetworkProjectConfig } from '../../constants/cpmData';
 
 interface NetworkScheduleDashboardProps {
     config?: NetworkProjectConfig;
@@ -65,6 +65,11 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
 
     // Props를 우선순위로 두고, 없으면 라우터 파라미터 사용
     const targetSiteId = projectId || siteId;
+
+    // [BUG FIX] CPM 공정표 현장별 노출 제한: siteA(대광)가 아닌 경우 렌더링하지 않음
+    if (targetSiteId !== ALLOWED_SITE_ID) {
+        return null;
+    }
 
     const [currentDay, setCurrentDay] = useState<number>(0);
     const [isDashboardOpen, setIsDashboardOpen] = useState<boolean>(true);
