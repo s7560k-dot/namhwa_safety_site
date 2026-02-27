@@ -4,47 +4,15 @@ import mermaid from 'mermaid';
 import { Network } from 'lucide-react';
 import EvmDashboard from './EvmDashboard';
 import EvmSCurveChart from './EvmSCurveChart';
-
-export interface NetworkTask {
-    id: string;
-    name: string;
-    start: number;
-    duration: number;
-    cost: number;
-}
-
-export interface NetworkProjectConfig {
-    startDate: string; // "YYYY-MM-DD"
-    totalDays: number;
-    totalContractAmount: number;
-    projectName: string;
-}
+import { CPM_CONFIG, CPM_TASKS, NetworkTask, NetworkProjectConfig } from '../../constants/cpmData';
 
 interface NetworkScheduleDashboardProps {
     config?: NetworkProjectConfig;
     tasks?: NetworkTask[];
+    projectId?: string; // 추가: 부모로부터 직접 현장 ID를 받을 수 있음
 }
 
-// 기본(Default) 프로젝트 설정 및 하드코딩된 데이터 (추후 Firebase 등 외부에서 주입)
-const DEFAULT_CONFIG: NetworkProjectConfig = {
-    projectName: "대광새마을금고 골프연습장 신축공사",
-    startDate: "2025-12-12",
-    totalDays: 300,
-    totalContractAmount: 6630033084
-};
-
-const DEFAULT_TASKS: NetworkTask[] = [
-    { id: 'A', name: "가설 및 토공사", start: 0, duration: 40, cost: 341275348 },
-    { id: 'B', name: "기초 및 파일공사", start: 30, duration: 40, cost: 52232520 },
-    { id: 'C', name: "RC 구조물 공사", start: 60, duration: 70, cost: 764246127 },
-    { id: 'D', name: "철골 구조물 공사", start: 80, duration: 60, cost: 376856180 },
-    { id: 'E', name: "철탑 및 주요설비", start: 130, duration: 80, cost: 889267231 },
-    { id: 'F', name: "그물망 및 시스템", start: 200, duration: 50, cost: 370279992 },
-    { id: 'G', name: "내외장 및 MEP", start: 160, duration: 100, cost: 2595879480 },
-    { id: 'H', name: "부대토목 및 조경", start: 250, duration: 50, cost: 1239996206 }
-];
-
-// Mermaid 차트 구성 (하드코딩 된 문자열 부분도 나중에 동적으로 수정 가능)
+// Mermaid 차트 구성
 const MERMAID_GRAPH = `
 graph LR
     classDef normal fill:#fff,stroke:#333,stroke-width:1px,rx:5,ry:5;
@@ -88,14 +56,27 @@ const formatMoneyShort = (amount: number) => {
     return (amount / 100000000).toFixed(1);
 };
 
+// Mermaid 초기화 (글로벌 1회)
+mermaid.initialize({
+    startOnLoad: false,
+    flowchart: { curve: 'basis' },
+    theme: 'default'
+});
+
 const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
-    config = DEFAULT_CONFIG,
-    tasks = DEFAULT_TASKS
+    config = CPM_CONFIG,
+    tasks = CPM_TASKS,
+    projectId // Props로 들어온 현장 ID
 }) => {
+
     const { siteId } = useParams(); // URL에서 프로젝트(현장) ID 추출
+
+    // Props를 우선순위로 두고, 없으면 라우터 파라미터 사용
+    const targetSiteId = projectId || siteId;
+
     const [currentDay, setCurrentDay] = useState<number>(0);
     const mermaidRef = useRef<HTMLDivElement>(null);
-    const [renderKey, setRenderKey] = useState(0);
+    const chartId = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
 
     // 날짜 연산 계산
     const currentDateString = useMemo(() => {
@@ -130,6 +111,7 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                 ...task,
                 status,
                 progressPct: Math.round(taskProgress * 100),
+                cost: task.cost,
                 earned
             };
         });
@@ -144,33 +126,34 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
         };
     }, [currentDay, tasks, config.totalContractAmount]);
 
-    // Mermaid 차트 초기화 (컴포넌트 로드시 딱 한번)
+    // Mermaid 차트 초기화 및 렌더링
     useEffect(() => {
-        mermaid.initialize({
-            startOnLoad: false, // React 환경에서는 수동 렌더가 안정적
-            flowchart: { curve: 'basis' },
-            theme: 'default'
-        });
-
-        // setTimeout으로 DOM 마운트 후 렌더 보장
         const renderMermaid = async () => {
             if (mermaidRef.current) {
                 try {
-                    const { svg } = await mermaid.render('mermaid-chart-svg', MERMAID_GRAPH);
+                    // 이전 내용 초기화
+                    mermaidRef.current.innerHTML = '<div class="flex items-center text-gray-400 text-xs animate-pulse">차트 렌더링 중...</div>';
+
+                    const { svg } = await mermaid.render(chartId.current, MERMAID_GRAPH);
                     mermaidRef.current.innerHTML = svg;
                 } catch (err) {
                     console.error("Mermaid Render Error", err);
+                    mermaidRef.current.innerHTML = '<div class="text-red-400 text-xs font-bold">공정표 렌더링 오류가 발생했습니다.</div>';
                 }
             }
         };
 
-        setTimeout(renderMermaid, 50);
-    }, []);
+        // DOM 마운트 후 즉시 및 약간의 지연 후 렌더링 시도 (리액트 생명주기 대응)
+        renderMermaid();
+        const timer = setTimeout(renderMermaid, 500);
+
+        return () => clearTimeout(timer);
+    }, []); // 차트 내용은 고정이므로 최초 1회만 실행
 
     const { tasksInfo, currentTotalEarned, finalProgress } = computedStatus;
 
     return (
-        <div className="flex flex-col h-full w-full min-h-screen bg-gray-50 p-5 font-sans box-border text-gray-800">
+        <div className="flex flex-col h-full w-full bg-gray-50 p-5 font-sans box-border text-gray-800 rounded-xl">
             {/* 상단 헤더 영역 */}
             <header className="flex flex-col md:flex-row justify-between md:items-center bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-5">
                 <h1 className="flex items-center m-0 text-xl font-bold text-gray-800 tracking-tight">
@@ -193,9 +176,10 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                 <div className="flex-[2] bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col min-h-[400px]">
                     <h3 className="m-0 mb-4 text-base font-bold text-gray-800">CPM Network Schedule</h3>
                     <div
-                        key={renderKey} // 강제 리렌더
                         ref={mermaidRef}
                         className="mermaid flex-1 flex justify-center items-center overflow-auto"
+                        // 리액트가 이 div 이하의 DOM을 건드리지 않도록 명시
+                        dangerouslySetInnerHTML={{ __html: '' }}
                     >
                         {/* Mermaid Render Target */}
                     </div>
@@ -301,15 +285,15 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
             </div >
 
             {/* 실제 DB 연동 EVM 기성 현황 모듈 섹션 */}
-            {siteId && (
+            {targetSiteId && (
                 <div className="mt-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4 px-1 border-b border-gray-200 pb-2">실적 공정 및 기성고(EVM) 관리 대시보드</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                         <div className="lg:col-span-2">
-                            <EvmSCurveChart projectId={siteId} />
+                            <EvmSCurveChart projectId={targetSiteId} />
                         </div>
                         <div className="lg:col-span-1 border-gray-100 flex flex-col h-full overflow-hidden">
-                            <EvmDashboard projectId={siteId} />
+                            <EvmDashboard projectId={targetSiteId} />
                         </div>
                     </div>
                 </div>

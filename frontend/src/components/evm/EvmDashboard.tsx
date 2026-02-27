@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase'; // Firebase 경로는 프로젝트 구조에 맞게
+import { db } from '../../firebase';
 import { WbsTask, calculateEvmMetrics } from './types';
 import { Activity } from 'lucide-react';
 import EvmUpdateModal from './EvmUpdateModal';
-import ExcelWbsUploader from './ExcelWbsUploader';
+import { CPM_TASKS } from '../../constants/cpmData';
 
 interface EvmDashboardProps {
     projectId: string;
@@ -12,155 +12,159 @@ interface EvmDashboardProps {
 const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
     const [tasks, setTasks] = useState<WbsTask[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<WbsTask | null>(null);
 
     useEffect(() => {
-        // Firestore에서 현장의 WBS 데이터를 불러옴
+        // Firestore에서 실적 데이터(EV, AC)만 불러옴
         const unsubscribe = db
             .collection('sites')
             .doc(projectId)
             .collection('wbs_tasks')
-            .onSnapshot((snapshot: any) => {
-                const tasksData: WbsTask[] = snapshot.docs.map((doc: any) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                setTasks(tasksData);
+            .onSnapshot(async (snapshot: any) => {
+                const firestoreDataMap: { [key: string]: any } = {};
+                snapshot.forEach((doc: any) => {
+                    firestoreDataMap[doc.id] = doc.data();
+                });
+
+                // CPM_TASKS 마스터 데이터를 기준으로 UI용 데이터 병합
+                const mergedTasks: WbsTask[] = CPM_TASKS.map(cpmTask => {
+                    const dbMetrics = firestoreDataMap[cpmTask.id] || {};
+                    return {
+                        id: cpmTask.id,
+                        name: cpmTask.name, // 마스터 데이터(CPM) 최우선 지원
+                        pv: cpmTask.cost,  // 마스터 데이터(CPM) 최우선 (자동 반영 보장)
+                        ev: dbMetrics.ev || 0,
+                        ac: dbMetrics.ac || 0,
+                        startDate: "2025-12-12",
+                        endDate: "2026-10-12",
+                        updatedAt: dbMetrics.updatedAt || new Date().toISOString()
+                    };
+                });
+
+                setTasks(mergedTasks);
                 setLoading(false);
             });
 
         return () => unsubscribe();
     }, [projectId]);
 
-    if (loading) {
-        return <div className="p-4 text-center text-gray-500">데이터를 불러오는 중입니다...</div>;
-    }
+    // CPM 데이터를 기반으로 Firestore 실적 데이터 초기화 (이름/예산은 상수를 따라가므로 실적만 리셋)
+    const initializeFromCpm = async (pid: string, force: boolean = false) => {
+        if (force && !confirm('현재 등록된 실적(기성, 원가)을 모두 0으로 초기화하시겠습니까? 작업명과 예산은 공정표(CPM) 설정을 자동으로 따라갑니다.')) return;
 
-    // 임시: 더미 데이터 주입 로직
-    const addDummyData = async () => {
-        if (!confirm('현재 프로젝트(siteA 등)에 지표 테스트를 위한 더미 WBS 데이터를 5개 주입하시겠습니까? (기존 데이터가 있다면 추가 생성됩니다)')) return;
-
-        setLoading(true);
-        const dummyTasks = [
-            { name: '1월: 가설공사', startDate: '2026-01-01', endDate: '2026-01-31', pv: 10000000, ev: 10000000, ac: 9500000 },
-            { name: '2월: 토공사', startDate: '2026-02-01', endDate: '2026-02-28', pv: 25000000, ev: 20000000, ac: 24000000 },
-            { name: '3월: 골조공사(지하)', startDate: '2026-03-01', endDate: '2026-03-31', pv: 40000000, ev: 15000000, ac: 18000000 },
-            { name: '4월: 골조공사(1층)', startDate: '2026-04-01', endDate: '2026-04-30', pv: 30000000, ev: 0, ac: 0 },
-            { name: '5월: 골조공사(2층)', startDate: '2026-05-01', endDate: '2026-05-31', pv: 20000000, ev: 0, ac: 0 }
-        ];
-
+        setIsSyncing(true);
         try {
+            const colRef = db.collection('sites').doc(pid).collection('wbs_tasks');
             const batch = db.batch();
-            const colRef = db.collection('sites').doc(projectId).collection('wbs_tasks');
 
-            dummyTasks.forEach((task, idx) => {
-                // 순서 구분을 위해 id에 인덱스를 붙여 삽입
-                const docRef = colRef.doc(`dummy_task_${idx + 1}`);
-                batch.set(docRef, task);
+            // 기존 데이터의 메타데이터(이름, PV)를 제거하고 실적만 관리하도록 전환
+            CPM_TASKS.forEach((cpmTask) => {
+                const docRef = colRef.doc(cpmTask.id);
+                batch.set(docRef, {
+                    ev: 0,
+                    ac: 0,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }); // merge: true로 실적 필드만 0으로 세팅
             });
 
             await batch.commit();
-            alert('✅ 더미 데이터가 성공적으로 주입되었습니다! 차트와 표를 확인해주세요.');
-        } catch (e) {
-            console.error(e);
-            alert('데이터 주입 실패: 콘솔을 확인해주세요.');
+            console.log("✅ Performance metrics reset to 0 based on CPM baseline.");
+            if (force) alert('✅ 실적이 초기화되었습니다. 이름과 예산은 CPM 상수를 실시간으로 따릅니다.');
+        } catch (err) {
+            console.error("Initialization Error:", err);
+            alert('초기화 중 오류가 발생했습니다.');
         } finally {
+            setIsSyncing(false);
             setLoading(false);
         }
     };
 
-    // 데이터가 없을 경우 표시할 UI
-    if (tasks.length === 0) {
+    if (loading) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <ExcelWbsUploader projectId={projectId} existingTasks={tasks} onSuccess={() => { }} />
-
-                <div className="flex items-center justify-between mb-4 flex-wrap sm:flex-nowrap gap-2 overflow-x-auto">
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center whitespace-nowrap shrink-0">
-                        <Activity className="text-blue-500 mr-2" size={20} /> 공정 등록 지표 (EVM)
-                    </h3>
-                    <button
-                        onClick={addDummyData}
-                        className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-100 transition-colors whitespace-nowrap shrink-0"
-                    >
-                        임시: 🧪 더미 데이터 5건 넣기
-                    </button>
-                </div>
-                <div className="py-10 text-center text-gray-300 font-bold italic text-sm">등록된 공정 데이터가 없습니다.</div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
+                <div className="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+                <div className="text-gray-500 font-bold">공정 데이터를 초기화하는 중입니다...</div>
             </div>
         );
     }
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <ExcelWbsUploader projectId={projectId} existingTasks={tasks} onSuccess={() => { }} />
-
             <div className="flex items-center justify-between mb-4 flex-wrap sm:flex-nowrap gap-2 overflow-x-auto">
                 <h3 className="text-lg font-bold text-gray-800 flex items-center whitespace-nowrap shrink-0">
                     <Activity className="text-blue-500 mr-2" size={20} /> 공정 등록 지표 (EVM)
+                    <span className="ml-2 text-xs text-gray-400 font-normal">| CPM 연동 완료</span>
                 </h3>
                 <div className="flex gap-2 shrink-0">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-bold whitespace-nowrap">
-                        SPI/CPI &lt; 1.0 (지연/초과)
-                    </span>
                     <button
-                        onClick={addDummyData}
-                        className="text-xs bg-indigo-50 text-indigo-600 px-2 flex items-center rounded font-bold hover:bg-indigo-100 transition-colors whitespace-nowrap"
+                        onClick={() => initializeFromCpm(projectId, true)}
+                        disabled={isSyncing}
+                        className="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded font-black border border-red-100 hover:bg-red-100 transition-colors"
                     >
-                        + 더미 추가
+                        🔄 CPM 기준 초기화
                     </button>
+                    <span className="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded font-bold whitespace-nowrap border border-blue-100">
+                        SSOT: CPM Network
+                    </span>
                 </div>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-center">
-                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                <table className="w-full text-sm text-center border-collapse">
+                    <thead className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider font-black">
                         <tr>
-                            <th className="px-3 py-4 rounded-l-lg whitespace-nowrap">작업명</th>
-                            <th className="px-3 py-4 text-right whitespace-nowrap">계획가치(PV)</th>
-                            <th className="px-3 py-4 text-right whitespace-nowrap">기성(EV)</th>
-                            <th className="px-3 py-4 text-right whitespace-nowrap">실투입(AC)</th>
-                            <th className="px-3 py-4 border-l border-gray-200 whitespace-nowrap">일정지수(SPI)</th>
-                            <th className="px-3 py-4 whitespace-nowrap">비용지수(CPI)</th>
-                            <th className="px-3 py-4 rounded-r-lg whitespace-nowrap border-l border-gray-200">관리</th>
+                            <th className="px-3 py-4 rounded-l-lg text-left pl-6">작업명</th>
+                            <th className="px-3 py-4 text-right">계획가치(PV)</th>
+                            <th className="px-3 py-4 text-right">기성실적(EV)</th>
+                            <th className="px-3 py-4 text-right">실투입원가(AC)</th>
+                            <th className="px-3 py-4 border-l border-gray-100">일정지수(SPI)</th>
+                            <th className="px-3 py-4">비용지수(CPI)</th>
+                            <th className="px-3 py-4 rounded-r-lg border-l border-gray-100">관리</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {tasks.map((task) => {
+                        {tasks.length > 0 ? tasks.map((task) => {
                             const { spi, cpi } = calculateEvmMetrics(task);
-                            const isDelayed = spi < 1;
-                            const isOverBudget = cpi < 1;
+                            const isDelayed = spi < 1 && task.pv > 0;
+                            const isOverBudget = cpi < 1 && task.ac > 0;
 
                             return (
-                                <tr key={task.id} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="px-3 py-4 font-bold text-gray-700 text-left whitespace-nowrap">{task.name}</td>
-                                    <td className="px-3 py-4 text-gray-600 font-medium text-right whitespace-nowrap">{task.pv.toLocaleString()}</td>
-                                    <td className="px-3 py-4 font-black text-gray-800 text-right whitespace-nowrap">{task.ev.toLocaleString()}</td>
-                                    <td className="px-3 py-4 text-gray-600 font-medium text-right whitespace-nowrap">{task.ac.toLocaleString()}</td>
+                                <tr key={task.id} className="hover:bg-blue-50/30 transition-colors group">
+                                    <td className="px-3 py-4 font-bold text-gray-700 text-left pl-6 text-xs">{task.name}</td>
+                                    <td className="px-3 py-4 text-gray-600 font-medium text-right text-xs">{task.pv.toLocaleString()}</td>
+                                    <td className="px-3 py-4 font-black text-gray-900 text-right text-xs bg-gray-50/50">{task.ev.toLocaleString()}</td>
+                                    <td className="px-3 py-4 text-gray-600 font-medium text-right text-xs">{task.ac.toLocaleString()}</td>
 
-                                    <td className="px-3 py-4 border-l border-gray-200 whitespace-nowrap">
-                                        <span className={`px-2 py-1 rounded-md font-bold ${isDelayed ? 'bg-red-50 text-red-600 border border-red-100' : 'text-green-600'}`}>
-                                            {spi.toFixed(2)}
+                                    <td className="px-3 py-4 border-l border-gray-100">
+                                        <span className={`px-2 py-1 rounded-md font-bold text-[11px] ${isDelayed ? 'bg-red-50 text-red-600 border border-red-100' : (task.pv > 0 ? 'text-green-600' : 'text-gray-300')}`}>
+                                            {task.pv > 0 ? spi.toFixed(2) : '-'}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 rounded-md font-bold ${isOverBudget ? 'bg-red-50 text-red-600 border border-red-100' : 'text-green-600'}`}>
-                                            {cpi.toFixed(2)}
+                                    <td className="px-3 py-4">
+                                        <span className={`px-2 py-1 rounded-md font-bold text-[11px] ${isOverBudget ? 'bg-red-50 text-red-600 border border-red-100' : (task.ac > 0 ? 'text-green-600' : 'text-gray-300')}`}>
+                                            {task.ac > 0 ? cpi.toFixed(2) : '-'}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-4 border-l border-gray-200 whitespace-nowrap">
+                                    <td className="px-3 py-4 border-l border-gray-100">
                                         <button
                                             onClick={() => { setSelectedTask(task); setIsModalOpen(true); }}
-                                            className="text-[10px] bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded font-black hover:bg-indigo-100 transition-colors shadow-sm active:scale-95"
+                                            className="text-[10px] bg-white text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg font-black hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm active:scale-95"
                                         >
                                             실적 입력
                                         </button>
                                     </td>
                                 </tr>
                             );
-                        })}
+                        }) : (
+                            <tr>
+                                <td colSpan={7} className="py-20 text-center text-gray-400 font-bold italic">
+                                    등록된 공정 데이터가 없습니다. 상단의 초기화 버튼을 눌러주세요.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -177,4 +181,6 @@ const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
     );
 };
 
+
 export default EvmDashboard;
+

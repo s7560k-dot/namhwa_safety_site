@@ -11,8 +11,7 @@ import {
 import * as Modals from './components/Modals';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import EvmDashboard from './components/evm/EvmDashboard';
-import EvmSCurveChart from './components/evm/EvmSCurveChart';
+import NetworkScheduleDashboard from './components/evm/NetworkScheduleDashboard';
 
 // ----------------------------------------------------------------------
 // [로고 심볼 컴포넌트] - 브랜드 아이덴티티 강화
@@ -692,14 +691,9 @@ const SafetyDashboardInner = () => {
                         </div>
                     </div>
 
-                    {/* EVM (Earned Value Management) 모듈 섹션 */}
-                    <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                        <div className="lg:col-span-2">
-                            <EvmSCurveChart projectId={siteId} />
-                        </div>
-                        <div className="lg:col-span-1 border-l border-gray-100 pl-4 lg:pl-0 lg:border-l-0">
-                            <EvmDashboard projectId={siteId} />
-                        </div>
+                    {/* 통합 네트워크 공정 및 EVM 대시보드 모듈 섹션 */}
+                    <div className="mt-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                        <NetworkScheduleDashboard projectId={siteId} />
                     </div>
                 </main>
 
