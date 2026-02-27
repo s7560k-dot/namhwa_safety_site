@@ -128,27 +128,46 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
 
     // Mermaid 차트 초기화 및 렌더링
     useEffect(() => {
-        const renderMermaid = async () => {
-            if (mermaidRef.current) {
-                try {
-                    // 이전 내용 초기화
-                    mermaidRef.current.innerHTML = '<div class="flex items-center text-gray-400 text-xs animate-pulse">차트 렌더링 중...</div>';
+        let isMounted = true;
 
-                    const { svg } = await mermaid.render(chartId.current, MERMAID_GRAPH);
+        const renderMermaid = async () => {
+            if (!mermaidRef.current || !isMounted) return;
+
+            try {
+                // 이전 렌더링 결과 청소
+                mermaidRef.current.innerHTML = '<div class="flex items-center text-gray-400 text-xs animate-pulse font-bold">차트 분석 및 렌더링 중...</div>';
+
+                // 새로운 고유 ID 생성 (매 렌더링 시 고유성 보장)
+                const tempId = `mermaid-svg-${Math.random().toString(36).substr(2, 9)}`;
+
+                // Mermaid 렌더링 수행
+                const { svg } = await mermaid.render(tempId, MERMAID_GRAPH);
+
+                if (isMounted && mermaidRef.current) {
                     mermaidRef.current.innerHTML = svg;
-                } catch (err) {
-                    console.error("Mermaid Render Error", err);
-                    mermaidRef.current.innerHTML = '<div class="text-red-400 text-xs font-bold">공정표 렌더링 오류가 발생했습니다.</div>';
+                    // SVG 너비를 부모에 맞게 조정
+                    const svgElement = mermaidRef.current.querySelector('svg');
+                    if (svgElement) {
+                        svgElement.style.maxWidth = '100%';
+                        svgElement.style.height = 'auto';
+                    }
+                }
+            } catch (err) {
+                console.error("Mermaid Render Error:", err);
+                if (isMounted && mermaidRef.current) {
+                    mermaidRef.current.innerHTML = '<div class="text-red-400 text-xs font-black p-4 border border-red-100 bg-red-50 rounded-lg">그래프 렌더링 라이브러리 초기화 중...<br/>(새로고침을 시도해 주세요)</div>';
                 }
             }
         };
 
-        // DOM 마운트 후 즉시 및 약간의 지연 후 렌더링 시도 (리액트 생명주기 대응)
-        renderMermaid();
-        const timer = setTimeout(renderMermaid, 500);
+        // DOM이 확실히 잡힌 후 렌더링 시도
+        const timer = setTimeout(renderMermaid, 300);
 
-        return () => clearTimeout(timer);
-    }, []); // 차트 내용은 고정이므로 최초 1회만 실행
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, []); // 정의된 그래프가 변경될 때 재렌더링하려면 MERMAID_GRAPH 추가 가능
 
     const { tasksInfo, currentTotalEarned, finalProgress } = computedStatus;
 
@@ -284,15 +303,28 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                 </div>
             </div >
 
-            {/* 실제 DB 연동 EVM 기성 현황 모듈 섹션 */}
+            {/* 실제 DB 연동 EVM 기성 현황 모듈 섹션 (수직 배치로 가독성 개선) */}
             {targetSiteId && (
-                <div className="mt-8">
-                    <h2 className="text-lg font-bold text-gray-800 mb-4 px-1 border-b border-gray-200 pb-2">실적 공정 및 기성고(EVM) 관리 대시보드</h2>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                        <div className="lg:col-span-2">
+                <div className="mt-8 space-y-10">
+                    <h2 className="text-xl font-black text-gray-900 mb-6 px-1 border-b-2 border-gray-900 pb-3 flex items-center">
+                        <span className="w-2 h-6 bg-blue-600 mr-3 rounded-full"></span>
+                        실적 공정 및 기성고(EVM) 관리 대시보드
+                    </h2>
+
+                    <div className="animate-fade-in w-full shadow-lg rounded-2xl overflow-hidden bg-white border border-gray-100" style={{ animationDelay: '0.3s' }}>
+                        <div className="p-2 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between px-6 py-4">
+                            <span className="text-sm font-black text-gray-700 uppercase tracking-widest">S-Curve Analysis</span>
+                        </div>
+                        <div className="p-6">
                             <EvmSCurveChart projectId={targetSiteId} />
                         </div>
-                        <div className="lg:col-span-1 border-gray-100 flex flex-col h-full overflow-hidden">
+                    </div>
+
+                    <div className="animate-fade-in w-full shadow-lg rounded-2xl overflow-hidden bg-white border border-gray-100" style={{ animationDelay: '0.4s' }}>
+                        <div className="p-2 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between px-6 py-4">
+                            <span className="text-sm font-black text-gray-700 uppercase tracking-widest">EVM Performance Matrix</span>
+                        </div>
+                        <div className="p-6">
                             <EvmDashboard projectId={targetSiteId} />
                         </div>
                     </div>
