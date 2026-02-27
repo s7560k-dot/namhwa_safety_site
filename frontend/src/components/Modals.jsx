@@ -32,8 +32,8 @@ export const WorkerModal = ({ show, onClose, workerList, onChange, onAdd, onDele
                     <div className="space-y-2 max-h-[60vh] overflow-y-auto mb-3">
                         {workerList.map((worker) => (
                             <div key={worker.id} className="flex items-center gap-2 mb-2">
-                                <input type="text" className="border p-2 rounded w-1/2 text-sm" value={worker.trade} onChange={(e) => onChange(worker.id, 'trade', e.target.value)} placeholder="공종명" />
-                                <input type="number" className="border p-2 rounded w-1/3 text-sm" value={worker.count} onChange={(e) => onChange(worker.id, 'count', e.target.value)} placeholder="인원" />
+                                <input type="text" className="border p-2 rounded w-1/2 text-sm" value={worker.trade || ''} onChange={(e) => onChange(worker.id, 'trade', e.target.value)} placeholder="공종명" />
+                                <input type="number" className="border p-2 rounded w-1/3 text-sm" value={worker.count ?? ''} onChange={(e) => onChange(worker.id, 'count', e.target.value)} placeholder="인원" />
                                 <button onClick={() => onDelete(worker.id)} className="text-red-400 hover:text-red-600"><Trash size={16} /></button>
                             </div>
                         ))}

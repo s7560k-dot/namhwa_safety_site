@@ -11,6 +11,8 @@ import {
 import * as Modals from './components/Modals';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import EvmDashboard from './components/evm/EvmDashboard';
+import EvmSCurveChart from './components/evm/EvmSCurveChart';
 
 // ----------------------------------------------------------------------
 // [로고 심볼 컴포넌트] - 브랜드 아이덴티티 강화
@@ -112,32 +114,50 @@ const SafetyDashboardInner = () => {
 
     // Worker Handlers
     const handleAddWorker = () => {
-        const newWorker = { trade: '', count: 0 };
+        // 기존 배열에 id가 없는 점을 보완하기 위해 고유한 id(Date.now)를 부여
+        const newWorker = { id: Date.now().toString(), trade: '', count: 0 };
         data.setWorkerList([...data.workerList, newWorker]);
     };
 
-    const handleWorkerChangeByIndex = (index, field, value) => {
-        const newList = [...data.workerList];
-        newList[index] = { ...newList[index], [field]: value };
+    const handleWorkerChangeByIndex = (id, field, value) => {
+        // 기존에는 index로 받던 것을 id 기준으로 명확히 변경합니다. (Modal에서 worker.id 를 넘기고 있음)
+        const newList = data.workerList.map(worker =>
+            worker.id === id ? { ...worker, [field]: value } : worker
+        );
         data.setWorkerList(newList);
-    }
-    const handleDeleteWorker = (index) => {
-        const newList = [...data.workerList];
-        newList.splice(index, 1);
+    };
+    const handleDeleteWorker = (id) => {
+        // index 기반의 splice 대신 id를 기준으로 필터링하여 불변성을 유지합니다.
+        const newList = data.workerList.filter(w => w.id !== id);
         data.setWorkerList(newList);
     };
     const saveWorkersToDB = async () => {
-        const batch = db.batch();
-        const ref = db.collection('sites').doc(siteId).collection('workers');
-        for (const worker of data.workerList) {
-            if (worker.id) {
-                batch.set(ref.doc(worker.id), { trade: worker.trade, count: worker.count });
-            } else {
-                batch.set(ref.doc(), { trade: worker.trade, count: worker.count });
+        try {
+            const batch = db.batch();
+            const ref = db.collection('sites').doc(siteId).collection('workers');
+
+            // 1. 기존 DB 데이터 모두 삭제 (완전 동기화를 위함)
+            const snapshot = await ref.get();
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // 2. 현재 화면의 리스트를 모두 새로 추가
+            for (const worker of data.workerList) {
+                // 공종명이 비어있으면 저장하지 않음
+                if (!worker.trade || worker.trade.trim() === '') continue;
+
+                const newDocRef = ref.doc();
+                batch.set(newDocRef, { trade: worker.trade.trim(), count: parseInt(worker.count) || 0 });
             }
+
+            await batch.commit();
+            alert("출역 인원 정보가 저장되었습니다.");
+            setShowWorkerModal(false);
+        } catch (error) {
+            console.error("출역 인원 저장 오류:", error);
+            alert("출역 인원 저장에 실패했습니다.");
         }
-        await batch.commit();
-        setShowWorkerModal(false);
     };
 
     // Risk Work Handlers
@@ -669,6 +689,16 @@ const SafetyDashboardInner = () => {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* EVM (Earned Value Management) 모듈 섹션 */}
+                    <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                        <div className="lg:col-span-2">
+                            <EvmSCurveChart projectId={siteId} />
+                        </div>
+                        <div className="lg:col-span-1 border-l border-gray-100 pl-4 lg:pl-0 lg:border-l-0">
+                            <EvmDashboard projectId={siteId} />
                         </div>
                     </div>
                 </main>

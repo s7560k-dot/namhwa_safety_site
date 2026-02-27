@@ -23,7 +23,7 @@ def set_cors_headers(resp: https_fn.Response):
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
 
-@https_fn.on_request(max_instances=10, timeout_sec=120)
+@https_fn.on_request(max_instances=10, timeout_sec=120, memory=1024)
 def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
     """프론트엔드에서 2D 3D 변환기의 Gemini 호출을 중계 (API Key 보호)"""
     if req.method == "OPTIONS":
@@ -40,9 +40,22 @@ def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
             
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
-             raise ValueError("GEMINI_API_KEY environment variable is missing on server")
+             print("[ERROR] GEMINI_API_KEY missing")
+             return set_cors_headers(https_fn.Response(json.dumps({"detail": "Server API Key Missing"}), status=400, content_type="application/json"))
              
+        # 디버깅: 가용 모델 리스트 출력 (한 번만 혹은 주기적으로)
+        import datetime
+        print(f"[DEBUG] Starting analyze_floorplan_3d at {datetime.datetime.now()}")
+        
         genai.configure(api_key=api_key)
+        
+        # 모델 리스트 확인 (로그에서 확인용)
+        try:
+            available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+            print(f"[DEBUG] Available models: {available_models}")
+        except Exception as me:
+            print(f"[DEBUG] Failed to list models: {str(me)}")
+        
         
         system_instruction = """
           너는 전문 건축 CAD AI다. 주어진 평면도 이미지를 분석하여 
@@ -96,7 +109,9 @@ def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
             "data": image_bytes
         }
         
+        print(f"[DEBUG] Calling Gemini API with model: {model.model_name}")
         response = model.generate_content([prompt, image_blob])
+        print("[DEBUG] Gemini API call successful")
         ai_response_text = response.text.strip()
         
         # 불필요한 마크다운 제거
@@ -109,7 +124,7 @@ def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
     except Exception as e:
         error_msg = traceback.format_exc()
         print(f"Gemini API 3D Converter Error: {error_msg}")
-        resp = https_fn.Response(json.dumps({"detail": f"AI Parsing Failed: {str(e)}"}), status=500, content_type="application/json")
+        resp = https_fn.Response(json.dumps({"detail": f"AI Parsing Failed: {str(e)}"}), status=400, content_type="application/json")
         return set_cors_headers(resp)
 
 @https_fn.on_request(max_instances=10, memory=1024)
@@ -207,7 +222,7 @@ def recommend_basis(req: https_fn.Request) -> https_fn.Response:
     except Exception as e:
         error_msg = traceback.format_exc()
         print(f"Gemini API Error: {error_msg}")
-        resp = https_fn.Response(json.dumps({"detail": f"AI Recommendation Failed: {str(e)}"}), status=500, content_type="application/json")
+        resp = https_fn.Response(json.dumps({"detail": f"AI Recommendation Failed: {str(e)}"}), status=400, content_type="application/json")
         return set_cors_headers(resp)
 
 @https_fn.on_request(max_instances=10)

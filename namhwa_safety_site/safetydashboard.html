@@ -658,29 +658,38 @@
 
             const saveWorkersToDB = async () => {
                 if (!db) return;
-                const batch = db.batch();
-                const workerRef = db.collection('sites').doc(siteId).collection('workers');
+                try {
+                    const batch = db.batch();
+                    const workerRef = db.collection('sites').doc(siteId).collection('workers');
 
-                // 1. DB에 있는 ID 목록 가져오기
-                const snapshot = await workerRef.get();
-                const dbIds = snapshot.docs.map(doc => doc.id);
-                const currentIds = workerList.map(w => String(w.id));
+                    // 1. DB에 있는 ID 목록 가져오기
+                    const snapshot = await workerRef.get();
+                    const dbIds = snapshot.docs.map(doc => doc.id);
+                    const currentIds = workerList.map(w => String(w.id));
 
-                // 2. 삭제된 항목 처리 (DB에는 있는데 현재 리스트에 없는 것 삭제)
-                dbIds.forEach(dbId => {
-                    if (!currentIds.includes(dbId)) {
-                        batch.delete(workerRef.doc(dbId));
-                    }
-                });
+                    // 2. 삭제된 항목 처리 (DB에는 있는데 현재 리스트에 없는 것 삭제)
+                    dbIds.forEach(dbId => {
+                        if (!currentIds.includes(dbId)) {
+                            batch.delete(workerRef.doc(dbId));
+                        }
+                    });
 
-                // 3. 현재 항목 업데이트/추가
-                workerList.forEach(w => {
-                    const docRef = workerRef.doc(String(w.id));
-                    batch.set(docRef, { trade: w.trade, count: parseInt(w.count) || 0 }, { merge: true });
-                });
+                    // 3. 현재 항목 업데이트/추가
+                    workerList.forEach(w => {
+                        // 빈 항목은 저장하지 않음 (공종명 기입 안된 경우 무시)
+                        if (!w.trade || w.trade.trim() === '') return;
 
-                await batch.commit();
-                setShowWorkerModal(false);
+                        const docRef = workerRef.doc(String(w.id));
+                        batch.set(docRef, { trade: w.trade.trim(), count: parseInt(w.count) || 0 }, { merge: true });
+                    });
+
+                    await batch.commit();
+                    alert("출역 인원이 성공적으로 수정되었습니다.");
+                    setShowWorkerModal(false);
+                } catch (error) {
+                    console.error("출역 인원 저장 중 오류 발생:", error);
+                    alert("출역 인원 수정에 실패했습니다.");
+                }
             };
 
             // 부적합 조치
@@ -1247,8 +1256,8 @@
                                         <div className="space-y-2 max-h-[60vh] overflow-y-auto mb-3">
                                             {workerList.map((worker) => (
                                                 <div key={worker.id} className="flex items-center gap-2 mb-2">
-                                                    <input type="text" className="border p-2 rounded w-1/2 text-sm" value={worker.trade} onChange={(e) => handleWorkerChange(worker.id, 'trade', e.target.value)} placeholder="공종명" />
-                                                    <input type="number" className="border p-2 rounded w-1/3 text-sm" value={worker.count} onChange={(e) => handleWorkerChange(worker.id, 'count', e.target.value)} placeholder="인원" />
+                                                    <input type="text" className="border p-2 rounded w-1/2 text-sm" value={worker.trade || ''} onChange={(e) => handleWorkerChange(worker.id, 'trade', e.target.value)} placeholder="공종명" />
+                                                    <input type="number" className="border p-2 rounded w-1/3 text-sm" value={worker.count ?? ''} onChange={(e) => handleWorkerChange(worker.id, 'count', e.target.value)} placeholder="인원" />
                                                     <button onClick={() => handleDeleteWorker(worker.id)} className="text-red-400 hover:text-red-600"><Trash size={16} /></button>
                                                 </div>
                                             ))}

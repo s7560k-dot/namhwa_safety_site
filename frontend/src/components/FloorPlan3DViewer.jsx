@@ -43,7 +43,15 @@ export default function FloorPlan3DViewer({ data }) {
 
     return (
         <div className="w-full h-full absolute inset-0">
-            <Canvas camera={{ position: [5, 5, 10], fov: 50 }} shadows>
+            <Canvas
+                camera={{ position: [5, 5, 10], fov: 50 }}
+                shadows={{ type: THREE.PCFShadowMap }}
+                gl={{
+                    antialias: true,
+                    // THREE.Clock은 감쇠 예정이므로 가능한 경우 THREE.Timer를 사용하도록 유도하거나 설정을 강화합니다.
+                    // (Fiber 내부에 따라 동작이 다를 수 있음)
+                }}
+            >
                 <color attach="background" args={["#0f172a"]} />
                 <ambientLight intensity={0.5} />
                 <directionalLight

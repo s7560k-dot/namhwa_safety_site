@@ -43,9 +43,8 @@ export default function FloorPlanTo3DApp() {
             const mimeMatch = imageSrc.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
             const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
 
-            // 새로운 Firebase Functions 백엔드 게이트웨이 정대경로 호출
-            // firebase.json의 rewrites 정책을 통해 /api/* 요청이 백엔드 함수로 라우팅되도록 설정하여 CORS 문제를 원천 차단했습니다.
-            const CLOUD_FUNCTION_URL = "/api/analyze_floorplan_3d";
+            // Firebase Hosting의 60초 타임아웃 제한을 피하기 위해 클라우드 함수의 직접 URL을 호출합니다.
+            const CLOUD_FUNCTION_URL = "https://us-central1-namhwa-safety-dashboard.cloudfunctions.net/analyze_floorplan_3d";
 
             const response = await fetch(CLOUD_FUNCTION_URL, {
                 method: "POST",
@@ -58,14 +57,36 @@ export default function FloorPlanTo3DApp() {
                 })
             });
 
-            const result = await response.json();
+            // 1. 응답 데이터를 텍스트로 먼저 추출
+            const responseText = await response.text();
 
+            // 2. 상태 코드가 정상이 아닌 경우 처리 (HTML 에러 페이지 등)
             if (!response.ok) {
-                throw new Error(result.detail || "서버에서 도면을 분석하는 중 오류가 발생했습니다.");
+                console.error(`[API 에러] 상태 코드: ${response.status}, 응답 텍스트:`, responseText);
+
+                let errorMessage = "서버에서 도면을 분석하는 중 오류가 발생했습니다.";
+                try {
+                    // 에러 응답이 JSON 포맷이라면 상세 메시지 추출
+                    const errorJson = JSON.parse(responseText);
+                    errorMessage = errorJson.detail || errorMessage;
+                } catch (e) {
+                    // HTML 문서 등 파싱 불가능한 텍스트일 경우
+                    errorMessage = `서버 통신 오류 (상태: ${response.status}). 자세한 내용은 콘솔(F12)을 확인하세요.`;
+                }
+                throw new Error(errorMessage);
+            }
+
+            // 3. 정상 응답일 경우 JSON으로 변환
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                console.error("[JSON 파싱 에러] 서버에서 받은 응답:", responseText);
+                throw new Error("서버가 유효하지 않은 데이터(JSON 아님)를 반환했습니다.");
             }
 
             if (!result.data || !result.data.walls || !Array.isArray(result.data.walls)) {
-                throw new Error("서버 응답 형식이 올바르지 않습니다.");
+                throw new Error("서버 응답(데이터 구조)이 올바르지 않습니다.");
             }
 
             setParsedData(result.data);
