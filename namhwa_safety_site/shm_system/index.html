@@ -306,30 +306,32 @@
 
         @media print {
 
-            /* 브라우저 자체 여백 무시하고 내용물 상하좌우를 끝단에 맞춤 */
+            /* 브라우저 기본 여백을 제어하고, 매 페이지마다 고정된 여백을 할당 */
             @page {
                 size: a4 landscape;
-                margin: 0 !important;
+                margin: 25mm 10mm 10mm 10mm !important;
             }
 
+            html,
             body {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 background-color: #fff !important;
                 font-size: 11pt !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
             }
 
-            /* 실제 내용물 박스 자체에 강제로 위25, 좌우/아래10mm 여백(패딩)을 주고 줌 축소 */
+            /* 컨테이너의 강제 패딩은 첫 페이지만 먹히므로 제거하고, 스케일링 위주로 유지 */
             .container {
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                margin: 0 !important;
-                padding: 25mm 10mm 10mm 10mm !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
                 width: 100% !important;
-                max-width: none !important;
+                max-width: 100% !important;
                 box-sizing: border-box !important;
                 zoom: 0.85 !important;
             }
@@ -388,11 +390,22 @@
                 border-bottom: 1px solid #333;
             }
 
+            /* 테이블 내 객체들이 페이지 전환 시 잘리지 않도록 강제 방어 */
             table,
             tr,
             td,
             .section-title {
-                page-break-inside: avoid;
+                page-break-inside: avoid !important;
+            }
+
+            /* 대분류(평가항목) 표 사이사이에 여유를 주어 뒷 페이지로 넘어갈 때 자연스럽게 함 */
+            table.results-table,
+            table.performance-table {
+                page-break-inside: auto !important;
+            }
+
+            table.performance-table tr {
+                page-break-inside: avoid !important;
             }
 
             .side-by-side-section {
