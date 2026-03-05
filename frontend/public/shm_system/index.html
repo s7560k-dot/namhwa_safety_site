@@ -305,9 +305,11 @@
         }
 
         @media print {
+
+            /* 브라우저 자체 여백 무시하고 내용물 상하좌우를 끝단에 맞춤 */
             @page {
                 size: a4 landscape;
-                margin: 25mm 10mm 10mm 10mm !important;
+                margin: 0 !important;
             }
 
             body {
@@ -315,20 +317,21 @@
                 print-color-adjust: exact !important;
                 background-color: #fff !important;
                 font-size: 11pt !important;
-                zoom: 0.85 !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
             }
 
-            /* 강제로 폭을 유지시켜 zoom 비율대로 화면에 다 담기게 함 */
+            /* 실제 내용물 박스 자체에 강제로 위25, 좌우/아래10mm 여백(패딩)을 주고 줌 축소 */
             .container {
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                padding: 0 !important;
-                margin: 0 auto !important;
-                min-width: 1050px !important;
+                margin: 0 !important;
+                padding: 25mm 10mm 10mm 10mm !important;
                 width: 100% !important;
                 max-width: none !important;
+                box-sizing: border-box !important;
+                zoom: 0.85 !important;
             }
 
             thead {
