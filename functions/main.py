@@ -279,3 +279,68 @@ def export_excel(req: https_fn.Request) -> https_fn.Response:
         error_msg = traceback.format_exc()
         resp = https_fn.Response(json.dumps({"detail": f"Excel Export Error: {str(e)}"}), status=500)
         return set_cors_headers(resp)
+
+@https_fn.on_request(max_instances=10, timeout_sec=60, memory=512)
+def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
+    """SHM System 체크리스트 점수 및 코멘트를 바탕으로 Gemini AI 맞춤형 종합 요약 생성"""
+    if req.method == "OPTIONS":
+        return set_cors_headers(https_fn.Response(status=204))
+    if req.method != "POST":
+        return set_cors_headers(https_fn.Response(json.dumps({"detail": "Only POST method is supported"}), status=405, content_type="application/json"))
+        
+    try:
+        data = req.get_json(silent=True) or {}
+        site_name = data.get("siteName", "현장명 미상")
+        final_score = data.get("finalScore", 0)
+        strengths = data.get("strengths", [])
+        weaknesses = data.get("weaknesses", [])
+        
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+             raise ValueError("GEMINI_API_KEY environment variable is missing")
+             
+        genai.configure(api_key=api_key)
+        
+        system_instruction = """
+        당신은 20년 경력의 심도 있는 지식을 갖춘 대한민국 최고 건설현장 안전보건 전문 심사위원(책임기술인)입니다.
+        엄격하지만 긍정적이고 따뜻한 카리스마를 가졌습니다.
+        현장의 안전보건 시스템 점검 결과를 분석하여, 건설현장 책임자들에게 제공될 '총평 및 개선 요구사항 종합 보고서'를 작성하세요.
+        
+        [작성 규칙]
+        1. 출력 형식은 순수 HTML 포맷(<b>, <i>, <br>, <span style="..."> 등)만 사용해야 하며, 마크다운 코드 블록(```html) 등 부수적인 텍스트는 응답에 포함하지 마십시오.
+        2. 첫 문장은 제공된 점수를 바탕으로 현재 현장의 안전보건 활동 적정성 수준(우수/양호/미흡 등)에 대해 한 줄로 강력하게 총평합니다.
+        3. 강점 분야가 있다면 어떻게 현장을 긍정적으로 이끌고 있는지 칭찬해주십시오.
+        4. 약점 분야(사용자 코멘트 포함)가 있다면 사고 예방을 위해 구체적이고 전문적으로 어떻게 개선해야 할지 따끔한 조언을 남기세요.
+        5. 마지막은 구성원들의 안전 의식을 끓어오르게 할 독창적이고 힘찬 형태의 짧은 안전 슬로건으로 마무리하세요.
+        6. 전체 텍스트 양은 A4 용지 4분의 1장이 넘지 않게 간결하고 가독성 좋게, 줄바꿈을 적절히 사용하여 구성하세요.
+        7. 똑같은 점수와 비슷한 내용이 들어오더라도 매번 단어와 슬로건을 다르게 구성하여 중복 느낌을 확실히 피하십시오.
+        """
+        
+        model = genai.GenerativeModel(
+            model_name='gemini-2.5-flash',
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.8, # 다양성 창출을 위해 온도 살짝 상향
+            ),
+            system_instruction=system_instruction
+        )
+        
+        # 프롬프트 조립
+        weaknesses_str = json.dumps(weaknesses, ensure_ascii=False) if weaknesses else "특별한 취약점 코멘트 없음"
+        strengths_str = ", ".join(strengths) if strengths else "강점 분야로 꼽을 만한 사항 미흡"
+        
+        prompt = f"현장명: {site_name}\n총점: {final_score}점\n강점섹션: {strengths_str}\n약점섹션 및 세부 지적사항: {weaknesses_str}\n\n위 데이터를 바탕으로 종합 분석 HTML 텍스트를 응답해라. <b>[안전보건 활동 적정성 종합 검토]</b> 라는 제목으로 시작해라."
+        
+        response = model.generate_content(prompt)
+        ai_summary = response.text.strip()
+        
+        # 앞뒤 마크다운 트림
+        ai_summary = ai_summary.replace("```html", "").replace("```", "").strip()
+        
+        resp = https_fn.Response(json.dumps({"success": True, "summary": ai_summary}), content_type="application/json")
+        return set_cors_headers(resp)
+        
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        print(f"Gemini SHM Summary API Error: {error_msg}")
+        resp = https_fn.Response(json.dumps({"success": False, "detail": f"AI 분석 중 오류 발생: {str(e)}"}), status=400, content_type="application/json")
+        return set_cors_headers(resp)
