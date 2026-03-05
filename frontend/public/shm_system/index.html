@@ -306,34 +306,33 @@
 
         @media print {
 
-            /* 브라우저 기본 여백을 제어하고, 매 페이지마다 고정된 여백을 할당 */
+            /* 1. 최상위 규격: 가로 A4, 여백 강제 지정 (다중 페이지 지원) */
             @page {
-                size: a4 landscape;
+                size: A4 landscape;
                 margin: 25mm 10mm 10mm 10mm !important;
             }
 
-            html,
-            body {
-                width: 100% !important;
-                height: 100% !important;
+            /* 2. body 자체의 강제 height/width 제약 해제 (2페이지 이상 먹통 원인 제거) */
+            body,
+            html {
                 margin: 0 !important;
                 padding: 0 !important;
+                background-color: #fff !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                background-color: #fff !important;
                 font-size: 11pt !important;
+                zoom: 0.85 !important;
             }
 
-            /* 컨테이너의 강제 패딩은 첫 페이지만 먹히므로 제거하고, 스케일링 위주로 유지 */
+            /* 3. 컨테이너 핏 (패딩 제거 및 무한 확장 방지) */
             .container {
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                margin: 0 auto !important;
                 padding: 0 !important;
+                margin: 0 auto !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 box-sizing: border-box !important;
-                zoom: 0.85 !important;
             }
 
             thead {
