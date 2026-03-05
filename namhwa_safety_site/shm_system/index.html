@@ -462,7 +462,9 @@
             </button>
         </div>
 
-        <h1>(<input type="text" value="1분기">) 현장 안전보건경영시스템 점검 결과표</h1>
+        <h1>(<input type="text" id="quarter-input" value="1분기"
+                style="width: 60px; text-align: center; border: 1px solid #ccc; background-color: transparent;">) 현장
+            안전보건경영시스템 점검 결과표</h1>
 
         <table class="header-table">
             <colgroup>
@@ -825,6 +827,14 @@
             const closeModalBtn = document.getElementById('close-modal-btn');
 
             const phaseBadge = document.getElementById('evaluation-phase-badge');
+
+            // === 현재 날짜 기준 분기(Quarter) 자동 설정 ===
+            const quarterInput = document.getElementById('quarter-input');
+            if (quarterInput) {
+                const currentMonth = new Date().getMonth() + 1; // 1 ~ 12
+                const currentQuarter = Math.ceil(currentMonth / 3); // 1 ~ 4
+                quarterInput.value = `${currentQuarter}분기`;
+            }
 
             // === 인쇄 버튼 이벤트 리스너 추가 ===
             const printBtn = document.getElementById('print-btn');
