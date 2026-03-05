@@ -216,3 +216,283 @@
 
 [debug] [2026-03-05T01:22:33.224Z] Running admin server with args: ["python.exe","\"D:\\Antigravity\\my project\\functions\\venv\\Lib\\site-packages\\firebase_functions\\private\\serving.py\""] and env: {"GCLOUD_PROJECT":"namhwa-safety-dashboard","K_REVISION":"1","PORT":"80","GOOGLE_CLOUD_QUOTA_PROJECT":"namhwa-safety-dashboard","FUNCTIONS_EMULATOR":"true","TZ":"UTC","FIREBASE_DEBUG_MODE":"true","FIREBASE_DEBUG_FEATURES":"{\"skipTokenVerification\":true,\"enableCors\":true}","FIREBASE_EMULATOR_HUB":"127.0.0.1:4400","CLOUD_EVENTARC_EMULATOR_HOST":"http://127.0.0.1:9299","CLOUD_TASKS_EMULATOR_HOST":"127.0.0.1:9499","FIREBASE_CONFIG":"{\"storageBucket\":\"namhwa-safety-dashboard.firebasestorage.app\",\"projectId\":\"namhwa-safety-dashboard\"}","GOOGLE_APPLICATION_CREDENTIALS":"C:\\Users\\elcid-office\\AppData\\Roaming\\firebase\\s7560k_gmail_com_application_default_credentials.json","ADMIN_PORT":"8081"} in D:\Antigravity\my project\functions
 [debug] [2026-03-05T01:22:33.225Z] Running command with virtualenv: command="D:\Antigravity\my project\functions\venv\Scripts\activate.bat", args=["","&&","python.exe","\"D:\\Antigravity\\my project\\functions\\venv\\Lib\\site-packages\\firebase_functions\\private\\serving.py\""]
+[info]  * Serving Flask app 'serving'
+ * Debug mode: off
+
+[error] WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8081
+
+[error] Press CTRL+C to quit
+
+[debug] [2026-03-05T01:22:36.121Z] File D:\Antigravity\my project\functions\__pycache__\main.cpython-313.pyc changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File D:\\Antigravity\\my project\\functions\\__pycache__\\main.cpython-313.pyc changed, reloading triggers"}}
+[debug] [2026-03-05T01:22:37.130Z] Customer code is not Node
+[debug] [2026-03-05T01:22:37.131Z] Validating python source
+[debug] [2026-03-05T01:22:37.131Z] Building python source
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-03-05T01:22:37.132Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-03-05T01:22:37.149Z] Running command with virtualenv: command="D:\Antigravity\my project\functions\venv\Scripts\activate.bat", args=["","&&","python.exe","-c","\"import firebase_functions; import os; print(os.path.dirname(firebase_functions.__file__))\""]
+[debug] [2026-03-05T01:22:37.272Z] stdout: D:\Antigravity\my project\functions\venv\Lib\site-packages\firebase_functions
+
+[debug] [2026-03-05T01:22:37.280Z] Running admin server with args: ["python.exe","\"D:\\Antigravity\\my project\\functions\\venv\\Lib\\site-packages\\firebase_functions\\private\\serving.py\""] and env: {"GCLOUD_PROJECT":"namhwa-safety-dashboard","K_REVISION":"1","PORT":"80","GOOGLE_CLOUD_QUOTA_PROJECT":"namhwa-safety-dashboard","FUNCTIONS_EMULATOR":"true","TZ":"UTC","FIREBASE_DEBUG_MODE":"true","FIREBASE_DEBUG_FEATURES":"{\"skipTokenVerification\":true,\"enableCors\":true}","FIREBASE_EMULATOR_HUB":"127.0.0.1:4400","CLOUD_EVENTARC_EMULATOR_HOST":"http://127.0.0.1:9299","CLOUD_TASKS_EMULATOR_HOST":"127.0.0.1:9499","FIREBASE_CONFIG":"{\"storageBucket\":\"namhwa-safety-dashboard.firebasestorage.app\",\"projectId\":\"namhwa-safety-dashboard\"}","GOOGLE_APPLICATION_CREDENTIALS":"C:\\Users\\elcid-office\\AppData\\Roaming\\firebase\\s7560k_gmail_com_application_default_credentials.json","ADMIN_PORT":"8082"} in D:\Antigravity\my project\functions
+[debug] [2026-03-05T01:22:37.280Z] Running command with virtualenv: command="D:\Antigravity\my project\functions\venv\Scripts\activate.bat", args=["","&&","python.exe","\"D:\\Antigravity\\my project\\functions\\venv\\Lib\\site-packages\\firebase_functions\\private\\serving.py\""]
+[info]  * Serving Flask app 'serving'
+ * Debug mode: off
+
+[error] WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8082
+
+[error] Press CTRL+C to quit
+
+[error] D:\Antigravity\my project\functions\main.py:7: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+
+[error] D:\Antigravity\my project\functions\main.py:7: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+
+[error] 127.0.0.1 - - [05/Mar/2026 01:22:43] "GET /__/functions.yaml HTTP/1.1" 200 -
+
+[error] 127.0.0.1 - - [05/Mar/2026 01:22:43] "GET /__/functions.yaml HTTP/1.1" 200 -
+
+[debug] [2026-03-05T01:22:43.181Z] Got response from /__/functions.yaml endpoints:
+  analyze_dxf:
+    availableMemoryMb: 1024
+    concurrency: null
+    entryPoint: analyze_dxf
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  analyze_floorplan_3d:
+    availableMemoryMb: 1024
+    concurrency: null
+    entryPoint: analyze_floorplan_3d
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: 120
+  export_excel:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: export_excel
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  generate_shm_summary:
+    availableMemoryMb: 512
+    concurrency: null
+    entryPoint: generate_shm_summary
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: 60
+  recommend_basis:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: recommend_basis
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+params: []
+requiredAPIs: []
+specVersion: v1alpha1
+
+[debug] [2026-03-05T01:22:43.196Z] Got response from /__/functions.yaml endpoints:
+  analyze_dxf:
+    availableMemoryMb: 1024
+    concurrency: null
+    entryPoint: analyze_dxf
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  analyze_floorplan_3d:
+    availableMemoryMb: 1024
+    concurrency: null
+    entryPoint: analyze_floorplan_3d
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: 120
+  export_excel:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: export_excel
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  generate_shm_summary:
+    availableMemoryMb: 512
+    concurrency: null
+    entryPoint: generate_shm_summary
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: 10
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: 60
+  recommend_basis:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: recommend_basis
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+params: []
+requiredAPIs: []
+specVersion: v1alpha1
+
+[error] 127.0.0.1 - - [05/Mar/2026 01:22:43] "GET /__/quitquitquit HTTP/1.1" 200 -
+
+[error] 127.0.0.1 - - [05/Mar/2026 01:22:43] "GET /__/quitquitquit HTTP/1.1" 200 -
+
+[info] +  functions: Loaded functions definitions from source: analyze_dxf, analyze_floorplan_3d, export_excel, generate_shm_summary, recommend_basis. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: analyze_dxf, analyze_floorplan_3d, export_excel, generate_shm_summary, recommend_basis."}}
+[info] +  functions[us-central1-analyze_dxf]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_dxf). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_dxf)."}}
+[info] +  functions[us-central1-analyze_floorplan_3d]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_floorplan_3d). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_floorplan_3d)."}}
+[info] +  functions[us-central1-export_excel]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/export_excel). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/export_excel)."}}
+[info] +  functions[us-central1-generate_shm_summary]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/generate_shm_summary). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/generate_shm_summary)."}}
+[info] +  functions[us-central1-recommend_basis]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/recommend_basis). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/recommend_basis)."}}
+[info] +  functions: Loaded functions definitions from source: analyze_dxf, analyze_floorplan_3d, export_excel, generate_shm_summary, recommend_basis. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: analyze_dxf, analyze_floorplan_3d, export_excel, generate_shm_summary, recommend_basis."}}
+[info] +  functions[us-central1-analyze_dxf]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_dxf). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_dxf)."}}
+[info] +  functions[us-central1-analyze_floorplan_3d]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_floorplan_3d). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/analyze_floorplan_3d)."}}
+[info] +  functions[us-central1-export_excel]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/export_excel). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/export_excel)."}}
+[info] +  functions[us-central1-generate_shm_summary]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/generate_shm_summary). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/generate_shm_summary)."}}
+[info] +  functions[us-central1-recommend_basis]: http function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/recommend_basis). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1/recommend_basis)."}}
+[debug] [2026-03-05T01:22:43.229Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────┬────────────────┬──────────────────────────────────┐
+│ Emulator   │ Host:Port      │ View in Emulator UI              │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Functions  │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions  │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Hosting    │ 127.0.0.1:5000 │ n/a                              │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Extensions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/extensions │
+└────────────┴────────────────┴──────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+┌─────────────────────────┬───────────────┬─────────────────────┐
+│ Extension Instance Name │ Extension Ref │ View in Emulator UI │
+└─────────────────────────┴───────────────┴─────────────────────┘
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-03-05T01:22:47.680Z] [work-queue] {"queuedWork":["/namhwa-safety-dashboard/us-central1/generate_shm_summary-2026-03-05T01:22:47.680Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-03-05T01:22:47.680Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/namhwa-safety-dashboard/us-central1/generate_shm_summary-2026-03-05T01:22:47.680Z"],"workRunningCount":1}
+[debug] [2026-03-05T01:22:47.681Z] Accepted request OPTIONS /namhwa-safety-dashboard/us-central1/generate_shm_summary --> us-central1-generate_shm_summary
+[debug] [2026-03-05T01:22:47.681Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-03-05T01:22:47.682Z] [functions] Got req.url=/namhwa-safety-dashboard/us-central1/generate_shm_summary, mapping to path=/ {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/namhwa-safety-dashboard/us-central1/generate_shm_summary, mapping to path=/"}}
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-03-05T01:22:47.692Z] Running command with virtualenv: command="D:\Antigravity\my project\functions\venv\Scripts\activate.bat", args=["","&&","functions-framework"]
+[debug] [2026-03-05T01:22:47.705Z] [worker-pool] addWorker(us-central1-generate_shm_summary) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-generate_shm_summary)"}}
+[debug] [2026-03-05T01:22:47.705Z] [worker-pool] Adding worker with key us-central1-generate_shm_summary, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-generate_shm_summary, total=1"}}
+[info] >  D:\Antigravity\my project\functions\main.py:7: FutureWarning:  {"user":"D:\\Antigravity\\my project\\functions\\main.py:7: FutureWarning: \r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m D:\\Antigravity\\my project\\functions\\main.py:7: FutureWarning: \r"}}
+[info] >   {"user":"\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m \r"}}
+[info] >  All support for the `google.generativeai` package has ended. It will no longer be receiving  {"user":"All support for the `google.generativeai` package has ended. It will no longer be receiving \r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m All support for the `google.generativeai` package has ended. It will no longer be receiving \r"}}
+[info] >  updates or bug fixes. Please switch to the `google.genai` package as soon as possible. {"user":"updates or bug fixes. Please switch to the `google.genai` package as soon as possible.\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m updates or bug fixes. Please switch to the `google.genai` package as soon as possible.\r"}}
+[info] >  See README for more details: {"user":"See README for more details:\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m See README for more details:\r"}}
+[info] >   {"user":"\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m \r"}}
+[info] >  https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md {"user":"https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md\r"}}
+[info] >   {"user":"\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m \r"}}
+[info] >    import google.generativeai as genai {"user":"  import google.generativeai as genai\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m   import google.generativeai as genai\r"}}
+[info] >   * Serving Flask app 'generate_shm_summary' {"user":" * Serving Flask app 'generate_shm_summary'\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m  * Serving Flask app 'generate_shm_summary'\r"}}
+[info] >   * Debug mode: off {"user":" * Debug mode: off\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m  * Debug mode: off\r"}}
+[info] >  WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead. {"user":"WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.\r"}}
+[info] >   * Running on http://127.0.0.1:9011 {"user":" * Running on http://127.0.0.1:9011\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m  * Running on http://127.0.0.1:9011\r"}}
+[info] >  Press CTRL+C to quit {"user":"Press CTRL+C to quit\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m Press CTRL+C to quit\r"}}
+[info] >  127.0.0.1 - - [05/Mar/2026 01:22:50] "GET /__/health HTTP/1.1" 405 - {"user":"127.0.0.1 - - [05/Mar/2026 01:22:50] \"GET /__/health HTTP/1.1\" 405 -\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m 127.0.0.1 - - [05/Mar/2026 01:22:50] \"GET /__/health HTTP/1.1\" 405 -\r"}}
+[debug] [2026-03-05T01:22:50.276Z] [worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"[worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: IDLE"}}
+[debug] [2026-03-05T01:22:50.277Z] [worker-pool] submitRequest(triggerId=us-central1-generate_shm_summary) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-generate_shm_summary)"}}
+[info] i  functions: Beginning execution of "us-central1-generate_shm_summary" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Beginning execution of \"us-central1-generate_shm_summary\""}}
+[debug] [2026-03-05T01:22:50.277Z] [worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"[worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: BUSY"}}
+[info] >  127.0.0.1 - - [05/Mar/2026 01:22:50] "OPTIONS / HTTP/1.1" 204 - {"user":"127.0.0.1 - - [05/Mar/2026 01:22:50] \"OPTIONS / HTTP/1.1\" 204 -\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m 127.0.0.1 - - [05/Mar/2026 01:22:50] \"OPTIONS / HTTP/1.1\" 204 -\r"}}
+[debug] [2026-03-05T01:22:50.281Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-generate_shm_summary" in 3.8947ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finished \"us-central1-generate_shm_summary\" in 3.8947ms"}}
+[debug] [2026-03-05T01:22:50.281Z] [worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"[worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: IDLE"}}
+[debug] [2026-03-05T01:22:50.281Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-03-05T01:22:50.281Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-03-05T01:22:50.281Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-03-05T01:22:50.283Z] [work-queue] {"queuedWork":["/namhwa-safety-dashboard/us-central1/generate_shm_summary-2026-03-05T01:22:50.283Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-03-05T01:22:50.283Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/namhwa-safety-dashboard/us-central1/generate_shm_summary-2026-03-05T01:22:50.283Z"],"workRunningCount":1}
+[debug] [2026-03-05T01:22:50.283Z] Accepted request POST /namhwa-safety-dashboard/us-central1/generate_shm_summary --> us-central1-generate_shm_summary
+[debug] [2026-03-05T01:22:50.284Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-03-05T01:22:50.284Z] [functions] Got req.url=/namhwa-safety-dashboard/us-central1/generate_shm_summary, mapping to path=/ {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/namhwa-safety-dashboard/us-central1/generate_shm_summary, mapping to path=/"}}
+[debug] [2026-03-05T01:22:50.284Z] [worker-pool] submitRequest(triggerId=us-central1-generate_shm_summary) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-generate_shm_summary)"}}
+[info] i  functions: Beginning execution of "us-central1-generate_shm_summary" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Beginning execution of \"us-central1-generate_shm_summary\""}}
+[debug] [2026-03-05T01:22:50.284Z] [worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"[worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: BUSY"}}
+[info] >  127.0.0.1 - - [05/Mar/2026 01:22:59] "POST / HTTP/1.1" 200 - {"user":"127.0.0.1 - - [05/Mar/2026 01:22:59] \"POST / HTTP/1.1\" 200 -\r","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"\u001b[90m> \u001b[39m 127.0.0.1 - - [05/Mar/2026 01:22:59] \"POST / HTTP/1.1\" 200 -\r"}}
+[debug] [2026-03-05T01:22:59.074Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-generate_shm_summary" in 8790.316ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finished \"us-central1-generate_shm_summary\" in 8790.316ms"}}
+[debug] [2026-03-05T01:22:59.076Z] [worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"[worker-us-central1-generate_shm_summary-26beac5d-b6db-497e-b9a7-f438d5ae23ff]: IDLE"}}
+[debug] [2026-03-05T01:22:59.076Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-03-05T01:22:59.076Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-generate_shm_summary"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-03-05T01:22:59.077Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
