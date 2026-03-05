@@ -5,6 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>현장 안전보건 관리 점검표</title>
+    <script>
+        (function () {
+            // 관리자 비밀번호 설정
+            const ADMIN_PASSWORD = "1152";
+
+            // 이미 인증된 세션인지 확인
+            if (!sessionStorage.getItem("isAdminAuthenticated")) {
+                let inputPwd = prompt("관리자 비밀번호를 입력하세요:", "");
+
+                if (inputPwd === ADMIN_PASSWORD) {
+                    sessionStorage.setItem("isAdminAuthenticated", "true");
+                    alert("인증되었습니다.");
+                } else {
+                    alert("비밀번호가 일치하지 않습니다. 접근이 차단됩니다.");
+                    document.documentElement.innerHTML = ""; // 화면 지우기
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = "../index.html"; // 랜딩 페이지로 리다이렉트
+                    }
+                }
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 기본 스타일 */
@@ -85,12 +109,15 @@
         @media print {
             @page {
                 size: landscape;
-                margin: 5mm;
+                margin: 0;
+                /* 브라우저 기본 머리글(날짜) 및 바닥글(URL) 제거 */
             }
 
             body {
-                font-size: 9pt;
-                margin: 0;
+                font-size: 11pt;
+                /* 가독성을 높이기 위해 폰트 크기 확대 */
+                margin: 10mm;
+                /* 컨텐츠가 잘리지 않도록 본문에 여백 추가 */
                 padding: 0;
                 background-color: white;
                 -webkit-print-color-adjust: exact;

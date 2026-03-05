@@ -8,6 +8,30 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>현장 안전보건경영시스템 점검 결과표</title>
+    <script>
+        (function () {
+            // 관리자 비밀번호 (임의 설정)
+            const ADMIN_PASSWORD = "1152";
+
+            // 이미 인증된 세션인지 확인
+            if (!sessionStorage.getItem("isAdminAuthenticated")) {
+                let inputPwd = prompt("관리자 비밀번호를 입력하세요:", "");
+
+                if (inputPwd === ADMIN_PASSWORD) {
+                    sessionStorage.setItem("isAdminAuthenticated", "true");
+                    alert("인증되었습니다.");
+                } else {
+                    alert("비밀번호가 일치하지 않습니다. 접근이 차단됩니다.");
+                    document.documentElement.innerHTML = ""; // 화면 지우기
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = "../index.html"; // 랜딩 페이지로 리다이렉트
+                    }
+                }
+            }
+        })();
+    </script>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
@@ -432,6 +456,7 @@
             #regulation-modal,
             #add-supervisor-btn,
             #print-btn-container,
+            #action-btn-container,
             #auto-summary-btn,
             .add-inspector-btn,
             .remove-inspector-btn,
@@ -455,11 +480,28 @@
 
     <div class="container">
 
-        <div id="print-btn-container" style="text-align: right; margin-bottom: 20px;">
-            <button id="print-btn"
-                style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #1a237e; color: white; border: none; border-radius: 5px; transition: background-color 0.3s;">
-                &#128424; 인쇄하기
-            </button>
+        <div id="action-btn-container" class="no-print"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px;">
+                <button id="save-server-btn"
+                    style="padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; transition: background-color 0.3s;">
+                    서버에 저장
+                </button>
+                <button id="load-server-btn"
+                    style="padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 5px; transition: background-color 0.3s;">
+                    불러오기
+                </button>
+                <button id="reset-form-btn"
+                    style="padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #dc3545; color: white; border: none; border-radius: 5px; transition: background-color 0.3s;">
+                    초기화
+                </button>
+            </div>
+            <div>
+                <button id="print-btn"
+                    style="padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #1a237e; color: white; border: none; border-radius: 5px; transition: background-color 0.3s;">
+                    &#128424; 인쇄하기
+                </button>
+            </div>
         </div>
 
         <h1 style="text-align: center;">
@@ -665,17 +707,338 @@
 
     <!-- Regulation Modal -->
     <div id="regulation-modal">
-        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl">
-            <div class="flex justify-between items-center border-b pb-3 mb-4">
-                <h2 class="text-xl font-bold text-gray-900">관련 법규 및 기준</h2>
-                <button id="close-modal-btn">&times;</button>
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl"
+            style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; width: 100%;">
+            <div class="flex justify-between items-center border-b pb-3 mb-4"
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 class="text-xl font-bold text-gray-900" style="margin: 0;">관련 법규 및 기준</h2>
+                <button id="close-modal-btn"
+                    style="font-size: 1.5rem; border: none; background: none; cursor: pointer;">&times;</button>
             </div>
-            <div id="modal-content">
+            <div id="modal-content" style="max-height: 400px; overflow-y: auto;">
                 <!-- Regulation text will be injected here -->
             </div>
         </div>
     </div>
 
+    <!-- Server Load Modal -->
+    <div id="server-load-modal"
+        style="display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 60; align-items: center; justify-content: center;">
+        <div
+            style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; width: 90%; max-height: 80vh; display: flex; flex-direction: column;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; color: #1a237e;">저장된 점검표 불러오기</h2>
+                <button id="close-load-modal-btn"
+                    style="font-size: 1.5rem; border: none; background: none; cursor: pointer;">&times;</button>
+            </div>
+            <div id="load-list-content" style="flex-grow: 1; overflow-y: auto;">
+                <p style="text-align: center; color: #666;">데이터를 불러오는 중입니다...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay"
+        style="display: none; position: fixed; inset: 0; background-color: rgba(255, 255, 255, 0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+        <div
+            style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;">
+        </div>
+        <p id="loading-text" style="margin-top: 15px; font-weight: bold; color: #333;">저장 중...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
+            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
+            projectId: "namhwa-safety-dashboard",
+            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
+            messagingSenderId: "152864778612",
+            appId: "1:152864778612:web:ecc482adce93a1534a2421"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make functions globally available
+        window.saveToServer = async function () {
+            const siteNameEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(2) .input-text');
+            const dateEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(4) input');
+            const siteName = siteNameEl ? siteNameEl.textContent.trim() : "";
+            const checkDate = dateEl ? dateEl.value : "";
+
+            if (!siteName) {
+                alert("현장명을 입력해주세요.");
+                return;
+            }
+            if (!checkDate) {
+                alert("점검일을 입력해주세요.");
+                return;
+            }
+
+            // Show loading
+            const loadingOverlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').textContent = '서버에 저장 중입니다...';
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                // Collect Header Info
+                const headerInfo = {
+                    quarter: document.getElementById('quarter-input').value,
+                    siteName: siteName,
+                    checkDate: checkDate,
+                    progress: document.querySelector('.progress-input').value,
+                    department: document.querySelector('.header-table tr:nth-child(2) td:nth-child(4) input').value,
+                    evaluators: {
+                        manager: document.querySelector('.header-table tr:nth-child(1) td:last-child input') ? document.querySelector('.header-table tr:nth-child(1) td:last-child input').value : document.querySelectorAll('.header-table td input[placeholder*="현장소장"]')[0]?.value || '',
+                        safetyManager: document.querySelectorAll('.header-table td input[placeholder*="안전관리자"]')[0]?.value || '',
+                        supervisors: Array.from(document.querySelectorAll('#supervisor-list .input-text')).map(input => input.value).filter(val => val !== '')
+                    }
+                };
+
+                // Collect Signatures
+                const signatures = {
+                    inspectors: Array.from(document.querySelectorAll('#inspector-list .input-text')).map(input => input.value).filter(val => val !== ''),
+                    siteRep: document.querySelector('#dynamic-signature-area > div:nth-child(3) > div:nth-child(1) > input')?.value || '',
+                    evaluators: Array.from(document.querySelectorAll('#evaluator-list .input-text')).map(input => input.value).filter(val => val !== '')
+                };
+
+                // Collect Evaluation Items
+                const evaluationItems = [];
+                document.querySelectorAll('.main-table tbody tr').forEach((row, index) => {
+                    const select = row.querySelector('.eval-select');
+                    const comment = row.querySelector('.auto-expand-input');
+                    if (select) {
+                        evaluationItems.push({
+                            index: index,
+                            selectedValue: select.value,
+                            comment: comment ? comment.innerHTML : ''
+                        });
+                    }
+                });
+
+                // Collect Deductions & Field Score
+                const deductions = {
+                    majorAccident: document.getElementById('major-accident-count').value,
+                    workAccident: document.getElementById('work-accident-count').value,
+                    fieldScore: document.getElementById('field-score-input').value
+                };
+
+                // Collect Summary
+                const majorSummary = document.getElementById('major-summary-output').innerHTML;
+
+                // Collect Final Scores
+                const finalScores = {
+                    systemConverted: document.getElementById('system-converted-score').textContent,
+                    fieldConverted: document.getElementById('field-converted-score').textContent,
+                    totalScore: document.getElementById('final-total-score').textContent,
+                    finalGrade: document.getElementById('final-grade-display').textContent
+                };
+
+                const reportData = {
+                    headerInfo,
+                    signatures,
+                    evaluationItems,
+                    deductions,
+                    majorSummary,
+                    finalScores,
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "shm_checks"), reportData);
+
+                loadingOverlay.style.display = 'none';
+                alert("점검표가 서버에 성공적으로 저장되었습니다.");
+
+            } catch (error) {
+                console.error("Error saving document: ", error);
+                loadingOverlay.style.display = 'none';
+                alert("저장 중 오류가 발생했습니다: " + error.message);
+            }
+        };
+
+        window.showLoadModal = async function () {
+            const loadModal = document.getElementById('server-load-modal');
+            const listContent = document.getElementById('load-list-content');
+            loadModal.style.display = 'flex';
+            listContent.innerHTML = '<p style="text-align: center; color: #666;">데이터를 불러오는 중입니다...</p>';
+
+            try {
+                const q = query(collection(db, "shm_checks"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    listContent.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">저장된 점검표가 없습니다.</p>';
+                    return;
+                }
+
+                const ul = document.createElement('ul');
+                ul.style.cssText = 'list-style: none; padding: 0; margin: 0;';
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const siteName = data.headerInfo?.siteName || '현장명 미상';
+                    const date = data.headerInfo?.checkDate || '날짜 미상';
+                    const score = data.finalScores?.totalScore || '0';
+                    const grade = data.finalScores?.finalGrade || '-';
+                    const dateStr = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : '최근';
+
+                    const li = document.createElement('li');
+                    li.style.cssText = 'border: 1px solid #eee; border-radius: 5px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: background-color 0.2s; background-color: #fcfcfc;';
+                    li.onmouseover = () => li.style.backgroundColor = '#f0f8ff';
+                    li.onmouseout = () => li.style.backgroundColor = '#fcfcfc';
+                    li.onclick = () => window.loadDataRow(data);
+
+                    li.innerHTML = `
+                        <div style="font-weight: bold; font-size: 1.1em; color: #333; margin-bottom: 5px;">${siteName} (점검일: ${date})</div>
+                        <div style="font-size: 0.9em; color: #666; display: flex; justify-content: space-between;">
+                            <span>총점: ${score}점 / 등급: ${grade}</span>
+                            <span>저장일시: ${dateStr}</span>
+                        </div>
+                    `;
+                    ul.appendChild(li);
+                });
+
+                listContent.innerHTML = '';
+                listContent.appendChild(ul);
+
+            } catch (error) {
+                console.error("Error getting documents: ", error);
+                listContent.innerHTML = `<p style="text-align: center; color: red;">목록을 불러오는데 실패했습니다: ${error.message}</p>`;
+            }
+        };
+
+        window.loadDataRow = function (data) {
+            if (!confirm('현재 입력된 내용이 모두 삭제되고 선택한 데이터를 불러옵니다. 계속하시겠습니까?')) {
+                return;
+            }
+
+            // 1. Restore Header Info
+            if (data.headerInfo) {
+                document.getElementById('quarter-input').value = data.headerInfo.quarter || '1분기';
+                const siteNameEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(2) .input-text');
+                if (siteNameEl) siteNameEl.textContent = data.headerInfo.siteName || '';
+
+                const dateEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(4) input');
+                if (dateEl) dateEl.value = data.headerInfo.checkDate || '';
+
+                const progEl = document.querySelector('.progress-input');
+                if (progEl) progEl.value = data.headerInfo.progress || '0';
+
+                const deptEl = document.querySelector('.header-table tr:nth-child(2) td:nth-child(4) input');
+                if (deptEl) deptEl.value = data.headerInfo.department || '';
+
+                const hmInput = document.querySelectorAll('.header-table td input[placeholder*="현장소장"]')[0];
+                if (hmInput) hmInput.value = data.headerInfo.evaluators?.manager || '';
+
+                const smInput = document.querySelectorAll('.header-table td input[placeholder*="안전관리자"]')[0];
+                if (smInput) smInput.value = data.headerInfo.evaluators?.safetyManager || '';
+
+                // Restore Supervisors
+                const supervisorList = document.getElementById('supervisor-list');
+                supervisorList.innerHTML = '';
+                if (data.headerInfo.evaluators?.supervisors && Array.isArray(data.headerInfo.evaluators.supervisors)) {
+                    data.headerInfo.evaluators.supervisors.forEach(name => {
+                        const evt = new Event('click', { bubbles: true });
+                        document.getElementById('add-supervisor-btn').dispatchEvent(evt); // Trigger add logic
+                        const inputs = supervisorList.querySelectorAll('.input-text');
+                        if (inputs.length > 0) inputs[inputs.length - 1].value = name;
+                    });
+                }
+            }
+
+            // 2. Restore Signatures
+            if (data.signatures) {
+                const inspectorList = document.getElementById('inspector-list');
+                const evaluatorList = document.getElementById('evaluator-list');
+
+                // Clear existing dynamics except first
+                while (inspectorList.children.length > 1) { inspectorList.lastChild.remove(); }
+                while (evaluatorList.children.length > 1) { evaluatorList.lastChild.remove(); }
+
+                if (data.signatures.inspectors && data.signatures.inspectors.length > 0) {
+                    inspectorList.querySelector('.input-text').value = data.signatures.inspectors[0];
+                    for (let i = 1; i < data.signatures.inspectors.length; i++) {
+                        const evt = new Event('click', { bubbles: true });
+                        inspectorList.querySelector('.add-inspector-btn').dispatchEvent(evt);
+                        const inputs = inspectorList.querySelectorAll('.input-text');
+                        inputs[inputs.length - 1].value = data.signatures.inspectors[i];
+                    }
+                } else {
+                    inspectorList.querySelector('.input-text').value = '';
+                }
+
+                if (data.signatures.evaluators && data.signatures.evaluators.length > 0) {
+                    evaluatorList.querySelector('.input-text').value = data.signatures.evaluators[0];
+                    for (let i = 1; i < data.signatures.evaluators.length; i++) {
+                        const evt = new Event('click', { bubbles: true });
+                        evaluatorList.querySelector('.add-evaluator-btn').dispatchEvent(evt);
+                        const inputs = evaluatorList.querySelectorAll('.input-text');
+                        inputs[inputs.length - 1].value = data.signatures.evaluators[i];
+                    }
+                } else {
+                    evaluatorList.querySelector('.input-text').value = '';
+                }
+
+                const siteRep = document.querySelector('#dynamic-signature-area > div:nth-child(3) > div:nth-child(1) > input');
+                if (siteRep) siteRep.value = data.signatures.siteRep || '';
+            }
+
+            // 3. Restore Evaluation Items
+            if (data.evaluationItems && Array.isArray(data.evaluationItems)) {
+                const rows = document.querySelectorAll('.main-table tbody tr');
+                data.evaluationItems.forEach(item => {
+                    if (item.index < rows.length) {
+                        const select = rows[item.index].querySelector('.eval-select');
+                        const comment = rows[item.index].querySelector('.auto-expand-input');
+                        if (select) {
+                            select.value = item.selectedValue;
+                            // Trigger change manually to update visual scores
+                            const event = new Event('change', { bubbles: true });
+                            select.dispatchEvent(event);
+                        }
+                        if (comment) comment.innerHTML = item.comment || '';
+                    }
+                });
+            }
+
+            // 4. Restore Deductions & Field Score
+            if (data.deductions) {
+                document.getElementById('major-accident-count').value = data.deductions.majorAccident || '0';
+                document.getElementById('work-accident-count').value = data.deductions.workAccident || '0';
+                document.getElementById('field-score-input').value = data.deductions.fieldScore || '40';
+            }
+
+            // 5. Restore Summary
+            if (data.majorSummary) {
+                document.getElementById('major-summary-output').innerHTML = data.majorSummary;
+            }
+
+            // 6. Recalculate
+            if (window._globalUpdateMethod) {
+                window._globalUpdateMethod(); // Defined below to trigger recalculation safely
+            }
+
+            document.getElementById('server-load-modal').style.display = 'none';
+            alert('데이터를 성공적으로 불러왔습니다.');
+        };
+
+        document.getElementById('save-server-btn').addEventListener('click', window.saveToServer);
+        document.getElementById('load-server-btn').addEventListener('click', window.showLoadModal);
+
+        document.getElementById('reset-form-btn').addEventListener('click', () => {
+            if (confirm('모든 입력 내용을 초기화하시겠습니까?')) {
+                location.reload();
+            }
+        });
+
+        document.getElementById('close-load-modal-btn').addEventListener('click', () => {
+            document.getElementById('server-load-modal').style.display = 'none';
+        });
+
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
@@ -1247,7 +1610,12 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error(`서버 응답 오류 (상태 코드: ${response.status})`);
+                        let errorDetail = "";
+                        try {
+                            const errorJson = await response.json();
+                            errorDetail = errorJson.detail || "";
+                        } catch (e) { }
+                        throw new Error(`서버 응답 오류 (상태 코드: ${response.status}) ${errorDetail ? '\n상세: ' + errorDetail : ''}`);
                     }
 
                     const result = await response.json();
@@ -1296,8 +1664,13 @@
             autoSummaryBtn.addEventListener('mouseleave', () => { if (!autoSummaryBtn.disabled && autoSummaryBtn.textContent !== "✓ 분석 완료") autoSummaryBtn.style.backgroundColor = '#3949ab'; });
             // ==========================================
 
+            // ==========================================
+
             updateSupervisorButtonState();
             updateAllScores();
+
+            // Store global update reference for loaded data trigger
+            window._globalUpdateMethod = updateAllScores;
         });
     </script>
 
