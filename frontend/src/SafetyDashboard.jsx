@@ -74,6 +74,7 @@ const SafetyDashboardInner = () => {
 
     // Temp state for new/editing items
     const [inspectionImages, setInspectionImages] = useState([]);
+    const [selectedInspection, setSelectedInspection] = useState(null);
     const [noticeFile, setNoticeFile] = useState(null);
 
     // Site Config
@@ -840,7 +841,7 @@ const SafetyDashboardInner = () => {
                                 <div className="space-y-3">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 italic">최근 점검 이력</p>
                                     {data.inspectionLog.length > 0 ? data.inspectionLog.slice(0, 5).map(log => (
-                                        <div key={log.id} className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-gray-100 transition-all hover:bg-white group/log active:scale-[0.98]">
+                                        <div key={log.id} onClick={() => setSelectedInspection(log)} className="flex items-center justify-between p-3.5 bg-gray-50/50 rounded-xl border border-gray-100 transition-all hover:bg-white group/log active:scale-[0.98] cursor-pointer">
                                             <div className="flex flex-col">
                                                 <span className="text-[11px] font-black text-gray-900 tracking-tight group-hover/log:text-blue-600 transition-colors uppercase">{log.item}</span>
                                                 <span className="text-[10px] font-bold text-gray-400 flex items-center gap-2">
@@ -891,7 +892,8 @@ const SafetyDashboardInner = () => {
                 <Modals.SettingsModal show={showSettingsModal} onClose={() => setShowSettingsModal(false)} onSave={handleSaveSettings} startDate={data.startDate} targetDays={data.targetDays} cctvUrl={data.cctvUrl} />
                 <Modals.WorkerModal show={showWorkerModal} onClose={() => setShowWorkerModal(false)} workerList={data.workerList} onChange={handleWorkerChangeByIndex} onAdd={handleAddWorker} onDelete={handleDeleteWorker} onSave={saveWorkersToDB} />
                 <Modals.IssueModal show={showIssueModal} onClose={() => setShowIssueModal(false)} issues={data.issueList} type={selectedIssueType} onAdd={handleAddIssue} onChange={handleIssueChange} onImageUpload={handleIssueImageUpload} onSave={saveIssueChanges} onStatusChange={changeIssueStatus} onArchive={archiveIssue} />
-                <Modals.InspectionModal show={showInspectionModal} onClose={() => setShowInspectionModal(false)} type={inspectionType} onSave={handleSaveInspection} images={inspectionImages} onImageUpload={handleInspectionImageUpload} onRemoveImage={handleRemoveInspectionImage} setPreview={setPreviewFile} />
+                <Modals.InspectionWriteModal show={showInspectionModal} onClose={() => setShowInspectionModal(false)} type={inspectionType} onSave={handleSaveInspection} images={inspectionImages} onImageUpload={handleInspectionImageUpload} onRemoveImage={handleRemoveInspectionImage} setPreview={setPreviewFile} />
+                <Modals.InspectionDetailModal show={!!selectedInspection} onClose={() => setSelectedInspection(null)} inspection={selectedInspection} setPreview={setPreviewFile} />
                 <Modals.NoticeModal show={!!selectedNotice} onClose={() => setSelectedNotice(null)} notice={selectedNotice} />
                 <Modals.NoticeWriteModal show={showNoticeWriteModal} onClose={() => setShowNoticeWriteModal(false)} onSave={handleSaveNotice} setFile={setNoticeFile} />
                 <Modals.PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />

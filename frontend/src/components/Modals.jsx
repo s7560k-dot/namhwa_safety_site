@@ -137,7 +137,7 @@ export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onIma
     );
 };
 
-export const InspectionModal = ({ show, onClose, type, onSave, images, onImageUpload, onRemoveImage, setPreview }) => {
+export const InspectionWriteModal = ({ show, onClose, type, onSave, images, onImageUpload, onRemoveImage, setPreview }) => {
     if (!show) return null;
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
@@ -175,6 +175,67 @@ export const InspectionModal = ({ show, onClose, type, onSave, images, onImageUp
                     </div>
                     <button type="submit" className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold hover:bg-blue-700">저장 하기</button>
                 </form>
+            </div>
+        </div>
+    );
+};
+
+export const InspectionDetailModal = ({ show, onClose, inspection, setPreview }) => {
+    if (!show || !inspection) return null;
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-4 flex justify-between items-center bg-gray-800 text-white">
+                    <h3 className="font-bold">{inspection.type} 점검 상세</h3>
+                    <button onClick={onClose}><X size={24} /></button>
+                </div>
+                <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100/50">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">점검 일자</p>
+                            <p className="text-sm font-bold text-gray-800 tracking-tight">{inspection.date}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100/50">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">판정 결과</p>
+                            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest ${inspection.status === '합격' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {inspection.status}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="relative">
+                        <div className="absolute top-0 left-0 w-8 h-1 bg-blue-500 rounded-full"></div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest pt-3">점검 품목 / 장비</p>
+                        <p className="text-lg font-black text-gray-900 leading-tight">{inspection.item}</p>
+                    </div>
+
+                    <div className="bg-gray-50/50 rounded-2xl p-5 border border-gray-100">
+                        <p className="text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">세부 점검 기록</p>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed min-h-[80px]">
+                            {inspection.details || "입력된 상세 점검 내용이 없습니다."}
+                        </div>
+                    </div>
+
+                    {inspection.images && inspection.images.length > 0 && (
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">현장 사진 및 증빙 서류</p>
+                            <div className="flex flex-wrap gap-2.5">
+                                {inspection.images.map((img, idx) => (
+                                    <div key={idx} className="relative w-20 h-20 border border-gray-100 rounded-xl overflow-hidden group bg-white flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-95" onClick={() => setPreview(typeof img === 'string' ? { url: img, name: '이미지' } : img)}>
+                                        {(typeof img === 'string' || (img && (img.type === 'image' || !img.type))) ? (
+                                            <img src={typeof img === 'string' ? img : img.url} className="w-full h-full object-cover" alt="점검사진" />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center text-center p-1"><span className="text-2xl mb-1">📄</span><span className="text-[9px] text-gray-500 font-bold truncate w-16 uppercase">{img.name || '문서'}</span></div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <button onClick={onClose} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 mt-4">확인 완료</button>
+                </div>
             </div>
         </div>
     );
