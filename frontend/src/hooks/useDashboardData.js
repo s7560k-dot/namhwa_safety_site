@@ -92,8 +92,13 @@ export const useDashboardData = (siteId) => {
                         const local = prev.find(i => i.id === doc.id);
                         if (local) {
                             // 로컬에만 있는 Blob URL(미리보기) 유지 (서버에 아직 업로드 중일 때)
-                            if (local.beforeImg?.startsWith('blob:') && !serverData.beforeImg) serverData.beforeImg = local.beforeImg;
-                            if (local.afterImg?.startsWith('blob:') && !serverData.afterImg) serverData.afterImg = local.afterImg;
+                            const bImg = local.beforeImg;
+                            const aImg = local.afterImg;
+                            const bUrl = typeof bImg === 'string' ? bImg : bImg?.url;
+                            const aUrl = typeof aImg === 'string' ? aImg : aImg?.url;
+
+                            if (bUrl?.startsWith('blob:') && !serverData.beforeImg) serverData.beforeImg = bImg;
+                            if (aUrl?.startsWith('blob:') && !serverData.afterImg) serverData.afterImg = aImg;
                         }
                         return serverData;
                     });

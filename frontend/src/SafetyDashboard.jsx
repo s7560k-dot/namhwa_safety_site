@@ -310,8 +310,8 @@ const SafetyDashboardInner = () => {
             };
             
             // 유효한 서버 URL만 포함 (미리보기 Blob 주소 제외)
-            if (issue.beforeImg && !issue.beforeImg.startsWith('blob:')) updates.beforeImg = issue.beforeImg;
-            if (issue.afterImg && !issue.afterImg.startsWith('blob:')) updates.afterImg = issue.afterImg;
+            if (issue.beforeImg && typeof issue.beforeImg === 'string' && !issue.beforeImg.startsWith('blob:')) updates.beforeImg = issue.beforeImg;
+            if (issue.afterImg && typeof issue.afterImg === 'string' && !issue.afterImg.startsWith('blob:')) updates.afterImg = issue.afterImg;
 
             await db.collection('sites').doc(siteId).collection('issues').doc(id).update(updates);
             console.log(`[Status Change] DB sync success for status: ${status}`);
