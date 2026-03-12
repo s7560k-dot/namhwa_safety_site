@@ -167,6 +167,52 @@ const SafetyDashboardInner = () => {
         });
     };
     const handleWorkEdit = (id) => setEditingWorkId(id);
+    // Image Compression Utility
+    const compressImage = (file, maxWidth = 1280, quality = 0.7) => {
+        return new Promise((resolve, reject) => {
+            if (!file.type.startsWith('image/')) {
+                resolve(file); // 이미지가 아니면 원본 반환 (PDF 등)
+                return;
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            // File 객체와 유사하게 name 속성 유지
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            reject(new Error("Canvas toBlob failed"));
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    };
+
     const handleWorkChange = (id, field, value) => {
         data.setRiskWorks(data.riskWorks.map(w => w.id === id ? { ...w, [field]: value } : w));
     };
@@ -186,7 +232,8 @@ const SafetyDashboardInner = () => {
     // Issue Handlers
     const handleAddIssue = async () => {
         await db.collection('sites').doc(siteId).collection('issues').add({
-            status: 'new', loc: '', finder: '', desc: '', beforeImg: null, afterImg: null, createdAt: Date.now()
+            status: 'new', loc: '', finder: '', desc: '', beforeImg: null, afterImg: null, 
+            archived: false, createdAt: Date.now()
         });
     };
     const handleIssueChange = (id, field, value) => {
@@ -195,25 +242,107 @@ const SafetyDashboardInner = () => {
     const handleIssueImageUpload = async (id, field, e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const ref = storage.ref(`sites/${siteId}/issues/${Date.now()}_${file.name}`);
-        await ref.put(file);
-        const url = await ref.getDownloadURL();
-        handleIssueChange(id, field, url);
-        await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ [field]: url });
+
+        // 1. 로컬 미리보기 생성 및 즉시 반영 (isUploading 표시를 위해 객체 형태로 저장 시도)
+        const localUrl = URL.createObjectURL(file);
+        handleIssueChange(id, field, { url: localUrl, isUploading: true });
+
+        console.log(`[Issue Upload] Starting upload/compress for issue: ${id}, field: ${field}, file: ${file.name}`);
+        try {
+            // 2. 이미지 압축 (최대 1280px, 품질 0.7)
+            const compressedFile = await compressImage(file);
+            console.log(`[Issue Resize] Compressed: ${file.size} -> ${compressedFile.size} bytes`);
+
+            const ref = storage.ref(`sites/${siteId}/issues/${Date.now()}_${file.name}`);
+            await ref.put(compressedFile);
+            const url = await ref.getDownloadURL();
+            
+            // 3. 서버 URL로 교체 (완료 상태)
+            handleIssueChange(id, field, url);
+            
+            // DB sync
+            await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ [field]: url });
+            console.log(`[Issue Upload] Success for: ${file.name}`);
+        } catch (error) {
+            console.error(`[Issue Upload] Failed:`, error);
+            handleIssueChange(id, field, null); // 실패 시 초기화
+            alert(`사진 업로드 중 오류가 발생했습니다: ${error.message}`);
+        }
     };
     const saveIssueChanges = async (id) => {
         const issue = data.issueList.find(i => i.id === id);
         if (issue) {
-            await db.collection('sites').doc(siteId).collection('issues').doc(id).update(issue);
-            alert("저장되었습니다.");
+            try {
+                const updates = {
+                    loc: issue.loc || "",
+                    finder: issue.finder || "",
+                    desc: issue.desc || "",
+                    status: issue.status || "new",
+                    updatedAt: Date.now()
+                };
+
+                // 임시 Blob URL은 DB에 저장하지 않고 서버 URL만 저장하도록 필터링
+                if (issue.beforeImg && typeof issue.beforeImg === 'string' && !issue.beforeImg.startsWith('blob:')) updates.beforeImg = issue.beforeImg;
+                if (issue.afterImg && typeof issue.afterImg === 'string' && !issue.afterImg.startsWith('blob:')) updates.afterImg = issue.afterImg;
+
+                await db.collection('sites').doc(siteId).collection('issues').doc(id).update(updates);
+                console.log(`[Issue Save] DB update success for issue: ${id}`);
+                alert("성공적으로 저장되었습니다.");
+            } catch (error) {
+                console.error("Issue save error:", error);
+                alert("저장 중 오류가 발생했습니다.");
+            }
         }
     };
     const changeIssueStatus = async (id, status) => {
-        await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ status });
+        const issue = data.issueList.find(i => i.id === id);
+        if (!issue) return;
+
+        console.log(`[Status Change] Moving issue ${id} to ${status}`);
+        try {
+            // blob URL은 DB에 저장하지 않음 (업로드 완료 후 별도 업데이트됨)
+            const updates = { 
+                status,
+                loc: issue.loc || "",
+                finder: issue.finder || "",
+                desc: issue.desc || "",
+                updatedAt: Date.now()
+            };
+            
+            // 유효한 서버 URL만 포함 (미리보기 Blob 주소 제외)
+            if (issue.beforeImg && !issue.beforeImg.startsWith('blob:')) updates.beforeImg = issue.beforeImg;
+            if (issue.afterImg && !issue.afterImg.startsWith('blob:')) updates.afterImg = issue.afterImg;
+
+            await db.collection('sites').doc(siteId).collection('issues').doc(id).update(updates);
+            console.log(`[Status Change] DB sync success for status: ${status}`);
+        } catch (error) {
+            console.error("Status change error:", error);
+            alert("상태 변경 중 오류가 발생했습니다.");
+        }
     };
     const archiveIssue = async (id) => {
-        if (confirm("이 항목을 조치 완료 목록에서 제외하시겠습니까?\n(데이터는 서버에 안전하게 보관됩니다.)")) {
-            await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ archived: true });
+        if (!confirm("이 항목을 조치 완료 목록에서 제외하시겠습니까?\n(데이터는 서버에 안전하게 보관됩니다.)")) return;
+
+        try {
+            console.log(`[Issue Archive] Archiving issue: ${id}`);
+            // 1. 로컬 상태 즉시 반영 (낙관적 업데이트)
+            data.setIssueList(prev => prev.map(i => i.id === id ? { ...i, archived: true } : i));
+            
+            // 2. 서버 업데이트
+            await db.collection('sites').doc(siteId).collection('issues').doc(id).update({ 
+                archived: true,
+                updatedAt: Date.now()
+            });
+
+            console.log(`[Issue Archive] Success`);
+            // 3. 성공 알림 (모달은 부모의 filteredIssues 필터링에 의해 자동으로 항목이 사라지거나 빈 화면이 됨)
+            alert("목록에서 안전하게 제거되었습니다.");
+        } catch (error) {
+            console.error("[Issue Archive] Error:", error);
+            const msg = error.code === 'permission-denied' ? "권한이 없습니다. 관리자에게 문의하세요." : "목록에서 제거하는 중 오류가 발생했습니다.";
+            alert(msg);
+            // 실패 시 로컬 상태 복구
+            data.setIssueList(prev => prev.map(i => i.id === id ? { ...i, archived: false } : i));
         }
     };
 
@@ -250,28 +379,69 @@ const SafetyDashboardInner = () => {
     };
     const handleInspectionImageUpload = async (e) => {
         const files = Array.from(e.target.files);
-        const newAttachments = await Promise.all(files.map(async file => {
-            const ref = storage.ref(`sites/${siteId}/inspections/${Date.now()}_${file.name}`);
-            await ref.put(file);
-            const url = await ref.getDownloadURL();
-            return { type: file.type.includes('pdf') ? 'pdf' : 'image', url, name: file.name };
+        if (files.length === 0) return;
+
+        // 1. 로컬 미리보기 즉시 생성 (사용자 경험 최우선)
+        const tempIdPrefix = Date.now();
+        const localItems = files.map((file, idx) => ({
+            type: file.type.includes('pdf') ? 'pdf' : 'image',
+            url: URL.createObjectURL(file),
+            name: file.name,
+            tempId: `${tempIdPrefix}_${idx}`,
+            isUploading: true
         }));
-        setInspectionImages(prev => [...prev, ...newAttachments]);
+        setInspectionImages(prev => [...prev, ...localItems]);
+
+        console.log(`[Inspection Upload] Starting compress and upload for ${files.length} files`);
+        try {
+            await Promise.all(files.map(async (file, idx) => {
+                // 2. 이미지 압축
+                const compressedFile = await compressImage(file);
+                console.log(`[Inspection Resize] ${file.name}: ${file.size} -> ${compressedFile.size} bytes`);
+
+                const ref = storage.ref(`sites/${siteId}/inspections/${tempIdPrefix}_${idx}_${file.name}`);
+                await ref.put(compressedFile);
+                const url = await ref.getDownloadURL();
+                
+                // 3. 서버 URL로 교체 (tempId 매칭)
+                setInspectionImages(prev => prev.map(item => 
+                    item.tempId === `${tempIdPrefix}_${idx}` ? { ...item, url, isUploading: false } : item
+                ));
+            }));
+            console.log(`[Inspection Upload] All files processed successfully`);
+        } catch (error) {
+            console.error(`[Inspection Upload] Error:`, error);
+            alert(`사진 업로드 중 오류가 발생했습니다: ${error.message}`);
+        }
     };
     const handleRemoveInspectionImage = (index) => {
+        console.log(`[Inspection Remove] Removing image at index: ${index}`);
         setInspectionImages(prev => prev.filter((_, i) => i !== index));
     };
     const handleSaveInspection = async (e) => {
         e.preventDefault();
-        await db.collection('sites').doc(siteId).collection('inspections').add({
-            type: inspectionType,
-            item: e.target.item.value,
-            date: new Date().toISOString().slice(5, 10),
-            status: e.target.result.value,
-            images: inspectionImages,
-            createdAt: Date.now()
-        });
-        setShowInspectionModal(false);
+        const formData = new FormData(e.target);
+        const item = formData.get('item');
+        const result = formData.get('result');
+        const details = formData.get('details');
+
+        try {
+            await db.collection('sites').doc(siteId).collection('inspections').add({
+                type: inspectionType,
+                item: item,
+                details: details || "",
+                date: new Date().toISOString().slice(5, 10), // MM-DD
+                status: result,
+                images: inspectionImages,
+                createdAt: Date.now()
+            });
+            setShowInspectionModal(false);
+            setInspectionImages([]);
+            console.log(`[Inspection Save] Success: ${item}`);
+        } catch (error) {
+            console.error("[Inspection Save] Error:", error);
+            alert("점검 내용 저장 중 오류가 발생했습니다.");
+        }
     };
 
     // Notice Handlers
@@ -536,7 +706,7 @@ const SafetyDashboardInner = () => {
                                                             <AlertTriangle size={12} className="text-red-500/50" />
                                                             <span>위험성 평가 및 안전 대책</span>
                                                         </label>
-                                                        <textarea className="w-full p-4 text-sm font-medium border border-gray-100 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-4 focus:ring-blue-50 shadow-inner bg-white/80 backdrop-blur-sm" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(id)}></textarea>
+                                                        <textarea className="w-full p-4 text-sm font-medium border border-gray-100 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-4 focus:ring-blue-50 shadow-inner bg-white/80 backdrop-blur-sm" rows="2" placeholder="주요 위험 요인과 안전 대책을 입력하세요." value={work.assessment} onChange={(e) => handleWorkChange(work.id, 'assessment', e.target.value)} onBlur={() => handleWorkSave(work.id)}></textarea>
                                                     </div>
                                                 </div>
                                             );
@@ -611,7 +781,7 @@ const SafetyDashboardInner = () => {
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in shadow-xl shadow-gray-200/20">
                                 <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center uppercase tracking-tight gap-2">
                                     <CheckCircle className="text-green-500" size={20} />
-                                    <span>이슈 등록 현황</span>
+                                    <span>안전부적합 조치</span>
                                 </h3>
                                 <div className="space-y-4">
                                     <div onClick={() => { setSelectedIssueType('new'); setShowIssueModal(true); }} className="flex items-center justify-between p-4 bg-red-50/50 rounded-2xl border border-red-100/50 cursor-pointer hover:bg-red-50 transition-all hover:scale-[1.02] shadow-sm shadow-red-500/5 group">
@@ -649,7 +819,7 @@ const SafetyDashboardInner = () => {
 
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in relative overflow-hidden group">
                                 <div className="absolute top-0 left-0 w-24 h-1 bg-red-800"></div>
-                                <h3 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-tight">출입 통제 및 점검</h3>
+                                <h3 className="text-lg font-black text-gray-900 mb-6 uppercase tracking-tight">반입점검 및 알림</h3>
                                 <div className="grid grid-cols-1 gap-3 mb-6">
                                     <button onClick={() => openInspectionModal('건설장비')} className="group/btn py-4 bg-gray-50 text-gray-700 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-50 hover:text-blue-700 transition-all border border-gray-100 flex items-center justify-center gap-3 relative overflow-hidden">
                                         <Truck size={18} className="transition-transform group-hover/btn:-translate-x-1" />

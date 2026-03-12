@@ -86,9 +86,19 @@ export const useDashboardData = (siteId) => {
         // 5. Issues
         const unsubIssue = siteRef.collection('issues')
             .onSnapshot(snapshot => {
-                const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setIssueList(list);
-                // Derived counts would be calculated here or in render
+                setIssueList(prev => {
+                    const newList = snapshot.docs.map(doc => {
+                        const serverData = { id: doc.id, ...doc.data() };
+                        const local = prev.find(i => i.id === doc.id);
+                        if (local) {
+                            // 로컬에만 있는 Blob URL(미리보기) 유지 (서버에 아직 업로드 중일 때)
+                            if (local.beforeImg?.startsWith('blob:') && !serverData.beforeImg) serverData.beforeImg = local.beforeImg;
+                            if (local.afterImg?.startsWith('blob:') && !serverData.afterImg) serverData.afterImg = local.afterImg;
+                        }
+                        return serverData;
+                    });
+                    return newList;
+                });
             }, error => console.warn("Error fetching issues:", error));
 
         // 6. Inspections [FIXED: inspectionLogs -> inspections]
@@ -132,7 +142,7 @@ export const useDashboardData = (siteId) => {
     useEffect(() => {
         const counts = { new: 0, processing: 0, done: 0 };
         issueList.forEach(issue => {
-            if (issue.archived) return; // 아카이브된 항목은 카운트 제외
+            if (issue.archived) return;
             if (issue.status === 'new') counts.new++;
             else if (issue.status === 'processing') counts.processing++;
             else if (issue.status === 'done') counts.done++;
@@ -140,64 +150,60 @@ export const useDashboardData = (siteId) => {
         setIssueCounts(counts);
 
         const newNotifications = [];
-
-        // 1. New Notices (within 7 days)
         const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+
+        // 1. New Notices (within 3 days for relevance)
         noticeData.forEach(notice => {
             const noticeDate = new Date(notice.date);
             const diffTime = Math.abs(now - noticeDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays <= 7) {
+            if (diffDays <= 3) {
                 newNotifications.push({
                     id: `notice_${notice.id}`,
                     type: '공지',
                     message: notice.title,
                     date: notice.date,
-                    link: '#'
+                    timestamp: notice.createdAt || noticeDate.getTime()
                 });
             }
         });
 
         // 2. New Issues (Status: new)
         issueList.forEach(issue => {
-            if (issue.status === 'new') {
-                let formattedDate = new Date().toISOString().slice(0, 10);
-                if (issue.createdAt) {
-                    const d = new Date(issue.createdAt);
-                    if (!isNaN(d.getTime())) {
-                        formattedDate = d.toISOString().slice(0, 10);
-                    }
-                }
+            if (issue.status === 'new' && !issue.archived) {
                 newNotifications.push({
                     id: `issue_${issue.id}`,
                     type: '부적합',
-                    message: `신규 부적합 조치 요청 (${issue.loc || '위치 미지정'})`,
-                    date: formattedDate,
-                    link: '#'
+                    message: `[신규] ${issue.loc || '위치미정'}: ${issue.desc?.substring(0, 20)}...`,
+                    date: issue.date || todayStr,
+                    timestamp: issue.createdAt || now.getTime()
                 });
             }
         });
 
-        // 3. Pending Approvals
-        approvals.forEach(appr => {
-            if (appr.status === 'pending' || appr.status === '대기') {
+        // 3. Recent Inspections (Last 24h)
+        inspectionLog.forEach(insp => {
+            const inspDate = insp.createdAt ? new Date(insp.createdAt) : new Date();
+            const diffTime = Math.abs(now - inspDate);
+            if (diffTime <= (1000 * 60 * 60 * 24)) {
                 newNotifications.push({
-                    id: `appr_${appr.id}`,
-                    type: '결재',
-                    message: `결재 대기: ${appr.title}`,
-                    date: appr.date || new Date().toISOString().slice(0, 10),
-                    link: '#'
+                    id: `insp_${insp.id}`,
+                    type: '점검',
+                    message: `${insp.item} 점검 완료 (${insp.status})`,
+                    date: insp.date || todayStr,
+                    timestamp: insp.createdAt || inspDate.getTime()
                 });
             }
         });
 
-        // Sort by date desc
-        newNotifications.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Sort by timestamp desc
+        newNotifications.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-        setNotifications(newNotifications);
+        setNotifications(newNotifications.slice(0, 15));
         setNotificationCount(newNotifications.length);
 
-    }, [noticeData, issueList, approvals]);
+    }, [noticeData, issueList, inspectionLog, approvals]);
 
     // Derived state: Accident Free Days
     const calculateAccidentFreeDays = () => {

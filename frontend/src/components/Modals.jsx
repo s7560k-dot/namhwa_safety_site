@@ -54,13 +54,13 @@ export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onIma
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className={`p-5 flex justify-between items-center text-white rounded-t-xl shrink-0 ${type === 'new' ? 'bg-red-500' : type === 'processing' ? 'bg-yellow-500' : 'bg-green-500'}`}>
-                    <h3 className="font-bold text-lg">{type === 'new' ? '신규 발견 목록' : type === 'processing' ? '조치 중 목록' : '조치 완료 목록'}</h3>
+                    <h3 className="font-bold text-lg">{type === 'new' ? '신규 안전부적합 사항' : type === 'processing' ? '조치 중 내역' : '조치 완료 내역'}</h3>
                     <button onClick={onClose} className="hover:bg-white/20 rounded-full p-1 transition"><X size={24} /></button>
                 </div>
                 <div className="p-6 space-y-6 overflow-y-auto bg-gray-50 flex-1">
                     {type === 'new' && (
                         <button onClick={onAdd} className="w-full py-3 bg-red-50 text-red-600 rounded-lg border-2 border-dashed border-red-200 font-bold mb-4 hover:bg-red-100 transition flex items-center justify-center">
-                            <Plus size={18} className="mr-2" /> + 신규 부적합 사항 등록
+                            <Plus size={18} className="mr-2" /> + 신규 부적합 사항 접수
                         </button>
                     )}
                     {filteredIssues.length > 0 ? filteredIssues.map(issue => (
@@ -79,22 +79,42 @@ export const IssueModal = ({ show, onClose, issues, type, onAdd, onChange, onIma
 
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 h-32 bg-gray-50 flex items-center justify-center">
+                                    <div className="absolute top-1 left-1 z-10 bg-gray-800 text-white text-[9px] px-1.5 py-0.5 rounded font-bold opacity-70">조치 전</div>
                                     {issue.beforeImg ? (
                                         <>
-                                            <img src={issue.beforeImg} alt="조치 전" className="w-full h-full object-cover" />
-                                            <a href={issue.beforeImg} download target="_blank" className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Download size={14} /></a>
+                                            <img src={typeof issue.beforeImg === 'string' ? issue.beforeImg : issue.beforeImg.url} alt="조치 전" className="w-full h-full object-cover" />
+                                            {typeof issue.beforeImg === 'string' && <a href={issue.beforeImg} download target="_blank" className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"><Download size={14} /></a>}
+                                            {issue.beforeImg.isUploading && (
+                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10 animate-pulse">
+                                                    <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                                                </div>
+                                            )}
                                         </>
-                                    ) : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">조치 전 사진</span></div>}
-                                    <label className="absolute inset-0 cursor-pointer"><input type="file" className="hidden" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'beforeImg', e)} /></label>
+                                    ) : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">사진 없음</span></div>}
+                                    {type !== 'done' && (
+                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center z-20">
+                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'beforeImg', e)} />
+                                        </label>
+                                    )}
                                 </div>
                                 <div className="relative group overflow-hidden rounded-xl border-2 border-dashed border-gray-200 h-32 bg-gray-50 flex items-center justify-center">
+                                    <div className="absolute top-1 left-1 z-10 bg-green-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold opacity-70">조치 후</div>
                                     {issue.afterImg ? (
                                         <>
-                                            <img src={issue.afterImg} alt="조치 후" className="w-full h-full object-cover" />
-                                            <a href={issue.afterImg} download target="_blank" className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Download size={14} /></a>
+                                            <img src={typeof issue.afterImg === 'string' ? issue.afterImg : issue.afterImg.url} alt="조치 후" className="w-full h-full object-cover" />
+                                            {typeof issue.afterImg === 'string' && <a href={issue.afterImg} download target="_blank" className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"><Download size={14} /></a>}
+                                            {issue.afterImg.isUploading && (
+                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10 animate-pulse">
+                                                    <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                                                </div>
+                                            )}
                                         </>
-                                    ) : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">조치 후 사진</span></div>}
-                                    <label className="absolute inset-0 cursor-pointer"><input type="file" className="hidden" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'afterImg', e)} /></label>
+                                    ) : <div className="text-center"><Upload size={18} className="mx-auto mb-1 text-gray-400" /><span className="text-xs font-bold text-gray-400">사진 없음</span></div>}
+                                    {type !== 'done' && (
+                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center z-20">
+                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => onImageUpload(issue.id, 'afterImg', e)} />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
 
@@ -122,11 +142,11 @@ export const InspectionModal = ({ show, onClose, type, onSave, images, onImageUp
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-                <div className="p-4 flex justify-between items-center bg-blue-600 text-white rounded-t-xl"><h3 className="font-bold">{type} 점검 등록</h3><button onClick={onClose}><X size={24} /></button></div>
+                <div className="p-4 flex justify-between items-center bg-blue-600 text-white rounded-t-xl"><h3 className="font-bold">{type} 점검/반입 등록</h3><button onClick={onClose}><X size={24} /></button></div>
                 <form onSubmit={onSave} className="p-6 space-y-4">
                     <div><label className="block text-sm font-medium text-gray-700 mb-1">품목명 / 장비명</label><input name="item" type="text" className="w-full border rounded-lg p-2" required placeholder="예: 이동식 크레인, 에폭시 등" /></div>
                     <div><label className="block text-sm font-medium text-gray-700 mb-2">점검 결과</label><div className="flex gap-4"><label className="flex items-center cursor-pointer"><input type="radio" name="result" value="합격" className="mr-2" defaultChecked /><span className="text-sm font-bold text-green-600">합격</span></label><label className="flex items-center cursor-pointer"><input type="radio" name="result" value="불합격" className="mr-2" /><span className="text-sm font-bold text-red-600">불합격</span></label></div></div>
-                    <div><label className="block text-sm font-medium text-gray-700 mb-1">세부 점검 내용</label><textarea className="w-full border rounded-lg p-2 h-20" placeholder="특이사항 및 점검 결과를 입력하세요"></textarea></div>
+                    <div><label className="block text-sm font-medium text-gray-700 mb-1">세부 점검 내용</label><textarea name="details" className="w-full border rounded-lg p-2 h-20" placeholder="특이사항 및 점검 결과를 입력하세요"></textarea></div>
 
                     {/* Images */}
                     <div>
@@ -134,15 +154,22 @@ export const InspectionModal = ({ show, onClose, type, onSave, images, onImageUp
                         <div className="flex flex-wrap gap-2 mb-2">
                             {images.map((img, idx) => (
                                 <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group bg-gray-50 flex items-center justify-center cursor-pointer" onClick={() => setPreview(typeof img === 'string' ? { url: img, name: '이미지' } : img)}>
-                                    {typeof img === 'string' ? <img src={img} className="w-full h-full object-cover" /> : (
-                                        <div className="flex flex-col items-center justify-center text-center p-1"><span className="text-2xl">📄</span><span className="text-[10px] text-gray-500 truncate w-16 mt-1">{img.name}</span></div>
+                                    {(typeof img === 'string' || (img && (img.type === 'image' || !img.type))) ? (
+                                        <img src={typeof img === 'string' ? img : img.url} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-center p-1"><span className="text-2xl">📄</span><span className="text-[10px] text-gray-500 truncate w-16 mt-1">{img.name || '문서'}</span></div>
                                     )}
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); onRemoveImage(idx); }} className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"><X size={12} /></button>
+                                    {img.isUploading && (
+                                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10 animate-pulse">
+                                            <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                                        </div>
+                                    )}
+                                    <button type="button" onClick={(e) => { e.stopPropagation(); onRemoveImage(idx); }} className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity z-20"><X size={12} /></button>
                                 </div>
                             ))}
-                            <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                            <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors relative">
                                 <Plus className="w-6 h-6 text-gray-400" />
-                                <input type="file" multiple className="hidden" accept="image/*, .pdf" onChange={onImageUpload} />
+                                <input type="file" multiple className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*, .pdf" onChange={onImageUpload} />
                             </label>
                         </div>
                     </div>
