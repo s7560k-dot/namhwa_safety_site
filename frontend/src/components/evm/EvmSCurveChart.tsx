@@ -45,24 +45,37 @@ const EvmSCurveChart: React.FC<EvmSCurveChartProps> = ({ projectId }) => {
                 let cumulativeEV = 0;
                 let cumulativeAC = 0;
 
-                // 마스터 데이터(CPM_TASKS) 순서에 따라 누적 데이터 생성
-                const chartData: ChartData[] = CPM_TASKS.map((cpmTask) => {
+                // 1. 실적이 입력된 마지막 공종의 인덱스를 찾습니다.
+                let lastIndexWithData = -1;
+                CPM_TASKS.forEach((t, i) => {
+                    const taskData = tasksMap[t.id];
+                    // ev나 ac가 존재하고 0보다 큰 경우 (실제 실적 입력이 있는 경우)를 '데이터가 있는 지점'으로 간주
+                    if (taskData && (taskData.ev > 0 || taskData.ac > 0)) {
+                        lastIndexWithData = i;
+                    }
+                });
+
+                // 2. 마스터 데이터(CPM_TASKS) 순서에 따라 누적 데이터 생성
+                const chartData: ChartData[] = CPM_TASKS.map((cpmTask, index) => {
                     const taskData = tasksMap[cpmTask.id];
 
+                    // PV는 DB 데이터와 상관없이 항상 공정표(CPM) 상의 계획 예산을 누적합니다. (Fixes zero PV bug)
+                    cumulativePV += cpmTask.cost;
+
                     if (taskData) {
-                        cumulativePV += taskData.pv || 0;
                         cumulativeEV += taskData.ev || 0;
                         cumulativeAC += taskData.ac || 0;
-                    } else {
-                        // DB에 아직 생성되지 않은 경우 (초기화 전) CPM 기본 배정액 누적
-                        cumulativePV += cpmTask.cost;
                     }
+
+                    // 현재 시점(오늘)까지만 선을 그리기 위해 lastIndexWithData를 기준으로 값을 할당합니다.
+                    // 데이터가 없는 미래 구간은 null을 반환하여 그래프가 끊기게 합니다.
+                    const hasActuals = index <= lastIndexWithData;
 
                     return {
                         time: cpmTask.name, // X축 라벨: CPM 공종명
                         PV: cumulativePV,
-                        EV: cumulativeEV,
-                        AC: cumulativeAC,
+                        EV: hasActuals ? cumulativeEV : (null as any),
+                        AC: hasActuals ? cumulativeAC : (null as any),
                     };
                 });
 

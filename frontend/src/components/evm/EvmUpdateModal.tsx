@@ -50,13 +50,13 @@ const EvmUpdateModal: React.FC<EvmUpdateModalProps> = ({ isOpen, onClose, projec
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await db.collection('sites').doc(projectId).collection('wbs_tasks').doc(task.id).update({
+            // update 대신 set(merge: true)를 사용하여 문서가 없을 경우에도 오류 없이 생성되도록 합니다.
+            await db.collection('sites').doc(projectId).collection('wbs_tasks').doc(task.id).set({
                 ev: earnedValue,
                 ac: actualCost,
                 currentProgress: progress,
-                actualCost: actualCost,
                 updatedAt: new Date().toISOString()
-            });
+            }, { merge: true });
 
             onSuccess();
             onClose();

@@ -283,7 +283,7 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                                     <button
                                         onClick={handleGenerateWbs}
                                         disabled={isGeneratingWbs}
-                                        className={`px - 5 py - 2.5 rounded - xl font - bold text - sm flex items - center gap - 2 transition - all ${isGeneratingWbs ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-violet-600 text-white hover:bg-violet-700 shadow-md shadow-violet-200'} `}
+                                        className={`px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all ${isGeneratingWbs ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-violet-600 text-white hover:bg-violet-700 shadow-md shadow-violet-200'}`}
                                     >
                                         {isGeneratingWbs ? (
                                             <><span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></span> 제너레이팅 중...</>
@@ -311,12 +311,12 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                                                 <tr key={node.id} className="hover:bg-gray-50/50">
                                                     <td className="px-4 py-3 font-mono text-xs text-violet-600 font-bold">{node.pnsCode || '-'}</td>
                                                     <td className="px-4 py-3">
-                                                        <span className={`inline - block px - 2 py - 0.5 rounded text - xs ${node.level === 1 ? 'bg-gray-800 text-white font-bold' : node.level === 2 ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-600'} `}>
+                                                        <span className={`inline-block px-2 py-0.5 rounded text-xs ${node.level === 1 ? 'bg-gray-800 text-white font-bold' : node.level === 2 ? 'bg-gray-200 text-gray-800' : 'bg-gray-100 text-gray-600'}`}>
                                                             L{node.level}
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <div className="flex items-center" style={{ marginLeft: `${(node.level - 1) * 16} px` }}>
+                                                        <div className="flex items-center" style={{ marginLeft: `${(node.level - 1) * 16}px` }}>
                                                             {node.level > 1 && <span className="text-gray-300 mr-2">└</span>}
                                                             <span className="font-semibold text-gray-800">{node.name}</span>
                                                         </div>
@@ -376,7 +376,7 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                                             <div className="bg-gray-100 h-3 rounded-full mt-5 overflow-hidden ring-4 ring-gray-50">
                                                 <div
                                                     className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full transition-all duration-700 ease-out"
-                                                    style={{ width: `${finalProgress}% ` }}
+                                                    style={{ width: `${finalProgress}%` }}
                                                 ></div>
                                             </div>
                                         </div>
@@ -417,7 +417,7 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                                             </thead>
                                             <tbody>
                                                 {tasksInfo.map((t) => (
-                                                    <tr key={t.id} className={`border - b border - gray - 50 last: border - 0 hover: bg - gray - 50 / 80 transition - colors ${t.status === 'active' ? 'bg-blue-50/40 translate-x-1 border-l-2 border-l-blue-600' : ''} `}>
+                                                    <tr key={t.id} className={`border-b border-gray-50 last:border-0 hover:bg-gray-50/80 transition-colors ${t.status === 'active' ? 'bg-blue-50/40 translate-x-1 border-l-2 border-l-blue-600' : ''}`}>
                                                         <td className="py-4 px-4">
                                                             <span className="text-[11px] font-black text-gray-900 truncate block max-w-[150px]" title={t.name}>
                                                                 {t.name}
