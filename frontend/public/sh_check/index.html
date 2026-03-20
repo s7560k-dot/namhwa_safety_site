@@ -261,31 +261,34 @@
                             alt="회사 로고" class="h-6" onerror="this.style.display='none'">
                     </a>
                     <div
-                        class="bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center gap-3 text-xs no-print">
+                        class="bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center gap-3 text-xs">
                         <div class="flex items-center gap-1">
                             <span class="font-semibold text-blue-700">규모(S):</span>
                             <select id="factor-s" onchange="updateKFactor()"
-                                class="bg-white border rounded px-1 py-0.5">
+                                class="bg-white border rounded px-1 py-0.5 no-print">
                                 <option value="0.8">소규모 (0.8)</option>
                                 <option value="1.0" selected>중규모 (1.0)</option>
                                 <option value="1.2">대규모 (1.2)</option>
                             </select>
+                            <span id="print-factor-s" class="hidden print:inline text-blue-900 font-medium">중규모 (1.0)</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <span class="font-semibold text-blue-700">위험(R):</span>
                             <select id="factor-r" onchange="updateKFactor()"
-                                class="bg-white border rounded px-1 py-0.5">
+                                class="bg-white border rounded px-1 py-0.5 no-print">
                                 <option value="1.0" selected>일반 (1.0)</option>
                                 <option value="1.1">고위험 (1.1)</option>
                             </select>
+                            <span id="print-factor-r" class="hidden print:inline text-blue-900 font-medium">일반 (1.0)</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <span class="font-semibold text-blue-700">공정(P):</span>
                             <select id="factor-p" onchange="updateKFactor()"
-                                class="bg-white border rounded px-1 py-0.5">
+                                class="bg-white border rounded px-1 py-0.5 no-print">
                                 <option value="1.0" selected>초기/마감 (1.0)</option>
                                 <option value="1.2">골조단계 (1.2)</option>
                             </select>
+                            <span id="print-factor-p" class="hidden print:inline text-blue-900 font-medium">초기/마감 (1.0)</span>
                         </div>
                         <div class="ml-2 pl-2 border-l border-blue-200">
                             <span class="font-bold text-blue-800">난이도(K):</span>
@@ -375,9 +378,12 @@
                         <button onclick="calculateScore()"
                             class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition">점수
                             계산</button>
-                        <div class="w-auto text-lg p-3 bg-blue-50 rounded-lg text-center">
-                            <strong>총점:</strong> <span id="total-score"
-                                class="font-bold text-blue-600 text-xl">0.00</span>
+                        <div class="w-auto p-3 bg-blue-50 rounded-lg text-center flex flex-col items-center justify-center min-w-[200px]">
+                            <div class="flex items-center gap-2">
+                                <strong>총점:</strong> 
+                                <span id="total-score" class="font-bold text-blue-600 text-xl">0.00</span>
+                            </div>
+                            <div id="score-formula" class="text-[10px] text-blue-800 mt-1 font-medium opacity-80 leading-tight"></div>
                         </div>
                     </div>
                     <div class="flex items-center gap-4 w-full sm:w-auto">
@@ -921,7 +927,21 @@
             });
 
             const totalScoreEl = document.getElementById('total-score');
+            const formulaEl = document.getElementById('score-formula');
+            
             totalScoreEl.textContent = finalScore.toFixed(2);
+            
+            // 상세 계산식 텍스트 생성
+            if (grandTotalMaxPossibleWeightedScore > 0) {
+                const totalBonus = bonusImprovement + bonusIdea;
+                const bonusText = totalBonus !== 0 ? ` + 가점 ${totalBonus.toFixed(1)}` : '';
+                formulaEl.textContent = `(${grandTotalWeightedScore.toFixed(2)} ÷ ${grandTotalMaxPossibleWeightedScore.toFixed(2)}) × 100 × K ${kFactor.toFixed(2)}${bonusText} = ${finalScore.toFixed(2)}`;
+                formulaEl.style.display = 'block';
+            } else {
+                formulaEl.textContent = '';
+                formulaEl.style.display = 'none';
+            }
+
             const totalScoreColor = finalScore >= 90 ? 'text-blue-600' : (finalScore < 60 ? 'text-red-600' : 'text-gray-800');
             totalScoreEl.className = `font-bold text-xl ${totalScoreColor}`;
         }

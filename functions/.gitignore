@@ -2,7 +2,10 @@
 __pycache__/
 
 # Python virtual environment
+.env
+.env.*
 venv/
+
 *.local
 
 # Environment Variables

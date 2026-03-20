@@ -38,10 +38,10 @@ def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
         if not data or "imageBase64" not in data or "mimeType" not in data:
             return set_cors_headers(https_fn.Response(json.dumps({"detail": "Missing imageBase64 or mimeType"}), status=400, content_type="application/json"))
             
-        api_key = os.environ.get("GEMINI_API_KEY")
+        api_key = os.environ.get("GOOGLE_API_KEY_EDITOR")
         if not api_key:
-             print("[ERROR] GEMINI_API_KEY missing")
-             return set_cors_headers(https_fn.Response(json.dumps({"detail": "Server API Key Missing"}), status=400, content_type="application/json"))
+             print("[ERROR] GOOGLE_API_KEY_EDITOR missing")
+             return set_cors_headers(https_fn.Response(json.dumps({"detail": "Server API Key Missing (Editor)"}), status=400, content_type="application/json"))
              
         # 디버깅: 가용 모델 리스트 출력 (한 번만 혹은 주기적으로)
         import datetime
@@ -205,9 +205,9 @@ def recommend_basis(req: https_fn.Request) -> https_fn.Response:
          return set_cors_headers(https_fn.Response(json.dumps({"detail": "Item name is required"}), status=400, content_type="application/json"))
 
     try:
-        api_key = os.environ.get("GEMINI_API_KEY")
+        api_key = os.environ.get("GOOGLE_API_KEY_SAFETY")
         if not api_key:
-             raise ValueError("GEMINI_API_KEY environment variable is missing")
+             raise ValueError("GOOGLE_API_KEY_SAFETY environment variable is missing")
              
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
@@ -295,9 +295,9 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
         strengths = data.get("strengths", [])
         weaknesses = data.get("weaknesses", [])
         
-        api_key = os.environ.get("GEMINI_API_KEY")
+        api_key = os.environ.get("GOOGLE_API_KEY_SAFETY")
         if not api_key:
-             raise ValueError("GEMINI_API_KEY environment variable is missing")
+             raise ValueError("GOOGLE_API_KEY_SAFETY environment variable is missing")
              
         genai.configure(api_key=api_key)
         

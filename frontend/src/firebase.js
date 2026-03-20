@@ -4,12 +4,12 @@ import 'firebase/compat/storage';
 import 'firebase/compat/auth';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
-    authDomain: "namhwa-safety-dashboard.firebaseapp.com",
-    projectId: "namhwa-safety-dashboard",
-    storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
-    messagingSenderId: "152864778612",
-    appId: "1:152864778612:web:ecc482adce93a1534a2421"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 if (!firebase.apps.length) {
