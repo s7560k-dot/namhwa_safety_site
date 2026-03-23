@@ -1371,8 +1371,8 @@
                         }
                     });
 
-                    // Cap logic: 공식 배점을 넘지 않도록 제한 (현장별 일관된 환산을 위해 기준 분모는 항상 maxAllowed 사용)
-                    sectionPossible = maxAllowed;
+                    // Cap logic: 공식 배점을 넘지 않도록 제한
+                    sectionPossible = Math.min(sectionPossible, maxAllowed);
                     sectionObtained = Math.min(sectionObtained, maxAllowed);
 
                     weightedObtainedSum += sectionObtained * weight;

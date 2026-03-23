@@ -1350,10 +1350,12 @@
                 let weightedObtainedSum = 0;
                 let weightedPossibleSum = 0;
 
+                const baseScores = { 1: 5, 2: 30, 3: 10, 4: 20, 5: 10, 6: 20, 7: 5 };
                 const tables = document.querySelectorAll('.main-table');
                 tables.forEach((table, index) => {
                     const sectionIndex = index + 1;
                     const weight = weights[sectionIndex] || 1.0;
+                    const maxAllowed = baseScores[sectionIndex];
 
                     let sectionObtained = 0;
                     let sectionPossible = 0;
@@ -1366,6 +1368,10 @@
                             sectionObtained += val;
                         }
                     });
+
+                    // Cap logic: 공식 배점을 넘지 않도록 제한 (현장별 일관된 환산을 위해 기준 분모는 항상 maxAllowed 사용)
+                    sectionPossible = maxAllowed;
+                    sectionObtained = Math.min(sectionObtained, maxAllowed);
 
                     weightedObtainedSum += sectionObtained * weight;
                     weightedPossibleSum += sectionPossible * weight;

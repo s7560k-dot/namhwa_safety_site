@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>현장 안전보건 관리 점검표</title>
+    <script>
+        (function () {
+            // 관리자 비밀번호 설정
+            const ADMIN_PASSWORD = "1152";
+
+            // 이미 인증된 세션인지 확인
+            if (!sessionStorage.getItem("isAdminAuthenticated")) {
+                let inputPwd = prompt("관리자 비밀번호를 입력하세요:", "");
+
+                if (inputPwd === ADMIN_PASSWORD) {
+                    sessionStorage.setItem("isAdminAuthenticated", "true");
+                    alert("인증되었습니다.");
+                } else {
+                    alert("비밀번호가 일치하지 않습니다. 접근이 차단됩니다.");
+                    document.documentElement.innerHTML = ""; // 화면 지우기
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = "../index.html"; // 랜딩 페이지로 리다이렉트
+                    }
+                }
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 기본 스타일 */
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .responsive-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .responsive-table {
+            min-width: 1400px;
+        }
+
+        .photo-thumbnail-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .photo-thumbnail {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 0.375rem;
+            margin-top: 0.5rem;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+
+        .delete-photo-btn {
+            position: absolute;
+            top: 0;
+            right: -5px;
+            background-color: rgba(239, 68, 68, 0.8);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            border: 1px solid white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Modal 스타일 */
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-container {
+            transition: transform 0.3s ease;
+        }
+
+        /* 사진 대지용 스타일 */
+        .report-photo-container {
+            position: relative;
+            width: 100%;
+            padding-top: 75%;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            background-color: #f3f4f6;
+        }
+
+        .report-photo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 인쇄용 스타일 */
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+                /* 브라우저 기본 머리글(날짜) 및 바닥글(URL) 제거 */
+            }
+
+            body {
+                font-size: 11pt;
+                /* 가독성을 높이기 위해 폰트 크기 확대 */
+                margin: 10mm;
+                /* 컨텐츠가 잘리지 않도록 본문에 여백 추가 */
+                padding: 0;
+                background-color: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .container {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .bg-white {
+                background-color: transparent !important;
+            }
+
+            .shadow-lg {
+                box-shadow: none !important;
+            }
+
+            .rounded-xl {
+                border-radius: 0 !important;
+            }
+
+            .p-4,
+            .p-6,
+            .p-8,
+            .sm\:p-6,
+            .sm\:p-8,
+            .lg\:p-8 {
+                padding: 0 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .responsive-table-container {
+                overflow: visible !important;
+            }
+
+            .responsive-table {
+                min-width: 100% !important;
+                width: 100% !important;
+            }
+
+            table {
+                table-layout: fixed;
+                width: 100%;
+            }
+
+            td,
+            th {
+                padding: 2px 4px !important;
+                word-break: break-word;
+                border: 1px solid #000 !important;
+            }
+
+            .real-radio {
+                display: none !important;
+            }
+
+            .print-radio-mark {
+                display: block !important;
+                font-size: 13pt;
+                line-height: 1;
+                color: #000 !important;
+                text-align: center;
+            }
+
+            textarea,
+            input[type="text"],
+            input[type="number"] {
+                border: none !important;
+                background-color: transparent !important;
+                resize: none;
+                width: 100%;
+                height: auto;
+                padding: 0;
+                font-size: inherit;
+            }
+
+            tfoot {
+                display: table-footer-group;
+            }
+
+            img {
+                max-height: 20px !important;
+            }
+
+            .photo-thumbnail {
+                max-width: 50px !important;
+                max-height: 50px !important;
+                border: none;
+                margin: 0;
+            }
+
+            .photo-thumbnail-container {
+                display: inline-block;
+                margin-right: 2px;
+            }
+
+            .mb-8 {
+                margin-bottom: 10px !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+            <div class="flex justify-between items-end mb-8 border-b pb-1">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">현장 안전보건 관리 점검표</h1>
+                    <div class="flex items-center mt-2 text-gray-600">
+                        <p class="text-gray-500 mr-4">안전보건팀</p>
+                        <div class="flex items-center space-x-1 text-sm">
+                            <input type="text" id="year"
+                                class="w-16 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500"
+                                placeholder="YYYY">
+                            <span>년</span>
+                            <input type="text" id="month"
+                                class="w-12 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500"
+                                placeholder="MM">
+                            <span>월</span>
+                            <input type="text" id="day"
+                                class="w-12 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500"
+                                placeholder="DD">
+                            <span>일</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <!-- 회사 로고 클릭 시 안전보건팀 자료실 랜딩페이지로 이동 -->
+                    <a href="../resource.html" title="자료실 랜딩페이지로 이동"
+                        class="inline-block hover:opacity-80 transition-opacity cursor-pointer">
+                        <img src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true"
+                            alt="회사 로고" class="h-6" onerror="this.style.display='none'">
+                    </a>
+                    <div
+                        class="bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center gap-3 text-xs">
+                        <div class="flex items-center gap-1">
+                            <span class="font-semibold text-blue-700">규모(S):</span>
+                            <select id="factor-s" onchange="updateKFactor()"
+                                class="bg-white border rounded px-1 py-0.5 no-print">
+                                <option value="0.8">소규모 (0.8)</option>
+                                <option value="1.0" selected>중규모 (1.0)</option>
+                                <option value="1.2">대규모 (1.2)</option>
+                            </select>
+                            <span id="print-factor-s" class="hidden print:inline text-blue-900 font-medium">중규모 (1.0)</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="font-semibold text-blue-700">위험(R):</span>
+                            <select id="factor-r" onchange="updateKFactor()"
+                                class="bg-white border rounded px-1 py-0.5 no-print">
+                                <option value="1.0" selected>일반 (1.0)</option>
+                                <option value="1.1">고위험 (1.1)</option>
+                            </select>
+                            <span id="print-factor-r" class="hidden print:inline text-blue-900 font-medium">일반 (1.0)</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="font-semibold text-blue-700">공정(P):</span>
+                            <select id="factor-p" onchange="updateKFactor()"
+                                class="bg-white border rounded px-1 py-0.5 no-print">
+                                <option value="1.0" selected>초기/마감 (1.0)</option>
+                                <option value="1.2">골조단계 (1.2)</option>
+                            </select>
+                            <span id="print-factor-p" class="hidden print:inline text-blue-900 font-medium">초기/마감 (1.0)</span>
+                        </div>
+                        <div class="ml-2 pl-2 border-l border-blue-200">
+                            <span class="font-bold text-blue-800">난이도(K):</span>
+                            <span id="k-value" class="font-bold text-blue-600 ml-1">1.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="responsive-table-container">
+                <table
+                    class="w-full table-fixed border-collapse border border-gray-300 text-sm sm:text-base responsive-table">
+                    <colgroup>
+                        <col class="w-[7%]">
+                        <col class="w-[10%]">
+                        <col class="w-[3%]">
+                        <col class="w-[4%]">
+                        <col class="w-auto">
+                        <col class="w-[5%]">
+                        <col class="w-[5%]">
+                        <col class="w-[5%]">
+                        <col class="w-[5%]">
+                        <col class="w-[5%]">
+                        <col class="w-[15%]">
+                        <col class="w-[10%]">
+                    </colgroup>
+                    <thead class="bg-gray-100 text-center font-semibold text-xs sm:text-sm">
+                        <tr>
+                            <th class="border border-gray-300 p-2" rowspan="2">대분류</th>
+                            <th class="border border-gray-300 p-2" rowspan="2">중분류</th>
+                            <th class="border border-gray-300 p-2" rowspan="2">번호</th>
+                            <th class="border border-gray-300 p-2" rowspan="2">지적<br>건수</th>
+                            <th class="border border-gray-300 p-2" rowspan="2">평가기준 (가중치)</th>
+                            <th class="border border-gray-300 p-2" colspan="5">평점</th>
+                            <th class="border border-gray-300 p-2" rowspan="2">평가자 의견</th>
+                            <th class="border border-gray-300 p-2" rowspan="2">사진</th>
+                        </tr>
+                        <tr>
+                            <th class="border border-gray-300 p-1 font-medium bg-blue-50">상(0.5)</th>
+                            <th class="border border-gray-300 p-1 font-medium">상중(0.3)</th>
+                            <th class="border border-gray-300 p-1 font-medium bg-gray-100">중(N/A)</th>
+                            <th class="border border-gray-300 p-1 font-medium">중하(-0.1)</th>
+                            <th class="border border-gray-300 p-1 font-medium">하(-0.3)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checklist-body"></tbody>
+                    <tfoot id="table-foot">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="sticky bottom-0 bg-white/80 backdrop-blur-sm p-4 mt-8 border-t border-gray-200 no-print">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 pt-2">
+                    <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                        <h3 class="font-bold text-green-800 mb-2 flex items-center gap-2">
+                            <span class="text-lg">✨</span> 안전 개선 노력 (가점)
+                        </h3>
+                        <div class="flex gap-2">
+                            <input type="number" id="bonus-improvement" min="0" max="10" step="0.5" value="0"
+                                onchange="calculateScore()" class="w-20 p-2 border rounded-lg text-center font-bold">
+                            <input type="text" placeholder="개선 노력 상세 내용 (사진 증빙 등)"
+                                class="flex-1 p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                        <h3 class="font-bold text-indigo-800 mb-2 flex items-center gap-2">
+                            <span class="text-lg">💡</span> 안전 아이디어 (가점)
+                        </h3>
+                        <div class="flex gap-2">
+                            <input type="number" id="bonus-idea" min="0" max="10" step="0.5" value="0"
+                                onchange="calculateScore()" class="w-20 p-2 border rounded-lg text-center font-bold">
+                            <input type="text" placeholder="혁신적 장비 도입 또는 우수 사례"
+                                class="flex-1 p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="summary-container" class="mb-4">
+                    <button onclick="toggleSummary()"
+                        class="w-full text-left font-semibold text-lg mb-2 text-gray-800">재해 형태별 소계 요약 <span
+                            id="summary-toggle-icon">▼</span></button>
+                    <div id="summary-details" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center">
+                    <div class="flex items-center gap-4 w-full sm:w-auto mb-4 sm:mb-0">
+                        <button onclick="calculateScore()"
+                            class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition">점수
+                            계산</button>
+                        <div class="w-auto p-3 bg-blue-50 rounded-lg text-center flex flex-col items-center justify-center min-w-[200px]">
+                            <div class="flex items-center gap-2">
+                                <strong>총점:</strong> 
+                                <span id="total-score" class="font-bold text-blue-600 text-xl">0.00</span>
+                            </div>
+                            <div id="score-formula" class="text-[10px] text-blue-800 mt-1 font-medium opacity-80 leading-tight"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <!-- 수정됨: 링크에서 버튼으로 변경하여 팝업 호출 -->
+                        <button onclick="openPhotoReportModal()"
+                            class="w-1/3 sm:w-auto text-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition">사진
+                            대지 출력</button>
+                        <button onclick="resetAllPhotos()"
+                            class="w-1/3 sm:w-auto bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition">초기화</button>
+                        <button onclick="window.print()"
+                            class="w-1/3 sm:w-auto bg-gray-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-800 transition">인쇄</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배점 기준 및 산출 방법 안내 섹션 추가 -->
+            <div class="mt-12 pt-8 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <span class="text-blue-600">📋</span> 점수 배점 기준 및 산출 방법 안내
+                </h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- 난이도 계수 (K) 설명 -->
+                    <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300 flex justify-between">
+                            <span>1. 난이도 계수 (K) 산정 기준</span>
+                            <span class="text-blue-600 font-mono">K = S × R × P</span>
+                        </h3>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex flex-col sm:flex-row justify-between items-start gap-1 sm:gap-4">
+                                <span class="font-semibold text-gray-700 w-24 shrink-0">규모 (S)</span>
+                                <div class="flex-1 text-gray-600 space-y-1">
+                                    <p>• <span class="font-medium">대규모(1.2):</span> 1,000억 이상 / 300명 이상</p>
+                                    <p>• <span class="font-medium">중규모(1.0):</span> 120억 ~ 1,000억 미만 / 50~300명</p>
+                                    <p>• <span class="font-medium">소규모(0.8):</span> 120억 미만 / 50명 미만</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <span class="font-semibold text-gray-700 w-24">위험도 (R)</span>
+                                <p class="flex-1 text-gray-600">일반 공종(1.0) / 고위험 공종(타워, 굴착 등 포함 시 1.1)</p>
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <span class="font-semibold text-gray-700 w-24">공정률 (P)</span>
+                                <p class="flex-1 text-gray-600">초기/마감 단계(1.0) / 골조 공사 단계(1.2)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 항목 가중치 및 평점 설명 -->
+                    <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-4 pb-2 border-b border-gray-300">2. 항목별 가중치 및 평점 기준</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <h4 class="font-semibold text-blue-700 mb-2">항목별 가중치</h4>
+                                <ul class="space-y-1 text-gray-600">
+                                    <li>• <span class="font-medium">치명항목:</span> 5x 가중치</li>
+                                    <li>• <span class="font-medium">중점항목:</span> 3x 가중치</li>
+                                    <li>• <span class="font-medium">일반항목:</span> 1x 가중치</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-blue-700 mb-2">평점 기준 (배점)</h4>
+                                <ul class="space-y-1 text-gray-600 text-xs sm:text-sm">
+                                    <li>• <span class="font-medium text-blue-600">상:</span> 0.5</li>
+                                    <li>• <span class="font-medium text-blue-600">상중:</span> 0.3</li>
+                                    <li>• <span class="font-medium text-gray-500 italic">중(N/A):</span> 평가 제외</li>
+                                    <li>• <span class="font-medium text-red-600">중하:</span> -0.1</li>
+                                    <li>• <span class="font-medium text-red-600">하:</span> -0.3</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 산출 공식 요약 -->
+                <div class="mt-6 bg-blue-900 text-white p-6 rounded-xl shadow-inner">
+                    <h3 class="font-bold mb-3 flex items-center gap-2">
+                        <span>🧮</span> 최종 점수 산출 공식
+                    </h3>
+                    <div class="bg-blue-800/50 p-4 rounded-lg font-mono text-center text-lg sm:text-xl">
+                        최종 점수 = <span class="text-yellow-400 font-bold">(획득 가중합 ÷ 최대 가중합*)</span> × 100 × <span
+                            class="text-green-400 font-bold">K</span> + <span class="text-pink-400 font-bold">가점</span>
+                    </div>
+                    <p class="mt-4 text-[10px] sm:text-xs text-blue-200 leading-relaxed">
+                        * 최대 가중합 : 평가 대상 항목(N/A 제외)들의 가중치 합계에 '상(0.5)' 배점을 곱한 값입니다.<br>
+                        * 가점 : 안전 개선 노력 및 아이디어 제안에 따라 각 최대 10점까지 추가 부여될 수 있습니다. (합계 최대 20점)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 사진 첨부 Modal -->
+    <div id="photo-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden modal-overlay opacity-0 no-print"
+        onclick="closePhotoModal()">
+        <div class="bg-white p-8 rounded-xl shadow-lg text-center w-full max-w-md mx-4 modal-container transform scale-95"
+            onclick="event.stopPropagation()">
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">사진 첨부</h1>
+            <p class="text-gray-600 mb-2">지적사항에 대한 사진을 촬영하거나 앨범에서 선택해 주세요.</p>
+            <p class="text-xs text-red-500 mb-6">(고용량 사진은 자동으로 리사이즈됩니다)</p>
+
+            <label for="photo-input"
+                class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition shadow-md cursor-pointer inline-block">
+                사진 촬영 및 선택
+            </label>
+            <input type="file" id="photo-input" accept="image/*" capture="camera" class="hidden">
+
+            <div id="preview-container"
+                class="mt-6 min-h-[200px] bg-gray-100 rounded-lg flex items-center justify-center">
+                <p id="preview-text" class="text-gray-500">사진을 선택해 주세요.</p>
+                <img id="preview-image" class="hidden max-w-full max-h-64 rounded-lg" alt="미리보기">
+            </div>
+
+            <div class="mt-6 flex gap-4">
+                <button onclick="closePhotoModal()"
+                    class="w-1/2 bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition">
+                    취소
+                </button>
+                <button id="save-button" disabled onclick="savePhoto()"
+                    class="w-1/2 bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition cursor-not-allowed">
+                    저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 사진 대지 보고서 Modal (새로 추가됨) -->
+    <div id="photo-report-modal" class="fixed inset-0 bg-white w-full h-full z-40 hidden overflow-y-auto no-print">
+        <div id="photo-report-modal-content" class="container mx-auto p-4 sm:p-8">
+            <header class="bg-white p-6 rounded-xl mb-8 no-print">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">사진 대지 보고서</h1>
+                        <p class="text-gray-500 mt-1">점검표에 첨부된 사진 목록입니다.</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="closePhotoReportModal()"
+                            class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">닫기</button>
+                        <button onclick="printPhotoReport()"
+                            class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">인쇄하기</button>
+                    </div>
+                </div>
+            </header>
+            <main id="report-container" class="grid grid-cols-1 md:grid-cols-3 gap-8"></main>
+        </div>
+    </div>
+
+    <script>
+        const checklistData = [
+            { category: '추락', subcategory: '개구부', count: 2, weight: 5, items: ['개구부 덮개 설치(재질, 고정, 경고표지 등) 및 유지 관리여부', '대형개구부(발코니, 자재반출구, 계단실, E/V입구, 흙막이 단부 등) 안전난간 설치여부'] },
+            { category: '추락', subcategory: '강관 비계/시스템비계', count: 2, weight: 5, items: ['비계 설치상태(침하, 좌굴(수직도), 작업발판, 승강로 등) 이상여부', '비계 안전시설(안전난간대, 낙하물방지망, 수직보호망 등) 설치상태 이상여부'] },
+            { category: '추락', subcategory: '이동식 틀비계', count: 3, weight: 3, items: ['이동식틀비계 설치상태(규격품, 작업발판, 브레싱 등) 이상여부', '이동식틀비계 안전시설(안전난간대, 아웃트리거, 바퀴구름방지장치 등) 이상여부', '틀비계 실명제 등 실시여부'] },
+            { category: '추락', subcategory: '말비계', count: 2, weight: 3, items: ['비규격품(목재) 사용여부 및 관리여부', '발판 폭 40㎝ 이상 확보 및 구조적 안전여부'] },
+            { category: '추락', subcategory: '달대비계', count: 3, weight: 5, items: ['로프 설치상태(주/보조로프 사용 및 로프손상, 2점지지, 풀림방지 등) 실시여부', '로프 안전조치(주로프 16mm, 보조로프 14mm, 벽체 접촉부 마모예방조치 등) 실시여부', '추락예방조치(작업자 수직구명로프(코브라), 바닥여장길이 1m이상) 실시 여부'] },
+            { category: '추락', subcategory: '사다리', count: 2, weight: 3, items: ['사다리 사용상태(상부고정/여장길이 확보/설치각도/목재사다리)이상여부', '사다리 전도예방조치(아웃트리거 설치, 미끄럼방지판 등) 사용여부'] },
+            { category: '추락', subcategory: '작업발판', count: 2, weight: 3, items: ['비규격(목재, 단관파이프, 각파이프, 유로폼 등) 작업발판 사용여부', '작업발판 설치기준(하부고정, 밀실여부, 폭) 준수 여부'] },
+            { category: '추락', subcategory: '갱폼', count: 5, weight: 5, items: ['추락 예방조치(안전난간/작업발판 누락, 작업발판 이격거리, 압송관 개구부 보호 등) 여부', '낙하 예방조치(앵커볼트 설치간격, 인양고리 상태 및 변형 유무, 정리정돈 등) 여부', '전도 예방조치(작업발판 정리정돈 등) 실시 여부', '승강시설(근로자 이동통로 확보 등) 및 적정여부', '기타 갱폼 설치기준 준수여부'] },
+            { category: '추락', subcategory: '교량 및 철골', count: 3, weight: 5, items: ['추락예방조치(개인보호구, 안전난간대 시설, 추락방지망 등 ) 실시여부', '승강시 안전시설(안전블럭, 코브라 등)설치 및 사용여부', '자재 정리정돈 상태(철골 적재, 철골상부 자재 적재 유무 등) 이상여부'] },
+            { category: '추락', subcategory: '추락방지망', count: 3, weight: 5, items: ['추락방지망 설치상태(망재질, 망연결, 밀실도 등) 이상여부', '추락방지망 설치장소(E/V개구부, 대형개구부, 손상등) 누락여부', '추락방지망 관리(폐기물, 폐자재 등) 적정여부'] },
+            { category: '충돌 및 협착', subcategory: '유해위험 기계기구', count: 2, weight: 3, items: ['방호장치(둥근톱, 고속절단기, 그라인더 등) 설치 및 사용여부', '철근가공기 풋스위치 덮개 사용여부'] },
+            { category: '충돌 및 협착', subcategory: '건설기계', count: 5, weight: 5, items: ['협착 예방조치(후진경보등, 경보음, 후방감시카메라, 신호수 등) 실시 및 작동여부', '건설기계 방호장치(권과방지장치, 과상승방지장치, 리미트스위치 등) 부착 및 작동여부', '장비전도 방지장치(아웃트리거, 고임목 등) 적정여부', '인양 중 낙하 예방조치(퀵커플러 안전핀, 후크해지장치, 유도로프 등) 실시여부', '장비실명제 카드 부착여부'] },
+            { category: '충돌 및 협착', subcategory: '타워크레인', count: 2, weight: 5, items: ['자체점검(1회/6개월) 실시 여부', '크레인 하부 방호울 및 시건장치 설치여부'] },
+            { category: '붕괴 및 도괴', subcategory: '굴착/터파기', count: 2, weight: 3, items: ['굴착 법면 토사붕괴(굴착구배, 굴착단부 토사적치 등) 예방여부', '굴착부 통행시설 확보여부'] },
+            { category: '붕괴 및 도괴', subcategory: '흙막이 공사', count: 4, weight: 5, items: ['가시설 시공시 설계도서 준수 여부', '가시설 설치시기 및 과굴착에 의한 붕괴 사고 위험여부', '흙막이 벽체(토류판, 쉬트파일 등) 변위 및 부재 변형 여부', '띠장 설치상태(스티프너, 브레싱, 볼트너트 연결, 띠장 연결부 보강 등) 이상여부'] },
+            { category: '붕괴 및 도괴', subcategory: '터널작업', count: 5, weight: 3, items: ['차징카 안전조치(협착, 낙반 등) 실시 여부', '작업대차 안전조치(작업발판, 승강로, 안전난간 등) 적정여부', '터널 내 통행로 확보여부', '비상사태(외부와의 통신체계, 비상조명, 소음방지대책 등) 예방조치 실시여부', '작업환경(조도75Lux, 환기시설 등) 적정여부'] },
+            { category: '붕괴 및 도괴', subcategory: '거푸집동바리/시스템동바리', count: 6, weight: 5, items: ['거푸집동바리 설치 계획 및 조립도 등 작성 및 비치여부', '거푸집동바리 설치기준 준수(설치간격, 2본연결 설치시 4개이상 볼트체결 등) 여부', '가설자재(재사용 검정품, 파이프서포트, 연결핀, 클램프 등) 적정 사용여부', '붕괴 예방조치(밑받침, 수평연결재, 동바리 고정, 수직도, 고정목, u헤드고정 등) 실시여부', '수평연결재 적정(전용철물 사용, 누락여부 등) 설치여부', '거푸집동바리 설치, 해체시 정리정돈 실시여부'] },
+            { category: '감전', subcategory: '분전반/수전설비', count: 4, weight: 5, items: ['접지시설(외함접지, 접지봉 매립, 접지극 손상, 적정 접지선 사용 등) 적정여부', '누전차단기(정격감도전류 30mmA이하, 동작시간 0.03초이내)설치/ 경유 및 작동 여부', '접근/접촉 방지조치(아크릴판, 시건장치, 안전표지 등) 실시여부', '고압가공선로 감전예방(방호관, 접근한계거리 준수, 절연보호구 등)을 위한 접근방지 조치'] },
+            { category: '감전', subcategory: '이동식 발전기', count: 3, weight: 3, items: ['접지시설(외함접지, 접지봉 매립, 접지극 손상, 적정 접지선 사용 등) 실시 여부', '누전차단기(정격감도전류 30mmA이하, 동작시간 0.03초이내)설치/ 경유 및 작동 여부', '회전체 접근방지조치 실시여부'] },
+            { category: '감전', subcategory: '작업전선', count: 3, weight: 3, items: ['접지상태(3P전선, 접지선 연결, 피복손상여부, 접지극 손상) 이상 여부', '반입전 점검실시 및 유해위험기계기구 스티커 부착여부', '누전차단기 내장형 릴선 사용 및 정상 작동 여부'] },
+            { category: '감전', subcategory: '교류아크 용접기', count: 3, weight: 3, items: ['자동전격방지기 설치 및 정상작동(회로 결선의 적절성) 여부', '감전예방(외함접지, 접지봉 매립, 피복손상, 충전부 절연조치 등) 조치 여부', '화재예방(불티비산방지포, 소화기, 주변 가연성 물질 차단 등) 조치 여부'] },
+            { category: '감전', subcategory: '이동식 투광등', count: 2, weight: 1, items: ['누전차단(외함접지, 손잡이 절연조치, 거치대 활용 등) 조치 여부', '감전예방(전등 보호갓, 투광등 보호덮개) 실시여부'] },
+            { category: '감전', subcategory: '양수기', count: 2, weight: 1, items: ['접지상태(3P전선, 접지선 연결, 피복손상여부, 접지극 손상) 이상여부', '회전체(엔진양수기) 접근방지조치 실시여부'] },
+            { category: '감전', subcategory: '기타', count: 2, weight: 1, items: ['유해위험기계기구 점검필증 부착여부', '기타 유해위험기계기구 감전(접지, 누전차단기 등) 예방조치 실시여부'] },
+            { category: '낙하 및 전도', subcategory: '방호선반', count: 2, weight: 3, items: ['방호선반(설치자재, 안전표지판 등)설치상태 이상여부', '방호선반 설치 위치선정(건물 주출입구, 통행 용이 장소 등) 적정여부'] },
+            { category: '낙하 및 전도', subcategory: '낙하물 방지망', count: 2, weight: 3, items: ['낙하물방지망 설치상태(매10m마다, 내민길이, 자재선정 등) 적정여부', '낙하물방지망 관리(폐기물, 폐자재, 손상 등) 적정여부'] },
+            { category: '낙하 및 전도', subcategory: '가설통로', count: 4, weight: 3, items: ['전도 예방조치(정리정돈, 미끄럼방지조치 등) 실시 여부', '통로 조도(75Lux 이상) 확보 여부', '통로 발판재의 적정 사용여부', '1m이상의 가설계단 안전난간 설치여부'] },
+            { category: '낙하 및 전도', subcategory: '터널작업', count: 2, weight: 3, items: ['암석의 부석정리 및 상부 천공시 하부 근로자 출입금지 조치의 적정 여부', '버럭 운반차량 적재기준 설정 및 운반시 덮개 설치 적정 여부'] },
+            { category: '낙하 및 전도', subcategory: '기타', count: 3, weight: 1, items: ['낙하위험장소 하부 출입통제(접근금지시설, 신호수, 위험표지, 위험테이프 등)조치 여부', '상하 동시작업 실시 여부', '줄걸이 용구(와이어로프, 슬링밸트, 샤클, 하카클램프, 해지장치 등) 적정여부'] },
+            { category: '기타', subcategory: '화재폭발', count: 5, weight: 5, items: ['아세틸렌 및 LPG 역화방지기 부착 및 압력게이지/ 호스 파손여부', '압력용기(LPG, 산소통 등)전용 운반구 사용여부', '위험물질/인화물질 보관시설(안전표지, 시건장치 등) 설치 및 관리여부', '화기 사용 주변 가연성물질 격리 여부 및 소화시설 비치여부', '기타 화재폭발 위험 안전 조치사항'] },
+            { category: '기타', subcategory: '밀폐작업', count: 4, weight: 5, items: ['밀폐공간 환기시설 설치 및 운용 여부', '밀폐공간 및 유해가스 발생구간 작업전 유해가스농도 및 산소농도 측정여부', '작업장내 호흡용 보호구, 안전대, 안전로프 등 보호장구 비치여부', '관리책임자 선임 및 지휘감독, 감시인 배치 여부'] },
+            { category: '기타', subcategory: '교통안전 시설', count: 2, weight: 1, items: ['교통안전시설물(안내표지판, PE드럼, 윙카, 갈매기표시, 휀스 등) 적정 설치 여부', '기타 교통안전시설물 설치상태'] },
+            { category: '기타', subcategory: 'MSDS', count: 1, weight: 1, items: ['MSDS 표지 현장게시 및 부착여부'] },
+            { category: '기타', subcategory: '보건관리', count: 1, weight: 1, items: ['현장내 휴게시설, 화장실 및 세면장 비치 및 청결상태'] },
+            { category: '기타', subcategory: '개인보호구', count: 1, weight: 3, items: ['작업상황에 맞는 개인보호구 지급 및 착용여부'] },
+            { category: '기타', subcategory: '안전의식', count: 1, weight: 1, items: ['작업상황에 맞는 안전표지판 및 안전현수막 설치여부'] },
+            { category: '기타', subcategory: '음주', count: 1, weight: 3, items: ['현장내 근로자 음주 및  음주흔적(소주병, 막걸리병 등)'] }
+        ];
+
+        let currentItemIndex = null;
+        const photoModal = document.getElementById('photo-modal');
+        const photoInput = document.getElementById('photo-input');
+        const previewImage = document.getElementById('preview-image');
+        const previewText = document.getElementById('preview-text');
+        const saveButton = document.getElementById('save-button');
+        let imageDataUrl = null;
+
+        window.addEventListener('load', () => {
+            const today = new Date();
+            document.getElementById('year').value = today.getFullYear();
+            document.getElementById('month').value = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('day').value = String(today.getDate()).padStart(2, '0');
+            generateTable();
+            loadAllPhotos();
+        });
+
+        const scoreIdKeys = { '0.5': 's0_5', '0.3': 's0_3', '0.0': 's0_0', '-0.1': 'm0_1', '-0.3': 'm0_3' };
+
+        function generateTable() {
+            const tbody = document.getElementById('checklist-body');
+            const tfoot = document.getElementById('table-foot');
+            let htmlBody = '';
+            let itemIndex = 0;
+            const groupedData = checklistData.reduce((acc, item) => {
+                if (!acc[item.category]) { acc[item.category] = []; }
+                acc[item.category].push(item);
+                return acc;
+            }, {});
+            for (const category in groupedData) {
+                const subcategories = groupedData[category];
+                const categoryRowCount = subcategories.reduce((sum, item) => sum + item.count, 0);
+                let isFirstSubcategory = true;
+                subcategories.forEach(subcategoryData => {
+                    for (let i = 0; i < subcategoryData.count; i++) {
+                        htmlBody += `<tr class="align-middle text-center item-row" data-category="${category}" data-item-index="${itemIndex}">`;
+                        if (isFirstSubcategory && i === 0) {
+                            htmlBody += `<td rowspan="${categoryRowCount}" class="border border-gray-300 p-2 font-bold">${category}</td>`;
+                        }
+                        if (i === 0) {
+                            htmlBody += `<td rowspan="${subcategoryData.count}" class="border border-gray-300 p-2">${subcategoryData.subcategory}</td>`;
+                        }
+                        htmlBody += `<td class="border border-gray-300 p-2">${i + 1}</td>`;
+                        htmlBody += `<td class="border border-gray-300"><input type="number" min="0" class="w-full p-1 text-center border-0 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"></td>`;
+                        htmlBody += `<td class="!text-left border border-gray-300 p-2">${subcategoryData.items[i]} <span class="text-xs text-blue-500 font-bold ml-1">(${subcategoryData.weight}x)</span></td>`;
+                        const scores = [0.5, 0.3, 0.0, -0.1, -0.3];
+                        scores.forEach(score => {
+                            const isNA = score === 0.0;
+                            htmlBody += `<td class="border border-gray-300 p-1 text-center ${isNA ? 'bg-gray-50' : ''}"><input type="radio" name="rating-${itemIndex}" data-score="${score}" onchange="calculateScore()" class="real-radio form-radio h-4 w-4 text-blue-600 cursor-pointer mx-auto"><span class="print-radio-mark hidden"></span></td>`;
+                        });
+
+                        htmlBody += `<td class="border border-gray-300"><textarea rows="2" class="w-full p-1 border-0 rounded-md focus:ring-2 focus:ring-blue-500 outline-none resize-y"></textarea></td>`;
+                        htmlBody += `<td class="border border-gray-300 p-2 align-top">
+                            <button onclick="openPhotoModal(${itemIndex})" class="bg-gray-200 text-gray-700 text-xs py-1 px-2 rounded hover:bg-gray-300 no-print">사진 추가</button>
+                            <div id="photo-container-${itemIndex}" class="mt-2"></div>
+                        </td>`;
+                        htmlBody += `</tr>`;
+                        itemIndex++;
+                    }
+                    isFirstSubcategory = false;
+                });
+                htmlBody += `<tr class="bg-gray-200 font-bold text-center subtotal-row" data-category-summary="${category}">
+                    <td colspan="3" class="border border-gray-300 p-2 text-xs">소계</td>
+                    <td id="subtotal-count-${category}" class="border border-gray-300 p-2 text-xs">0</td>
+                    <td class="border border-gray-300 p-2"></td>
+                    ${Object.keys(scoreIdKeys).map(key => `<td id="subtotal-rating-${scoreIdKeys[key]}-${category}" class="border border-gray-300 p-2 text-xs">0</td>`).join('')}
+                    <td id="subtotal-score-${category}" class="border border-gray-300 p-2 text-blue-700 text-xs">0.00</td>
+                    <td class="border border-gray-300 p-2"></td>
+                </tr>`;
+            }
+            tbody.innerHTML = htmlBody;
+            let htmlFoot = `<tr class="bg-gray-800 text-white font-bold text-center text-base">
+                <td colspan="3" class="border border-gray-400 p-3">총 합계</td>
+                <td id="grandtotal-count" class="border border-gray-400 p-3">0</td>
+                <td class="border border-gray-400 p-3"></td>
+                ${Object.keys(scoreIdKeys).map(key => `<td id="grandtotal-rating-${scoreIdKeys[key]}" class="border border-gray-400 p-3">0</td>`).join('')}
+                <td id="grandtotal-score" class="border border-gray-400 p-3 text-lg">0.00</td>
+                <td class="border border-gray-400 p-3"></td>
+            </tr>`;
+            tfoot.innerHTML = htmlFoot;
+        }
+
+        function updateKFactor() {
+            const s = parseFloat(document.getElementById('factor-s').value);
+            const r = parseFloat(document.getElementById('factor-r').value);
+            const p = parseFloat(document.getElementById('factor-p').value);
+            // 가중치 곱 방식 (사용자 수식 예시 기반)
+            const k = s * r * p;
+            document.getElementById('k-value').textContent = k.toFixed(2);
+            calculateScore();
+        }
+
+        function openPhotoModal(index) {
+            currentItemIndex = index;
+            const overlay = document.getElementById('photo-modal');
+            const container = overlay.querySelector('.modal-container');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                container.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closePhotoModal() {
+            const overlay = document.getElementById('photo-modal');
+            const container = overlay.querySelector('.modal-container');
+            overlay.classList.add('opacity-0');
+            container.classList.add('scale-95');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                resetModalState();
+            }, 300);
+        }
+
+        function resetModalState() {
+            imageDataUrl = null;
+            photoInput.value = '';
+            previewImage.src = '';
+            previewImage.classList.add('hidden');
+            previewText.classList.remove('hidden');
+            saveButton.disabled = true;
+            saveButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+            saveButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        }
+
+        photoInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    imageDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                    previewImage.src = imageDataUrl;
+                    previewImage.classList.remove('hidden');
+                    previewText.classList.add('hidden');
+                    saveButton.disabled = false;
+                    saveButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    saveButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function savePhoto() {
+            if (imageDataUrl && currentItemIndex !== null) {
+                try {
+                    // Save photo data
+                    localStorage.setItem('photo_' + currentItemIndex, imageDataUrl);
+
+                    // Find corresponding checklist item info
+                    const row = document.querySelector(`tr[data-item-index="${currentItemIndex}"]`);
+                    const category = row.dataset.category;
+                    const subcategory = row.querySelector('td:nth-of-type(2)').textContent;
+                    const itemNumber = row.querySelector('td:nth-of-type(3)').textContent;
+                    const itemText = row.querySelector('td:nth-of-type(5)').textContent;
+
+                    const photoInfo = {
+                        category,
+                        subcategory,
+                        itemNumber,
+                        itemText
+                    };
+                    localStorage.setItem('photo_info_' + currentItemIndex, JSON.stringify(photoInfo));
+
+                    loadSinglePhoto(currentItemIndex);
+                    closePhotoModal();
+                } catch (e) {
+                    alert('사진을 저장하는 데 실패했습니다. 용량이 너무 클 수 있습니다.');
+                }
+            } else {
+                alert('저장할 사진이 없습니다.');
+            }
+        }
+
+        function deleteSinglePhoto(index) {
+            localStorage.removeItem('photo_' + index);
+            localStorage.removeItem('photo_info_' + index);
+            localStorage.removeItem('photo_comment_' + index);
+            loadSinglePhoto(index); // Re-render the container (it will be empty)
+        }
+
+        function loadSinglePhoto(index) {
+            const photoData = localStorage.getItem('photo_' + index);
+            const container = document.getElementById('photo-container-' + index);
+            if (container) {
+                container.innerHTML = ''; // 기존 내용 삭제
+                if (photoData) {
+                    const thumbContainer = document.createElement('div');
+                    thumbContainer.className = 'photo-thumbnail-container';
+
+                    const img = document.createElement('img');
+                    img.src = photoData;
+                    img.className = 'photo-thumbnail';
+                    img.onclick = () => {
+                        const image = new Image();
+                        image.src = photoData;
+                        const w = window.open("");
+                        w.document.write(image.outerHTML);
+                    };
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '&times;';
+                    deleteBtn.className = 'delete-photo-btn no-print';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation(); // Prevent image click event
+                        deleteSinglePhoto(index);
+                    };
+
+                    thumbContainer.appendChild(img);
+                    thumbContainer.appendChild(deleteBtn);
+                    container.appendChild(thumbContainer);
+                }
+            }
+        }
+
+        function loadAllPhotos() {
+            const totalItems = checklistData.reduce((acc, val) => acc + val.count, 0);
+            for (let i = 0; i < totalItems; i++) {
+                loadSinglePhoto(i);
+            }
+        }
+
+        function resetAllPhotos() {
+            if (confirm('정말로 모든 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                const totalItems = checklistData.reduce((acc, val) => acc + val.count, 0);
+                for (let i = 0; i < totalItems; i++) {
+                    localStorage.removeItem('photo_' + i);
+                    localStorage.removeItem('photo_info_' + i);
+                    localStorage.removeItem('photo_comment_' + i);
+                }
+                loadAllPhotos(); // Refresh UI
+            }
+        }
+
+        function calculateScore() {
+            const categories = [...new Set(checklistData.map(item => item.category))];
+            const scoreKeys = ['0.5', '0.3', '0.0', '-0.1', '-0.3'];
+            let grandTotalWeightedScore = 0;
+            let grandTotalMaxPossibleWeightedScore = 0;
+            let grandTotalIssueCount = 0;
+            const grandTotalRatingCounts = { '0.5': 0, '0.3': 0, '0.0': 0, '-0.1': 0, '-0.3': 0 };
+
+            // Flatten checklist data to easily access weight by index
+            const flatChecklist = [];
+            checklistData.forEach(cat => {
+                for (let i = 0; i < cat.count; i++) {
+                    flatChecklist.push({ weight: cat.weight });
+                }
+            });
+
+            categories.forEach(category => {
+                let subtotalWeightedScore = 0;
+                let subtotalMaxPossibleWeightedScore = 0;
+                let subtotalIssueCount = 0;
+                const subtotalRatingCounts = { '0.5': 0, '0.3': 0, '0.0': 0, '-0.1': 0, '-0.3': 0 };
+                const itemRows = document.querySelectorAll(`#checklist-body tr.item-row[data-category="${category}"]`);
+
+                itemRows.forEach(row => {
+                    const idx = parseInt(row.dataset.itemIndex);
+                    const weight = flatChecklist[idx].weight;
+
+                    const issueInput = row.querySelector('input[type="number"]');
+                    if (issueInput && issueInput.value) {
+                        subtotalIssueCount += parseInt(issueInput.value, 10) || 0;
+                    }
+
+                    const checkedRadio = row.querySelector('input[type="radio"]:checked');
+                    if (checkedRadio) {
+                        const scoreVal = checkedRadio.dataset.score;
+                        const scoreValueNum = parseFloat(scoreVal);
+
+                        if (scoreValueNum === 0.0) {
+                            // '중(0.0)' 선택 시 N/A로 간주하여 평가 대상에서 제외 (분모/분자 모두 반영 안 함)
+                        } else {
+                            subtotalWeightedScore += (scoreValueNum * weight);
+                            subtotalMaxPossibleWeightedScore += (0.5 * weight); // 만점은 항상 0.5 기준
+                            if (subtotalRatingCounts.hasOwnProperty(scoreVal)) subtotalRatingCounts[scoreVal]++;
+                        }
+                    } else {
+                        // 미선택 시에도 '중(N/A)'으로 간주하여 평가 대상에서 제외
+                    }
+                });
+
+                document.getElementById(`subtotal-count-${category}`).textContent = subtotalIssueCount;
+                // Displaying simple weighted sum in table subtotal for reference
+                document.getElementById(`subtotal-score-${category}`).textContent = subtotalWeightedScore.toFixed(2);
+                scoreKeys.forEach(key => {
+                    document.getElementById(`subtotal-rating-${scoreIdKeys[key]}-${category}`).textContent = subtotalRatingCounts[key];
+                });
+
+                grandTotalIssueCount += subtotalIssueCount;
+                grandTotalWeightedScore += subtotalWeightedScore;
+                grandTotalMaxPossibleWeightedScore += subtotalMaxPossibleWeightedScore;
+                scoreKeys.forEach(key => { grandTotalRatingCounts[key] += subtotalRatingCounts[key]; });
+            });
+
+            const kFactor = parseFloat(document.getElementById('k-value').textContent) || 1.0;
+
+            // Final Calculation: (Obtained / Max) * K * 100
+            let baseScore = 0;
+            if (grandTotalMaxPossibleWeightedScore > 0) {
+                baseScore = (grandTotalWeightedScore / grandTotalMaxPossibleWeightedScore) * 100 * kFactor;
+            }
+
+            // Add Bonus Points
+            const bonusImprovement = parseFloat(document.getElementById('bonus-improvement').value) || 0;
+            const bonusIdea = parseFloat(document.getElementById('bonus-idea').value) || 0;
+            const finalScore = baseScore + bonusImprovement + bonusIdea;
+
+            document.getElementById('grandtotal-count').textContent = grandTotalIssueCount;
+            document.getElementById('grandtotal-score').textContent = grandTotalWeightedScore.toFixed(2);
+            scoreKeys.forEach(key => {
+                document.getElementById(`grandtotal-rating-${scoreIdKeys[key]}`).textContent = grandTotalRatingCounts[key];
+            });
+
+            const summaryDetails = document.getElementById('summary-details');
+            summaryDetails.innerHTML = '';
+            categories.forEach(category => {
+                const weightedSum = parseFloat(document.getElementById(`subtotal-score-${category}`).textContent);
+                const scoreElement = document.createElement('div');
+                scoreElement.className = 'p-3 bg-white rounded-md shadow-sm flex justify-between items-center';
+                const scoreColor = weightedSum > 0 ? 'text-blue-600' : (weightedSum < 0 ? 'text-red-600' : 'text-gray-800');
+                scoreElement.innerHTML = `<span class="font-medium text-gray-700">${category} 가중합:</span> <span class="font-bold text-lg ${scoreColor}">${weightedSum.toFixed(2)}</span>`;
+                summaryDetails.appendChild(scoreElement);
+            });
+
+            const totalScoreEl = document.getElementById('total-score');
+            const formulaEl = document.getElementById('score-formula');
+            
+            totalScoreEl.textContent = finalScore.toFixed(2);
+            
+            // 상세 계산식 텍스트 생성
+            if (grandTotalMaxPossibleWeightedScore > 0) {
+                const totalBonus = bonusImprovement + bonusIdea;
+                const bonusText = totalBonus !== 0 ? ` + 가점 ${totalBonus.toFixed(1)}` : '';
+                formulaEl.textContent = `(${grandTotalWeightedScore.toFixed(2)} ÷ ${grandTotalMaxPossibleWeightedScore.toFixed(2)}) × 100 × K ${kFactor.toFixed(2)}${bonusText} = ${finalScore.toFixed(2)}`;
+                formulaEl.style.display = 'block';
+            } else {
+                formulaEl.textContent = '';
+                formulaEl.style.display = 'none';
+            }
+
+            const totalScoreColor = finalScore >= 90 ? 'text-blue-600' : (finalScore < 60 ? 'text-red-600' : 'text-gray-800');
+            totalScoreEl.className = `font-bold text-xl ${totalScoreColor}`;
+        }
+
+        function toggleSummary() {
+            const details = document.getElementById('summary-details');
+            const icon = document.getElementById('summary-toggle-icon');
+            const isHidden = details.classList.toggle('hidden');
+            icon.textContent = isHidden ? '▼' : '▲';
+        }
+
+        // --- Photo Report Functions (새로 추가됨) ---
+        function openPhotoReportModal() {
+            const reportContainer = document.getElementById('report-container');
+            reportContainer.innerHTML = '';
+            let photoFound = false;
+            const totalItems = checklistData.reduce((acc, val) => acc + val.count, 0);
+
+            for (let i = 0; i < totalItems; i++) {
+                const photoData = localStorage.getItem('photo_' + i);
+                const photoInfoData = localStorage.getItem('photo_info_' + i);
+
+                if (photoData && photoInfoData) {
+                    photoFound = true;
+                    const photoInfo = JSON.parse(photoInfoData);
+                    const savedComment = localStorage.getItem('photo_comment_' + i) || '';
+                    const entry = document.createElement('div');
+                    entry.className = 'bg-white rounded-xl shadow-lg overflow-hidden photo-entry';
+
+                    // 스타일: 사진 대지 항목
+                    // 카테고리/중분류/항목 표시
+                    const titleText = `${photoInfo.category} > ${photoInfo.subcategory} > ${photoInfo.itemText}`;
+
+                    entry.innerHTML = `
+                        <div class="p-4 bg-gray-50 border-b photo-entry-header">
+                            <h3 class="font-bold text-gray-800 text-sm">${titleText}</h3>
+                        </div>
+                        <div class="p-4 photo-entry-body">
+                            <div class="report-photo-container mb-4">
+                               <img src="${photoData}" class="report-photo" alt="점검 사진">
+                            </div>
+                            <textarea
+                                data-index="${i}"
+                                class="w-full h-24 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50"
+                                placeholder="사진에 대한 설명을 입력하세요..."
+                                oninput="saveComment(this)"
+                            >${savedComment}</textarea>
+                        </div>
+                    `;
+                    reportContainer.appendChild(entry);
+                }
+            }
+
+            if (!photoFound) {
+                reportContainer.innerHTML = `<div class="col-span-1 md:col-span-3 text-center bg-white p-12 rounded-xl shadow-lg"><p class="text-gray-500">점검표에 추가된 사진이 없습니다.</p></div>`;
+            }
+
+            document.getElementById('photo-report-modal').classList.remove('hidden');
+        }
+
+        function closePhotoReportModal() {
+            document.getElementById('photo-report-modal').classList.add('hidden');
+        }
+
+        function saveComment(textarea) {
+            const index = textarea.dataset.index;
+            localStorage.setItem('photo_comment_' + index, textarea.value);
+        }
+
+        function printPhotoReport() {
+            const reportContent = document.getElementById('report-container').innerHTML;
+            const printWindow = window.open('', '', 'height=800,width=1200');
+            printWindow.document.write('<html><head><title>사진 대지 보고서</title>');
+            printWindow.document.write('<link href="https://cdn.tailwindcss.com/3.4.1/tailwind.min.css" rel="stylesheet">');
+            printWindow.document.write('<style>');
+            printWindow.document.write(`
+                @page { size: landscape; margin: 1cm; }
+                body { font-family: sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                main { 
+                    display: grid; 
+                    grid-template-columns: repeat(3, 1fr); 
+                    gap: 1cm; 
+                }
+                .photo-entry { page-break-inside: avoid; border: 1px solid #ccc; border-radius: 0.75rem; overflow: hidden; }
+                .photo-entry-header { padding: 0.5rem; background-color: #f9fafb; border-bottom: 1px solid #eee; }
+                .photo-entry-body { padding: 0.5rem; }
+                .photo-entry h3 { font-size: 9pt; font-weight: bold; }
+                .report-photo-container { position: relative; width: 100%; padding-top: 75%; overflow: hidden; border-radius: 0.5rem; background-color: #f3f4f6; margin-bottom: 0.5rem; }
+                .report-photo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+                textarea { width: 100%; height: 60px !important; font-size: 9pt; padding: 0.25rem; border: 1px solid #ddd; border-radius: 0.25rem; background-color: #f9fafb !important;}
+                .no-print { display: none; }
+            `);
+            printWindow.document.write('</style></head><body><main>');
+            printWindow.document.write(reportContent);
+            printWindow.document.write('</main></body></html>');
+            printWindow.document.close();
+
+            printWindow.onload = function () {
+                setTimeout(function () {
+                    printWindow.focus();
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            };
+        }
+        /**
+         * 인쇄 전: 라디오 버튼 상태를 읽어 span에 텍스트(○/●)를 직접 주입합니다.
+         * CSS :checked 선택자가 display:none 요소에서 무시되는 브라우저 한계를 우회합니다.
+         */
+        window.onbeforeprint = function () {
+            document.querySelectorAll('.print-radio-mark').forEach(function (span) {
+                const radio = span.previousElementSibling;
+                span.textContent = (radio && radio.checked) ? '●' : '○';
+            });
+        };
+
+        /**
+         * 인쇄 후: span의 텍스트를 비워 화면 표시 상태(CSS ::before 방식)로 복원합니다.
+         */
+        window.onafterprint = function () {
+            document.querySelectorAll('.print-radio-mark').forEach(function (span) {
+                span.textContent = '';
+            });
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,53 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="sky-gradient" x1="960" y1="0" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#020617"/>
+<stop offset="1" stop-color="#0f172a"/>
+</linearGradient>
+<linearGradient id="building-gradient" x1="960" y1="500" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#1e293b"/>
+<stop offset="1" stop-color="#0f172a"/>
+</linearGradient>
+<filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+<feGaussianBlur stdDeviation="5" result="blur"/>
+<feComposite in="SourceGraphic" in2="blur" operator="over"/>
+</filter>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky-gradient)"/>
+<!-- Stars -->
+<circle cx="100" cy="100" r="1.5" fill="white" opacity="0.6"/>
+<circle cx="250" cy="400" r="1" fill="white" opacity="0.4"/>
+<circle cx="500" cy="150" r="1.5" fill="white" opacity="0.7"/>
+<circle cx="1500" cy="200" r="2" fill="white" opacity="0.5"/>
+<circle cx="1200" cy="300" r="1" fill="white" opacity="0.3"/>
+<circle cx="1800" cy="100" r="1.5" fill="white" opacity="0.6"/>
+<circle cx="800" cy="80" r="1" fill="white" opacity="0.4"/>
+
+<!-- Skyline Silhouette -->
+<path d="M0 1080L0 800
+L100 800 L100 650 L180 650 L180 780 
+L220 780 L220 500 L300 500 L300 750 
+L350 750 L350 600 L450 600 L450 820
+L500 820 L500 700 L580 700 L580 850
+L650 850 L650 550 L750 550 L750 800
+L800 800 L800 400 L900 400 L900 820
+L950 820 L950 600 L1050 600 L1050 780
+L1100 780 L1100 450 L1200 450 L1200 800
+L1250 800 L1250 650 L1350 650 L1350 850
+L1400 850 L1400 550 L1500 550 L1500 780
+L1550 780 L1550 500 L1650 500 L1650 820
+L1700 820 L1700 600 L1780 600 L1780 750
+L1850 750 L1850 450 L1920 450 L1920 1080 Z" fill="url(#building-gradient)"/>
+
+<!-- Windows/Lights -->
+<rect x="230" y="520" width="60" height="2" fill="#fcd34d" opacity="0.3"/>
+<rect x="230" y="540" width="60" height="2" fill="#fcd34d" opacity="0.3"/>
+<rect x="230" y="560" width="60" height="2" fill="#fcd34d" opacity="0.3"/>
+
+<rect x="810" y="420" width="80" height="2" fill="#ef4444" opacity="0.5" filter="url(#glow)"/>
+<rect x="810" y="450" width="80" height="2" fill="#ef4444" opacity="0.5" filter="url(#glow)"/>
+
+<circle cx="1200" cy="450" r="2" fill="red" opacity="0.8">
+<animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+</circle>
+</svg>
