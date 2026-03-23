@@ -1394,8 +1394,13 @@
                 const workDeduction = workAccidents * -5;
                 document.getElementById('work-accident-deduction').textContent = workDeduction;
 
+                // 감점(페널티)을 공정율 단계(maxSystemScore)에 맞춰 비례 축소 (옵션 A)
+                const scaleFactor = maxSystemScore / 100;
+                const scaledMajorDeduction = majorDeduction * scaleFactor;
+                const scaledWorkDeduction = workDeduction * scaleFactor;
+
                 // 3. Apply Deductions to System Score
-                let systemFinalConvertedScore = systemBaseConvertedScore + majorDeduction + workDeduction;
+                let systemFinalConvertedScore = systemBaseConvertedScore + scaledMajorDeduction + scaledWorkDeduction;
                 systemFinalConvertedScore = Math.max(0, systemFinalConvertedScore);
 
                 document.getElementById('system-converted-score').textContent = systemFinalConvertedScore.toFixed(1);
