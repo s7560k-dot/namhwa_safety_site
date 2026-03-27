@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "namhwa-safety-dashboard"
-  }
+  },
+  "targets": {
+    "namhwa-safety-dashboard": {
+      "hosting": {
+        "main": [
+          "namhwa-safety-dashboard"
+        ],
+        "suwon": [
+          "suwon-namhwa"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

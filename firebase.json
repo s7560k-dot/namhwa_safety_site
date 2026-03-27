@@ -5,33 +5,62 @@
   "storage": {
     "rules": "storage.rules"
   },
-  "hosting": {
-    "public": "frontend/build",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/api/analyze_floorplan_3d",
-        "function": "analyze_floorplan_3d"
-      },
-      {
-        "source": "!**/*.{js,css,png,jpg,jpeg,gif,svg,ico,pdf,html,json,txt}",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "/**/*.{js,css,html}",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      }
-    ]
-  }
-}
+  "hosting": [
+    {
+      "target": "main",
+      "public": "frontend/build",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/api/analyze_floorplan_3d",
+          "function": "analyze_floorplan_3d"
+        },
+        {
+          "source": "!**/*.{js,css,png,jpg,jpeg,gif,svg,ico,pdf,html,json,txt}",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "/**/*.{js,css,html}",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "suwon",
+      "public": "suwon-react/dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "/**/*.{js,css,html}",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
