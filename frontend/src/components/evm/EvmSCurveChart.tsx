@@ -12,7 +12,7 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import { Activity } from 'lucide-react';
-import { CPM_TASKS } from '../../constants/cpmData';
+import { CPM_TASK_LISTS } from '../../constants/cpmData';
 
 interface EvmSCurveChartProps {
     projectId: string;
@@ -28,6 +28,8 @@ interface ChartData {
 const EvmSCurveChart: React.FC<EvmSCurveChartProps> = ({ projectId }) => {
     const [data, setData] = useState<ChartData[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const siteTasks = CPM_TASK_LISTS[projectId] || CPM_TASK_LISTS['siteA'];
 
     useEffect(() => {
         // Firestore 데이터를 불러와 CPM 작업 순서대로 누적치 계산
@@ -47,7 +49,7 @@ const EvmSCurveChart: React.FC<EvmSCurveChartProps> = ({ projectId }) => {
 
                 // 1. 실적이 입력된 마지막 공종의 인덱스를 찾습니다.
                 let lastIndexWithData = -1;
-                CPM_TASKS.forEach((t, i) => {
+                siteTasks.forEach((t, i) => {
                     const taskData = tasksMap[t.id];
                     // ev나 ac가 존재하고 0보다 큰 경우 (실제 실적 입력이 있는 경우)를 '데이터가 있는 지점'으로 간주
                     if (taskData && (taskData.ev > 0 || taskData.ac > 0)) {
@@ -55,8 +57,8 @@ const EvmSCurveChart: React.FC<EvmSCurveChartProps> = ({ projectId }) => {
                     }
                 });
 
-                // 2. 마스터 데이터(CPM_TASKS) 순서에 따라 누적 데이터 생성
-                const chartData: ChartData[] = CPM_TASKS.map((cpmTask, index) => {
+                // 2. 마스터 데이터(siteTasks) 순서에 따라 누적 데이터 생성
+                const chartData: ChartData[] = siteTasks.map((cpmTask, index) => {
                     const taskData = tasksMap[cpmTask.id];
 
                     // PV는 DB 데이터와 상관없이 항상 공정표(CPM) 상의 계획 예산을 누적합니다. (Fixes zero PV bug)
@@ -84,7 +86,7 @@ const EvmSCurveChart: React.FC<EvmSCurveChartProps> = ({ projectId }) => {
             });
 
         return () => unsubscribe();
-    }, [projectId]);
+    }, [projectId, siteTasks]);
 
     if (loading) {
         return <div className="p-4 text-center text-gray-500">차트를 불러오는 중입니다...</div>;

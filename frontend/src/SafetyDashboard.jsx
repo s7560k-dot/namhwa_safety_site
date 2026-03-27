@@ -79,9 +79,9 @@ const SafetyDashboardInner = () => {
 
     // Site Config
     const siteConfig = {
-        siteA: { name: '대광새마을금고 신축공사', text: 'text-blue-700', bg: 'bg-blue-600', gradient: 'from-blue-600 to-indigo-600', link: '/status_a/index.html' },
-        siteB: { name: '수원 노유자시설 신축공사', text: 'text-purple-700', bg: 'bg-purple-600', gradient: 'from-purple-600 to-pink-600', link: '/status_b/suwon.html' },
-        siteC: { name: '평택 세탁소 시설 신축공사', text: 'text-green-700', bg: 'bg-green-600', gradient: 'from-green-600 to-teal-600', link: '/status_c/busan.html' }
+        siteA: { name: '대광새마을금고 신축공사', text: 'text-blue-700', bg: 'bg-blue-600', gradient: 'from-blue-600 to-indigo-600', link: 'https://daegwang-namhwa.web.app/' },
+        siteB: { name: '수원 노유자시설 신축공사', text: 'text-purple-700', bg: 'bg-purple-600', gradient: 'from-purple-600 to-pink-600', link: 'https://suwon-namhwa.web.app/' },
+        siteC: { name: '평택 세탁소 시설 신축공사', text: 'text-green-700', bg: 'bg-green-600', gradient: 'from-green-600 to-teal-600', link: 'https://pyeongtaek-namhwa-site.web.app/' }
     };
     const currentSiteInfo = siteConfig[siteId] || siteConfig['siteA'];
 

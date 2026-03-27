@@ -1,0 +1,104 @@
+﻿{
+    "documents":  [
+                      {
+                          "name":  "projects/namhwa-safety-dashboard/databases/(default)/documents/sites/siteB/taskDetails/0",
+                          "fields":  {
+                                         "kpi":  {
+                                                     "stringValue":  "고소작업자 안전벨트 착용철저, 작업구간 관리감독자 상주 감독 "
+                                                 },
+                                         "risk":  {
+                                                      "stringValue":  "RPP휀스 설치작업시 안전조치미흡으로 인한 추락 "
+                                                  },
+                                         "taskName":  {
+                                                          "stringValue":  "공통가설"
+                                                      },
+                                         "imageData":  {
+                                                           "stringValue":  "https://firebasestorage.googleapis.com/v0/b/namhwa-safety-dashboard.firebasestorage.app/o/site_attachments%2F1767748171998_%EC%88%98%EC%9B%90%20%EA%B6%8C%EC%84%A0%20%EC%95%88%EC%A0%84%EC%A0%90%EA%B2%80%EC%9D%BC%EC%A7%80(RPP%ED%9C%80%EC%8A%A4%EC%84%A4%EC%B9%98).pdf?alt=media\u0026token=61a6c9fc-6673-410d-8588-fa7a7578a148"
+                                                       },
+                                         "activity":  {
+                                                          "stringValue":  "RPP휀스 설치작업시 관리감독자 상주관리 "
+                                                      },
+                                         "lastUpdated":  {
+                                                             "stringValue":  "2026-01-07T01:09:31.998Z"
+                                                         }
+                                     },
+                          "createTime":  "2026-01-07T01:09:32.894740Z",
+                          "updateTime":  "2026-01-07T01:09:32.894740Z"
+                      },
+                      {
+                          "name":  "projects/namhwa-safety-dashboard/databases/(default)/documents/sites/siteB/taskDetails/1",
+                          "fields":  {
+                                         "lastUpdated":  {
+                                                             "stringValue":  "2026-03-25T07:03:20.757Z"
+                                                         },
+                                         "activity":  {
+                                                          "stringValue":  "위험성평가회의"
+                                                      },
+                                         "imageData":  {
+                                                           "nullValue":  null
+                                                       },
+                                         "risk":  {
+                                                      "stringValue":  "가시설 해체작업시 자재충돌, 낙하 "
+                                                  },
+                                         "kpi":  {
+                                                     "stringValue":  "신호수 배치, 작업구획 설정 "
+                                                 },
+                                         "workDate":  {
+                                                          "stringValue":  "2026-03-23"
+                                                      }
+                                     },
+                          "createTime":  "2026-03-23T04:07:04.694648Z",
+                          "updateTime":  "2026-03-25T07:03:20.156279Z"
+                      },
+                      {
+                          "name":  "projects/namhwa-safety-dashboard/databases/(default)/documents/sites/siteB/taskDetails/16",
+                          "fields":  {
+                                         "risk":  {
+                                                      "stringValue":  "위험성평가 미실시 감소대책 미수립 후 작업 "
+                                                  },
+                                         "kpi":  {
+                                                     "stringValue":  "위험성평가"
+                                                 },
+                                         "taskName":  {
+                                                          "stringValue":  "토목공사"
+                                                      },
+                                         "imageData":  {
+                                                           "stringValue":  "https://firebasestorage.googleapis.com/v0/b/namhwa-safety-dashboard.firebasestorage.app/o/site_attachments%2F1770275249055_%EC%88%98%EC%9B%90%20%EA%B6%8C%EC%84%A0%20%EC%83%81%EC%8B%9C%EC%9C%84%ED%97%98%EC%84%B1%ED%8F%89%EA%B0%80(26.02.05).pdf?alt=media\u0026token=9f6a7350-024c-4ff5-ada0-37311275ba2a"
+                                                       },
+                                         "activity":  {
+                                                          "stringValue":  "상시위험성평가"
+                                                      },
+                                         "lastUpdated":  {
+                                                             "stringValue":  "2026-02-05T07:07:29.055Z"
+                                                         }
+                                     },
+                          "createTime":  "2026-01-07T01:10:15.735219Z",
+                          "updateTime":  "2026-02-05T07:07:31.212283Z"
+                      },
+                      {
+                          "name":  "projects/namhwa-safety-dashboard/databases/(default)/documents/sites/siteB/taskDetails/2",
+                          "fields":  {
+                                         "activity":  {
+                                                          "stringValue":  "공도구 점검 (반입) "
+                                                      },
+                                         "lastUpdated":  {
+                                                             "stringValue":  "2026-02-23T06:51:38.032Z"
+                                                         },
+                                         "imageData":  {
+                                                           "stringValue":  "https://firebasestorage.googleapis.com/v0/b/namhwa-safety-dashboard.firebasestorage.app/o/site_attachments%2FsiteB%2F1771829493985_%EC%88%98%EC%9B%90%20%EA%B6%8C%EC%84%A0%20%EA%B3%B5%EB%8F%84%EA%B5%AC%EC%A0%90%EA%B2%80(%EC%B2%A0%EA%B7%BC26.2.20).pdf?alt=media\u0026token=1bcc2ef2-fcd4-4b3b-856c-2d9bc0c06fb1"
+                                                       },
+                                         "risk":  {
+                                                      "stringValue":  "공도구 사용전 미점검으로 인한 감전 "
+                                                  },
+                                         "kpi":  {
+                                                     "stringValue":  "반입시 공도구 점검 실시 "
+                                                 },
+                                         "workDate":  {
+                                                          "stringValue":  "2026-02-23"
+                                                      }
+                                     },
+                          "createTime":  "2026-02-23T06:51:35.485818Z",
+                          "updateTime":  "2026-02-23T06:51:37.850816Z"
+                      }
+                  ]
+}

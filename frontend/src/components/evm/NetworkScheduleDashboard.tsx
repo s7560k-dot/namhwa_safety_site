@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Network, Activity, Layout, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import EvmDashboard from './EvmDashboard';
 import EvmSCurveChart from './EvmSCurveChart';
-import { CPM_CONFIG, CPM_TASKS, ALLOWED_SITE_ID, NetworkTask, NetworkProjectConfig } from '../../constants/cpmData';
+import { CPM_CONFIGS, CPM_TASK_LISTS, ALLOWED_SITE_IDS, NetworkTask, NetworkProjectConfig } from '../../constants/cpmData';
 import { WbsAutoGenerator } from '../../utils/wbsAutoGenerator';
 import { ProjectProfile, BoQItem, ScheduleItem, WbsNode } from '../../types/wbs';
 import WbsDataUploader from './WbsDataUploader';
@@ -11,11 +11,75 @@ import WbsDataUploader from './WbsDataUploader';
 interface NetworkScheduleDashboardProps {
     config?: NetworkProjectConfig;
     tasks?: NetworkTask[];
-    projectId?: string; // 추가: 부모로부터 직접 현장 ID를 받을 수 있음
+    projectId?: string; 
 }
 
-// Mermaid 차트 구성
-const MERMAID_GRAPH = `
+// Mermaid 차트 구성을 동적으로 생성
+const getMermaidGraph = (siteId: string) => {
+    if (siteId === 'siteC') {
+        return `
+graph LR
+    classDef normal fill:#fff, stroke:#333, stroke-width:1px, rx:5, ry:5;
+    classDef critical fill:#fff5f5, stroke:#e74c3c, stroke-width:3px, rx:5, ry:5;
+    classDef milestone fill:#2c3e50, stroke:#333, stroke-width:2px, color:#fff, rx:20, ry:20;
+    classDef sub fill:#f8f9fa, stroke:#dee2e6, stroke-dasharray: 5 5;
+
+    Start([🚀 착공통보 NTP]):::milestone
+    End([🏆 최종준공 CCD]):::milestone
+
+    subgraph Admin ["📂 행정 및 일반계획"]
+        D1030[D1030.품질관리계획]:::normal
+        D1035[D1035.품질승인]:::normal
+        D1040[D1040.안전보건계획]:::normal
+        D1045[D1045.안전승인]:::normal
+        D1150[D1150.환경관리계획]:::normal
+        D1160[D1160.환경승인]:::normal
+        D1110[D1110.예비공정표]:::normal
+        D1120[D1120.예비공정승인]:::normal
+        D1210[D1210.사전회의]:::normal
+    end
+
+    subgraph Submittals ["📑 자재승인 및 인허가"]
+        D1010[D1010.인허가 ENG 4288]:::critical
+        D1020[D1020.인허가 승인]:::critical
+        P1010[P1010.로컬자재제출]:::normal
+        O1010[O1010.해외자재제출]:::critical
+        O1020[O1020.해외자재승인]:::critical
+    end
+
+    subgraph Procurement ["🚢 자재조달"]
+        O1030[O1030.해외자재조달]:::critical
+    end
+
+    subgraph Construction ["🏗️ 현장 시공"]
+        C1010[C1010.가설울타리]:::normal
+        C1020[C1020.지장물철거]:::normal
+        C1120[C1120.본공사시공]:::critical
+        S9040[S9040.검사/준공]:::critical
+    end
+
+    %% Critical Path (Red Line)
+    Start === D1010
+    D1010 === D1020
+    D1020 === O1010
+    O1010 === O1020
+    O1020 === O1030
+    O1030 === C1120
+    C1120 === S9040
+    S9040 === End
+
+    %% Parallel Paths
+    Start -.-> D1030 -.-> D1035 -.-> C1120
+    Start -.-> D1040 -.-> D1045 -.-> C1120
+    Start -.-> D1150 -.-> D1160 -.-> C1120
+    Start -.-> D1110 -.-> D1120 -.-> C1120
+    Start -.-> D1210 -.-> C1010 -.-> C1020 -.-> C1120
+    D1020 -.-> P1010 -.-> C1120
+`;
+    }
+
+    // Default: siteA (대광)
+    return `
 graph LR
     classDef normal fill:#fff, stroke:#333, stroke-width:1px, rx:5, ry:5;
     classDef critical fill:#fff5f5, stroke:#e74c3c, stroke-width:3px, rx:5, ry:5;
@@ -46,6 +110,7 @@ graph LR
     E -.- F
     F -.- H
 `;
+};
 
 // 유틸리티 포맷 함수
 const formatMoney = (amount: number) => {
@@ -58,18 +123,20 @@ const formatMoneyShort = (amount: number) => {
 };
 
 const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
-    config = CPM_CONFIG,
-    tasks = CPM_TASKS,
-    projectId // Props로 들어온 현장 ID
+    config: propsConfig,
+    tasks: propsTasks,
+    projectId 
 }) => {
 
-    const { siteId } = useParams(); // URL에서 프로젝트(현장) ID 추출
+    const { siteId } = useParams(); 
+    const targetSiteId = projectId || siteId || 'siteA';
 
-    // Props를 우선순위로 두고, 없으면 라우터 파라미터 사용
-    const targetSiteId = projectId || siteId;
+    // 해당 사이트의 설정과 태스크 목록 가져오기
+    const config = propsConfig || CPM_CONFIGS[targetSiteId] || CPM_CONFIGS['siteA'];
+    const tasks = propsTasks || CPM_TASK_LISTS[targetSiteId] || CPM_TASK_LISTS['siteA'];
 
-    // [BUG FIX] CPM 공정표 현장별 노출 제한: siteA(대광)가 아닌 경우 렌더링하지 않음
-    if (targetSiteId !== ALLOWED_SITE_ID) {
+    // [BUG FIX] CPM 공정표 현장별 노출 제한
+    if (!ALLOWED_SITE_IDS.includes(targetSiteId)) {
         return null;
     }
 
@@ -181,7 +248,7 @@ const NetworkScheduleDashboard: React.FC<NetworkScheduleDashboardProps> = ({
                 mermaidRef.current.innerHTML = '<div class="flex items-center text-gray-400 text-xs animate-pulse font-black tracking-widest uppercase italic">Preparing Chart Engine...</div>';
 
                 const tempId = `mermaid-svg-${Math.random().toString(36).substr(2, 9)}`;
-                const { svg } = await mm.render(tempId, MERMAID_GRAPH);
+                const { svg } = await mm.render(tempId, getMermaidGraph(targetSiteId));
 
                 if (isMounted && mermaidRef.current) {
                     mermaidRef.current.innerHTML = svg;

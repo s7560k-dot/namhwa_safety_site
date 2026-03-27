@@ -3,7 +3,7 @@ import { db } from '../../firebase';
 import { WbsTask, calculateEvmMetrics } from './types';
 import { Activity } from 'lucide-react';
 import EvmUpdateModal from './EvmUpdateModal';
-import { CPM_TASKS } from '../../constants/cpmData';
+import { CPM_TASK_LISTS, CPM_CONFIGS } from '../../constants/cpmData';
 
 interface EvmDashboardProps {
     projectId: string;
@@ -17,6 +17,10 @@ const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<WbsTask | null>(null);
 
+    // 해당 사이트의 설정과 태스크 목록 가져오기
+    const siteTasks = CPM_TASK_LISTS[projectId] || CPM_TASK_LISTS['siteA'];
+    const siteConfig = CPM_CONFIGS[projectId] || CPM_CONFIGS['siteA'];
+
     useEffect(() => {
         // Firestore에서 실적 데이터(EV, AC)만 불러옴
         const unsubscribe = db
@@ -29,8 +33,8 @@ const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
                     firestoreDataMap[doc.id] = doc.data();
                 });
 
-                // CPM_TASKS 마스터 데이터를 기준으로 UI용 데이터 병합
-                const mergedTasks: WbsTask[] = CPM_TASKS.map(cpmTask => {
+                // siteTasks 마스터 데이터를 기준으로 UI용 데이터 병합
+                const mergedTasks: WbsTask[] = siteTasks.map(cpmTask => {
                     const dbMetrics = firestoreDataMap[cpmTask.id] || {};
                     return {
                         id: cpmTask.id,
@@ -38,8 +42,8 @@ const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
                         pv: cpmTask.cost,  // 마스터 데이터(CPM) 최우선 (자동 반영 보장)
                         ev: dbMetrics.ev || 0,
                         ac: dbMetrics.ac || 0,
-                        startDate: "2025-12-12",
-                        endDate: "2026-10-12",
+                        startDate: siteConfig.startDate,
+                        endDate: siteConfig.startDate, // 단순화: 전체 시작일 기준 (필요시 태스크별 계산)
                         updatedAt: dbMetrics.updatedAt || new Date().toISOString()
                     };
                 });
@@ -49,7 +53,7 @@ const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
             });
 
         return () => unsubscribe();
-    }, [projectId]);
+    }, [projectId, siteTasks, siteConfig]);
 
     // CPM 데이터를 기반으로 Firestore 실적 데이터 초기화 (이름/예산은 상수를 따라가므로 실적만 리셋)
     const initializeFromCpm = async (pid: string, force: boolean = false) => {
@@ -61,7 +65,7 @@ const EvmDashboard: React.FC<EvmDashboardProps> = ({ projectId }) => {
             const batch = db.batch();
 
             // 기존 데이터의 메타데이터(이름, PV)를 제거하고 실적만 관리하도록 전환
-            CPM_TASKS.forEach((cpmTask) => {
+            siteTasks.forEach((cpmTask) => {
                 const docRef = colRef.doc(cpmTask.id);
                 batch.set(docRef, {
                     ev: 0,

@@ -10,6 +10,12 @@
         ],
         "suwon": [
           "suwon-namhwa"
+        ],
+        "daegwang": [
+          "daegwang-namhwa"
+        ],
+        "pyeongtaek": [
+          "pyeongtaek-namhwa-site"
         ]
       }
     }

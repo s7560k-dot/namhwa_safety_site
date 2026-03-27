@@ -68,7 +68,8 @@ const App = () => {
   // ── CSS 변수 설정 (그리드 월 수 대응) ──
   useEffect(() => {
     document.documentElement.style.setProperty('--grid-months', siteConfig.months);
-  }, [siteConfig.months]);
+    document.title = `${siteConfig.name} 안전보건 현황표`;
+  }, [siteConfig.months, siteConfig.name]);
 
   // ────────────────────────────────────────────────────
   // 모달 핸들러
