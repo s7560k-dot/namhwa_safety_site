@@ -1,24 +1,14 @@
 /**
  * @file ProcessChart.jsx
- * @description 16개월 공정 그리드 및 안전 태그 그리드 컴포넌트
- *
- * 기존 renderGrid() 함수를 React 컴포넌트로 변환합니다.
- * - contenteditable 착공준비 셀 → 제어 컴포넌트 (onBlur 저장)
- * - 공정 막대 클릭 → onBarClick 콜백
- * - 안전 태그 셀 클릭 → onTagCellClick 콜백
+ * @description Dynamic months construction grid with loop safety
  */
 
 import React, { useState, useCallback } from "react";
-
-// ────────────────────────────────────────────────────
-// 착공준비 입력 셀 (개별 상태 관리로 한글 입력 이슈 방지)
-// ────────────────────────────────────────────────────
 
 /**
  * @param {{ value: string, onBlurSave: (value: string) => void }} props
  */
 const PrepCell = ({ value, onBlurSave }) => {
-  // 로컬 상태로 관리하여 Firebase와 입력 타이밍 분리
   const [localValue, setLocalValue] = useState(value ?? "");
 
   const handleBlur = useCallback(() => {
@@ -37,10 +27,6 @@ const PrepCell = ({ value, onBlurSave }) => {
     </div>
   );
 };
-
-// ────────────────────────────────────────────────────
-// 안전 태그 셀
-// ────────────────────────────────────────────────────
 
 /**
  * @param {{ tags: string[], rowIndex: number, month: number, onClick: () => void }} props
@@ -62,15 +48,9 @@ const TagCell = ({ tags, rowIndex, month, onClick }) => (
   </div>
 );
 
-// ────────────────────────────────────────────────────
-// ProcessChart 메인 컴포넌트
-// ────────────────────────────────────────────────────
-
-/** 헤더 행의 총 열 수 (구분 + 착공준비 + 16개월) */
-const TOTAL_MONTHS = 16;
-
 /**
  * @param {{
+ *   months: number,
  *   constructionData: Array<{ name, start, duration, color, label }>,
  *   prepConst: Record<number, string>,
  *   prepSafety: Record<number, string>,
@@ -81,39 +61,53 @@ const TOTAL_MONTHS = 16;
  * }} props
  */
 const ProcessChart = ({
-  constructionData,
-  prepConst,
-  prepSafety,
-  safetyData,
+  months = 12,
+  constructionData = [],
+  prepConst = {},
+  prepSafety = {},
+  safetyData = [],
   onBarClick,
   onTagCellClick,
   onPrepUpdate,
 }) => {
   return (
     <div className="chart-wrapper">
-      <div className="grid-container">
-
+      <div
+        className="grid-container"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `180px 80px repeat(${months}, 1fr)`,
+        }}
+      >
         {/* ── 헤더 행 ── */}
         <div className="cell cell-header">구분</div>
         <div className="cell cell-header prep-header">착공준비</div>
-        {Array.from({ length: TOTAL_MONTHS }, (_, i) => (
-          <div key={i} className="cell cell-header">{i + 1}월</div>
+        {Array.from({ length: months }, (_, i) => (
+          <div key={i} className="cell cell-header">
+            {i + 1}월
+          </div>
         ))}
 
         {/* ── 공정 행 ── */}
         {constructionData.map((task, taskIndex) => {
-          // 각 월을 순서대로 렌더링
           const monthCells = [];
-          let month = 1;
-          while (month <= TOTAL_MONTHS) {
-            if (month === task.start) {
-              // 공정 막대: span으로 duration 열을 점유
+          let m = 0; // 0-based index for logic
+          const MAX_ITERATIONS = 1000;
+          let iterations = 0;
+
+          while (m < months && iterations < MAX_ITERATIONS) {
+            iterations++;
+            if (m === task.start) {
+              const span = Math.max(
+                1,
+                Math.min(task.duration || 1, months - m)
+              );
               monthCells.push(
                 <div
-                  key={month}
+                  key={m}
                   className="cell"
                   style={{
-                    gridColumn: `span ${task.duration}`,
+                    gridColumn: `span ${span}`,
                     background: "#fff",
                     padding: "5px",
                   }}
@@ -127,27 +121,22 @@ const ProcessChart = ({
                   </div>
                 </div>
               );
-              month += task.duration;
+              m += span;
             } else {
-              monthCells.push(<div key={month} className="cell" />);
-              month++;
+              monthCells.push(<div key={m} className="cell" />);
+              m++;
             }
           }
 
           return (
             <React.Fragment key={taskIndex}>
-              {/* 공종명 */}
               <div className="cell cell-sidebar" title={task.name}>
                 {task.name}
               </div>
-
-              {/* 착공준비 셀 */}
               <PrepCell
                 value={prepConst[taskIndex] ?? ""}
                 onBlurSave={(val) => onPrepUpdate("const", taskIndex, val)}
               />
-
-              {/* 월별 셀 */}
               {monthCells}
             </React.Fragment>
           );
@@ -161,32 +150,26 @@ const ProcessChart = ({
         {/* ── 안전 행 ── */}
         {safetyData.map((row, rowIndex) => (
           <React.Fragment key={rowIndex}>
-            {/* 안전 항목명 */}
             <div className="cell cell-sidebar safety-row">{row.title}</div>
-
-            {/* 착공준비 셀 */}
             <PrepCell
               value={prepSafety[rowIndex] ?? ""}
               onBlurSave={(val) => onPrepUpdate("safety", rowIndex, val)}
             />
-
-            {/* 월별 태그 셀 */}
-            {Array.from({ length: TOTAL_MONTHS }, (_, i) => {
-              const month = i + 1;
-              const tags = row.monthlyTags?.[month] ?? [];
+            {Array.from({ length: months }, (_, i) => {
+              const m = i + 1;
+              const tags = row.monthlyTags?.[m] ?? [];
               return (
                 <TagCell
-                  key={month}
+                  key={m}
                   tags={tags}
                   rowIndex={rowIndex}
-                  month={month}
-                  onClick={() => onTagCellClick(rowIndex, month)}
+                  month={m}
+                  onClick={() => onTagCellClick(rowIndex, m)}
                 />
               );
             })}
           </React.Fragment>
         ))}
-
       </div>
     </div>
   );
