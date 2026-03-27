@@ -18,8 +18,25 @@ const Login = () => {
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // 승인 여부 확인 로직 추가 가능 (AuthContext에서 처리하므로 여기선 기본 이동)
-                navigate('/');
+                // [수정] 로그인되어 있더라도 승인되지 않은 유저는 /login에 머물며 상태를 보여줌
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        if (userData.isApproved || userData.role === 'admin') {
+                            navigate('/');
+                        } else {
+                            // 승인되지 않은 유저는 상태 유지를 위해 이동하지 않음
+                            setError("⚠️ 아직 관리자 승인이 완료되지 않았습니다. 승인 후 이용 가능합니다.");
+                        }
+                    } else {
+                        // 문서가 없는 경우 (신규 가입 유도 등)
+                        navigate('/');
+                    }
+                } catch (err) {
+                    console.error("Auto-auth check error:", err);
+                    // 에러 시 보안을 위해 /login 유지
+                }
             }
         });
         return () => unsubscribe();
