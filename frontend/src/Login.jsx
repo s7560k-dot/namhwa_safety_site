@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from './firebase';
 
+import { useLocation } from 'react-router-dom';
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // /ProtectedRoute에서 보낸 '승인 대기' 상태 확인
+    const isPendingApproval = location.state?.pendingApproval;
 
     useEffect(() => {
-        // Compat SDK: auth.onAuthStateChanged
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
+                // 승인 여부 확인 로직 추가 가능 (AuthContext에서 처리하므로 여기선 기본 이동)
                 navigate('/');
             }
         });
@@ -28,19 +34,23 @@ const Login = () => {
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const user = userCredential.user;
 
-            // [추가] Firestore에서 사용자 역할 확인 및 로컬 스토리지 저장
+            // Firestore에서 사용자 정보 및 승인 상태 확인
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 if (userData.role === 'admin') {
                     localStorage.setItem('userRole', 'admin');
+                    navigate('/admin');
+                } else if (!userData.isApproved) {
+                    setError("⚠️ 아직 관리자 승인이 완료되지 않았습니다. 승인 후 이용 가능합니다.");
+                    // 로그아웃 시키지 않고 상태만 표시 (또는 자동 로그아웃 선택 가능)
+                } else {
+                    navigate('/');
                 }
-            } else if (email.endsWith('@namhwa.com') || email === 'nhs1033@nate.com') {
-                // 화이트리스트 이메일의 경우 레거시 호환을 위해 설정
-                localStorage.setItem('userRole', 'admin');
+            } else {
+                // 신규 유저 문서 생성은 AuthContext에서 처리
+                navigate('/');
             }
-
-            navigate('/');
         } catch (err) {
             console.error("Login error", err);
             let msg = "로그인 중 오류가 발생했습니다.";
@@ -55,10 +65,6 @@ const Login = () => {
                     break;
                 case 'auth/too-many-requests':
                     msg = "너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.";
-                    break;
-                case 'auth/requests-from-referer-blocked':
-                case 'auth/unauthorized-domain':
-                    msg = `도메인 차단됨: ${err.message}. Firebase Console 또는 Google Cloud Console의 API Key 설정을 확인하세요.`;
                     break;
                 default:
                     msg = `오류 (${err.code}): ${err.message}`;
@@ -79,7 +85,7 @@ const Login = () => {
         setError('');
         try {
             await auth.sendPasswordResetEmail(email);
-            setError(''); // 에러 메시지 초기화
+            setError(''); 
             alert(`✅ 비밀번호 재설정 이메일을 "${email}"로 발송했습니다.\n받은 편지함을 확인해주세요.`);
         } catch (err) {
             if (err.code === 'auth/user-not-found') {
@@ -93,92 +99,81 @@ const Login = () => {
     };
 
     return (
-        <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">
-            <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">남화토건(주)</h1>
-                    <p className="text-gray-500 mt-2">안전보건팀 자료실 로그인</p>
+        <div className="bg-slate-900 min-h-screen flex items-center justify-center p-4 font-sans relative overflow-hidden">
+            {/* Background Effect */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-red-600 rounded-full blur-[120px] opacity-10 -mr-48 -mt-48"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-10 -ml-48 -mb-48"></div>
+
+            <div className="max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-10 border border-white/20 relative z-10 transition-all">
+                <div className="text-center mb-10">
+                    <img src="/namhwa_symbol.png" alt="Logo" className="h-16 mx-auto mb-4" />
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter">NAMHWA SAFETY</h1>
+                    <p className="text-slate-400 mt-2 font-bold text-sm uppercase tracking-widest">Authorized Access Only</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-6">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">이메일 (ID)</label>
+                {/* 승인 대기 또는 에러 메시지 */}
+                {isPendingApproval && !error && (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col items-center text-center gap-2">
+                        <span className="text-amber-800 text-sm font-black italic">ACCESS DENIED</span>
+                        <p className="text-amber-700 text-xs font-bold leading-relaxed">
+                            로그인은 완료되었으나, 아직 **관리자 승인**이 되지 않았습니다.<br />
+                            담당자에게 승인을 요청해 주세요.
+                        </p>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-center text-xs font-bold leading-relaxed">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleLogin} className="space-y-5">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">이메일 계정</label>
                         <input
                             type="email"
-                            id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                            className="w-full px-5 py-4 bg-slate-100 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all font-bold text-slate-900 shadow-inner"
                             placeholder="example@namhwa.com"
                         />
                     </div>
 
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">비밀번호</label>
                         <input
                             type="password"
-                            id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                            placeholder="비밀번호 입력"
+                            className="w-full px-5 py-4 bg-slate-100 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all font-bold text-slate-900 shadow-inner"
+                            placeholder="••••••••"
                         />
                     </div>
-
-                    {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition duration-200 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        className={`w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-2xl shadow-xl shadow-slate-200 transition-all flex justify-center items-center gap-2 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        {loading ? (
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        ) : (
-                            <span>로그인</span>
-                        )}
+                        {loading ? '인증 중...' : '시스템 접속'}
                     </button>
                 </form>
 
-                <div className="mt-4 flex flex-col gap-3">
-                    {/* 비밀번호 재설정 */}
+                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col gap-3">
                     <button
                         type="button"
                         onClick={handleResetPassword}
-                        disabled={loading}
-                        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg shadow transition duration-200"
+                        className="text-xs font-black text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
                     >
-                        🔑 비밀번호 재설정 이메일 발송
-                    </button>
-                    {/* 게스트 로그인 (개발용) */}
-                    <button
-                        onClick={async () => {
-                            setLoading(true);
-                            try {
-                                await auth.signInAnonymously();
-                                navigate('/');
-                            } catch (err) {
-                                console.warn("Anonymous login failed, forcing Guest Mode:", err);
-                                sessionStorage.setItem('guestMode', 'true');
-                                navigate('/');
-                            } finally {
-                                setLoading(false);
-                            }
-                        }}
-                        disabled={loading}
-                        className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-lg shadow transition duration-200 flex justify-center items-center"
-                    >
-                        게스트 로그인 (개발용)
+                        비밀번호 재설정 이메일 발송
                     </button>
                 </div>
 
-                <div className="mt-6 text-center text-xs text-gray-400">
-                    &copy; 2024 Namhwa Construction Co., Ltd.
+                <div className="mt-10 text-center">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2024 NAMHWA CONSTRUCTION</p>
                 </div>
             </div>
         </div>

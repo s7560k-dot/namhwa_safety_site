@@ -102,17 +102,14 @@ const ResourceCenter = () => {
     }, []); // 빈 배열: 최초 마운트 시에만 실행
 
     useEffect(() => {
-        // [2] Firebase Auth 및 알림 데이터 감시
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            setUser(user);
-            const isUserAdmin = user && (
-                user.email?.endsWith('@namhwa.com') ||
-                user.email === 'nhs1033@nate.com' ||
-                localStorage.getItem('userRole') === 'admin'
-            );
-            setIsAdmin(!!isUserAdmin);
-        });
+        if (isSafetyOn) {
+            sessionStorage.setItem('safetyOn', 'true');
+        } else {
+            sessionStorage.removeItem('safetyOn');
+        }
+    }, [isSafetyOn]);
 
+    useEffect(() => {
         // [3] 스크롤 상태 감시 (네비게이션 바 디자인 변경용)
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
@@ -121,9 +118,8 @@ const ResourceCenter = () => {
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
-            unsubscribe();
         };
-    }, []); // 의존성에서 location, isSafetyOn 제거 (불필요한 리렌더링 및 로직 재실행 방지)
+    }, []);
 
     useEffect(() => {
         // [4] 알림 개수 업데이트 (시스템 가동 상태일 때만 실행)

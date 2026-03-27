@@ -8,7 +8,7 @@
   "hosting": [
     {
       "target": "main",
-      "public": "frontend/build",
+      "public": "frontend/dist",
       "ignore": [
         "firebase.json",
         "**/.*",

@@ -536,12 +536,13 @@ const Admin = () => {
                                             <tr>
                                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">직원 정보</th>
                                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">권한</th>
+                                                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">승인 여부</th>
                                                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">액션</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {loading ? (
-                                                <tr><td colSpan="3" className="px-6 py-12 text-center text-slate-400 font-medium">로딩 중...</td></tr>
+                                                <tr><td colSpan="4" className="px-6 py-12 text-center text-slate-400 font-medium">로딩 중...</td></tr>
                                             ) : filteredUsers.map((user) => (
                                                 <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
                                                     <td className="px-6 py-5">
@@ -561,9 +562,21 @@ const Admin = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-5">
-                                                        <button onClick={() => handleResetPassword(user.email)} className="mx-auto flex items-center gap-1 text-amber-600 hover:bg-amber-50 px-3 py-1.5 rounded-lg text-xs font-black transition-all">
-                                                            <Key size={14} /> 재설정
+                                                        <button 
+                                                            onClick={() => handleToggleApproval(user.id, user.isApproved)}
+                                                            disabled={actionLoading || user.role === 'admin'}
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${user.isApproved ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                                                        >
+                                                            {user.isApproved ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                                                            {user.isApproved ? '승인됨' : '대기중'}
                                                         </button>
+                                                    </td>
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex justify-center gap-2">
+                                                            <button onClick={() => handleResetPassword(user.email)} className="flex items-center gap-1 text-slate-400 hover:text-amber-600 px-3 py-1.5 rounded-lg text-xs font-black transition-all">
+                                                                <Key size={14} /> 비번재설정
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}

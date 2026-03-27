@@ -13,26 +13,61 @@ import CivilQuantityTakeoff from './components/CivilQuantityTakeoff';
 import FloorPlanTo3DApp from './components/FloorPlanTo3DApp';
 import NetworkScheduleDashboard from './components/evm/NetworkScheduleDashboard';
 
+import { AuthProvider } from './context/AuthContext';
+import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<ResourceCenter />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfUse />} />
-        <Route path="/support" element={<ContactSupport />} />
-        <Route path="/dashboard/:siteId" element={<SafetyDashboard />} />
-        <Route path="/board/global" element={<GlobalBoard />} />
-        <Route path="/calculator" element={<MaterialCalculator />} />
-        <Route path="/civil-calc" element={<CivilQuantityTakeoff />} />
-        <Route path="/floorplan-3d" element={<FloorPlanTo3DApp />} />
-        <Route path="/network-schedule/:siteId" element={<NetworkScheduleDashboard />} />
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<ResourceCenter />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          } />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfUse />} />
+          <Route path="/support" element={<ContactSupport />} />
+          
+          {/* Approved users only routes */}
+          <Route path="/dashboard/:siteId" element={
+            <ApprovedRoute>
+              <SafetyDashboard />
+            </ApprovedRoute>
+          } />
+          <Route path="/board/global" element={
+            <ApprovedRoute>
+              <GlobalBoard />
+            </ApprovedRoute>
+          } />
+          <Route path="/calculator" element={
+            <ApprovedRoute>
+              <MaterialCalculator />
+            </ApprovedRoute>
+          } />
+          <Route path="/civil-calc" element={
+            <ApprovedRoute>
+              <CivilQuantityTakeoff />
+            </ApprovedRoute>
+          } />
+          <Route path="/floorplan-3d" element={
+            <ApprovedRoute>
+              <FloorPlanTo3DApp />
+            </ApprovedRoute>
+          } />
+          <Route path="/network-schedule/:siteId" element={
+            <ApprovedRoute>
+              <NetworkScheduleDashboard />
+            </ApprovedRoute>
+          } />
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
