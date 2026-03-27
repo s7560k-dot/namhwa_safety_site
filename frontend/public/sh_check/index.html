@@ -2,6 +2,7 @@
 <html lang="ko">
 
 <head>
+    <script src="/auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>현장 안전보건 관리 점검표</title>
@@ -1014,7 +1015,8 @@
         function printPhotoReport() {
             const reportContent = document.getElementById('report-container').innerHTML;
             const printWindow = window.open('', '', 'height=800,width=1200');
-            printWindow.document.write('<html><head><title>사진 대지 보고서</title>');
+            printWindow.document.write('<html><head>
+    <script src="/auth-guard.js"></script><title>사진 대지 보고서</title>');
             printWindow.document.write('<link href="https://cdn.tailwindcss.com/3.4.1/tailwind.min.css" rel="stylesheet">');
             printWindow.document.write('<style>');
             printWindow.document.write(`

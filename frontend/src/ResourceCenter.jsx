@@ -222,18 +222,22 @@ const ResourceCenter = () => {
                     </div>
 
                     <div className={`hidden md:flex gap-10 text-[13px] font-bold uppercase tracking-wider ${isScrolled ? 'text-slate-600' : 'text-white'}`}>
-                        <a href="#systems" className="hover:text-red-500 transition-colors">Systems</a>
-                        <a href="#sites" className="hover:text-red-500 transition-colors">Sites</a>
-                        <a href="#sops" className="hover:text-red-500 transition-colors">Checklists</a>
-                        <a href="#tools" className="hover:text-red-500 transition-colors">Tools</a>
-                        <a href="#board" className="relative hover:text-red-500 transition-colors">
-                            Board
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-2 -right-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white shadow-lg shadow-red-500/50">
-                                    {unreadCount > 9 ? '9+' : unreadCount}
-                                </span>
-                            )}
-                        </a>
+                        {isSafetyOn && (
+                            <>
+                                <a href="#systems" className="hover:text-red-500 transition-colors">Systems</a>
+                                <a href="#sites" className="hover:text-red-500 transition-colors">Sites</a>
+                                <a href="#sops" className="hover:text-red-500 transition-colors">Checklists</a>
+                                <a href="#tools" className="hover:text-red-500 transition-colors">Tools</a>
+                                <a href="#board" className="relative hover:text-red-500 transition-colors">
+                                    Board
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-2 -right-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white shadow-lg shadow-red-500/50">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </a>
+                            </>
+                        )}
                         {user ? (
                             <button
                                 onClick={handleLogout}
@@ -259,18 +263,22 @@ const ResourceCenter = () => {
 
                 {mobileMenuOpen && (
                     <div className="absolute top-full left-0 w-full bg-white shadow-2xl py-2 flex flex-col md:hidden border-t border-slate-50 overflow-y-auto max-h-[calc(100vh-80px)]">
-                        <a href="#systems" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Systems</a>
-                        <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Sites</a>
-                        <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Checklists</a>
-                        <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Tools</a>
-                        <a href="#board" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors flex items-center justify-between">
-                            Board
-                            {unreadCount > 0 && (
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white">
-                                    {unreadCount}
-                                </span>
-                            )}
-                        </a>
+                        {isSafetyOn && (
+                            <>
+                                <a href="#systems" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Systems</a>
+                                <a href="#sites" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Sites</a>
+                                <a href="#sops" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Checklists</a>
+                                <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors">Tools</a>
+                                <a href="#board" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 text-slate-900 font-bold text-lg hover:bg-slate-50 border-b border-slate-50 transition-colors flex items-center justify-between">
+                                    Board
+                                    {unreadCount > 0 && (
+                                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </a>
+                            </>
+                        )}
                         {user ? (
                             <button
                                 onClick={() => {
