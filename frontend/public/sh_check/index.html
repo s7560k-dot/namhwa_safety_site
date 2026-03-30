@@ -256,7 +256,7 @@
                 </div>
                 <div class="flex flex-col items-end gap-2">
                     <!-- 회사 로고 클릭 시 안전보건팀 자료실 랜딩페이지로 이동 -->
-                    <a href="../resource.html" title="자료실 랜딩페이지로 이동"
+                    <a href="/" title="자료실 랜딩페이지로 이동"
                         class="inline-block hover:opacity-80 transition-opacity cursor-pointer">
                         <img src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true"
                             alt="회사 로고" class="h-6" onerror="this.style.display='none'">
@@ -1015,8 +1015,7 @@
         function printPhotoReport() {
             const reportContent = document.getElementById('report-container').innerHTML;
             const printWindow = window.open('', '', 'height=800,width=1200');
-            printWindow.document.write('<html><head>
-    <script src="/auth-guard.js"></script><title>사진 대지 보고서</title>');
+            printWindow.document.write('<html><head><script src="/auth-guard.js"></script><title>사진 대지 보고서</title>');
             printWindow.document.write('<link href="https://cdn.tailwindcss.com/3.4.1/tailwind.min.css" rel="stylesheet">');
             printWindow.document.write('<style>');
             printWindow.document.write(`

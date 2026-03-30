@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from './firebase';
-
-import { useLocation } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 const Login = () => {
+    const { setMockUser, isMock } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -23,15 +23,20 @@ const Login = () => {
                     const userDoc = await db.collection('users').doc(user.uid).get();
                     if (userDoc.exists) {
                         const userData = userDoc.data();
-                        if (userData.isApproved || userData.role === 'admin') {
+                        const isHardcodedAdmin = user.email === 's7560k@gmail.com';
+                        const isApproved = userData.isApproved === true || String(userData.isApproved) === 'true';
+                        const isHardcodedStaff = ['s7560k@gmail.com', 'leejaehoon5712@gmail.com'].includes(user.email);
+                        if (isApproved || userData.role === 'admin' || isHardcodedStaff) {
                             navigate('/');
                         } else {
-                            // 승인되지 않은 유저는 상태 유지를 위해 이동하지 않음
+                            // 승인되지 않은 유저는 보안을 위해 즉시 강제 로그아웃
+                            await auth.signOut();
                             setError("⚠️ 아직 관리자 승인이 완료되지 않았습니다. 승인 후 이용 가능합니다.");
                         }
                     } else {
                         // 문서가 없는 경우 (신규 가입 유도 등)
-                        navigate('/');
+                        await auth.signOut();
+                        setError("📝 회원가입이 접수되었습니다. 관리자 승인 후 이용 가능합니다.");
                     }
                 } catch (err) {
                     console.error("Auto-auth check error:", err);
@@ -53,20 +58,30 @@ const Login = () => {
 
             // Firestore에서 사용자 정보 및 승인 상태 확인
             const userDoc = await db.collection('users').doc(user.uid).get();
+            const isHardcodedAdmin = user.email === 's7560k@gmail.com';
+
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                if (userData.role === 'admin') {
-                    localStorage.setItem('userRole', 'admin');
-                    navigate('/admin');
-                } else if (!userData.isApproved) {
+                const isApproved = userData.isApproved === true || String(userData.isApproved) === 'true';
+                const isHardcodedStaff = ['s7560k@gmail.com', 'leejaehoon5712@gmail.com'].includes(user.email);
+                if (userData.role === 'admin' || isHardcodedStaff) {
+                    localStorage.setItem('userRole', isHardcodedStaff && user.email !== 's7560k@gmail.com' ? 'user' : 'admin');
+                    navigate(user.email === 's7560k@gmail.com' ? '/admin' : '/');
+                } else if (!isApproved) {
+                    await auth.signOut(); // 미승인 유저는 세션 바로 파기
                     setError("⚠️ 아직 관리자 승인이 완료되지 않았습니다. 승인 후 이용 가능합니다.");
-                    // 로그아웃 시키지 않고 상태만 표시 (또는 자동 로그아웃 선택 가능)
                 } else {
                     navigate('/');
                 }
             } else {
                 // 신규 유저 문서 생성은 AuthContext에서 처리
-                navigate('/');
+                if (isHardcodedAdmin) {
+                     localStorage.setItem('userRole', 'admin');
+                     navigate('/admin');
+                } else {
+                    await auth.signOut(); // 신규 가입자도 승인 전까지 접근 제한 (바로 파기)
+                    setError("📝 회원가입이 접수되었습니다. 관리자 승인 후 이용 가능합니다.");
+                }
             }
         } catch (err) {
             console.error("Login error", err);
@@ -179,7 +194,9 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col gap-3">
+
+
+                <div className="mt-4 flex flex-col gap-3">
                     <button
                         type="button"
                         onClick={handleResetPassword}

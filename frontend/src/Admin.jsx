@@ -24,7 +24,7 @@ import {
     Edit
 } from 'lucide-react';
 import firebase from 'firebase/compat/app';
-import { initializeApp } from "firebase/app";
+import { initializeApp, deleteApp, getApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 // import { firebaseConfig } from './firebase_config'; // 제거됨 (보안을 위해 .env 사용)
 
@@ -123,7 +123,28 @@ const Admin = () => {
                 id: doc.id,
                 ...doc.data()
             }));
-            setUsers(usersList);
+            
+            // [데이터 보정] 요청받은 특정 사용자 정보 일괄 업데이트
+            let needsRefresh = false;
+            for (const user of usersList) {
+                // 신광배 (ADMIN) 보정
+                if (user.email === 's7560k@gmail.com' && (user.name === 'Unnamed' || user.role !== 'admin')) {
+                    await db.collection('users').doc(user.id).update({ name: '신광배', role: 'admin', isApproved: true });
+                    needsRefresh = true;
+                }
+                // 이재훈 (USER) 보정
+                if (user.email === 'leejaehoon5712@gmail.com' && (user.name === 'Unnamed' || !user.isApproved)) {
+                    await db.collection('users').doc(user.id).update({ name: '이재훈', isApproved: true });
+                    needsRefresh = true;
+                }
+            }
+
+            if (needsRefresh) {
+                const refreshedSnap = await db.collection('users').get();
+                setUsers(refreshedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            } else {
+                setUsers(usersList);
+            }
         } catch (err) {
             console.error("Error fetching users:", err);
             setError("사용자 목록을 불러오는 중 오류가 발생했습니다.");
@@ -138,48 +159,144 @@ const Admin = () => {
         setError('');
         setSuccess('');
 
+        let secondaryApp = null;
         try {
-            // 1. 현재 관리자 세션을 유지하면서 새 계정을 생성하기 위해 
-            // 별도의 Firebase App 인스턴스를 임시로 생성합니다.
-            const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+            // 1. 기존에 'Secondary' 앱이 있다면 먼저 삭제하여 중복 에러 방지
+            const existingApps = getApps();
+            const existingSecondary = existingApps.find(app => app.name === "Secondary");
+            if (existingSecondary) {
+                await deleteApp(existingSecondary);
+            }
+
+            // 2. 별도의 Firebase App 인스턴스 생성 (관리자 세션 유지용)
+            secondaryApp = initializeApp(firebaseConfig, "Secondary");
             const secondaryAuth = getAuth(secondaryApp);
 
-            // 2. Auth에 계정 생성
+            // 3. Auth에 계정 생성
             const userCredential = await createUserWithEmailAndPassword(secondaryAuth, newEmail, newPassword);
             const user = userCredential.user;
 
-            // 3. Firestore에 사용자 정보 저장
+            // 4. Firestore에 사용자 정보 저장
             await db.collection('users').doc(user.uid).set({
                 name: newName,
                 email: newEmail,
-                role: 'user', // 기본 권한
+                role: 'user', 
+                isApproved: true, // 관리자가 직접 생성한 경우 즉시 승인 처리
                 createdAt: new Date().toISOString()
             });
 
-            // 4. 임시 앱 인스턴스 정리
-            await secondaryAuth.signOut();
-            // Note: deleteApp function is needed to fully clean up if creating many, 
-            // but for simple use signOut is usually okay or use getApps check.
-
-            setSuccess(`✅ ${newName} 님의 계정이 성공적으로 생성되었습니다.`);
+            setSuccess(`✅ ${newName} 님의 계정이 생성되었으며, 즉시 승인되었습니다.`);
             setNewName('');
             setNewEmail('');
             setNewPassword('');
-            fetchUsers(); // 목록 갱신
+            fetchUsers(); 
         } catch (err) {
             console.error("Create user error:", err);
             let msg = "계정 생성 중 오류가 발생했습니다.";
             if (err.code === 'auth/email-already-in-use') msg = "이미 사용 중인 이메일입니다.";
             if (err.code === 'auth/weak-password') msg = "비밀번호는 6자리 이상이어야 합니다.";
-            setError(msg);
+            if (err.message.includes('duplicate-app')) msg = "시스템 오류: 앱 초기화 중복. 잠시 후 다시 시도해주세요.";
+            setError(`${msg} (상세: ${err.message})`);
         } finally {
+            // 5. 임시 앱 인스턴스 확실히 정리
+            if (secondaryApp) {
+                try {
+                    await deleteApp(secondaryApp);
+                } catch (cleanupErr) {
+                    console.error("Cleanup error:", cleanupErr);
+                }
+            }
             setActionLoading(false);
         }
     };
 
     const handleResetPassword = async (email) => {
-        // ... (existing code remains SAME)
+        if (!window.confirm(`${email} 사용자에게 비밀번호 재설정 이메일을 발송하시겠습니까?`)) return;
+        setActionLoading(true);
+        try {
+            await auth.sendPasswordResetEmail(email);
+            setSuccess("✅ 재설정 이메일이 발송되었습니다.");
+        } catch (err) {
+            console.error("Reset error:", err);
+            setError("이메일 발송에 실패했습니다.");
+        } finally {
+            setActionLoading(false);
+        }
     };
+
+    const handleToggleApproval = async (id, currentStatus) => {
+        setActionLoading(true);
+        try {
+            await db.collection('users').doc(id).update({
+                isApproved: !currentStatus
+            });
+            setSuccess(`✅ 승인 상태가 ${!currentStatus ? '승인' : '대기'}로 변경되었습니다.`);
+            fetchUsers();
+        } catch (err) {
+            console.error("Toggle error:", err);
+            setError("상태 변경 중 오류가 발생했습니다.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleToggleRole = async (id, currentRole) => {
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        if (!window.confirm(`사용자의 권한을 ${newRole.toUpperCase()}로 변경하시겠습니까?`)) return;
+        
+        setActionLoading(true);
+        try {
+            await db.collection('users').doc(id).update({
+                role: newRole,
+                // 관리자로 승격 시 자동으로 승인 처리
+                isApproved: newRole === 'admin' ? true : undefined 
+            });
+            setSuccess(`✅ 권한이 ${newRole.toUpperCase()}로 변경되었습니다.`);
+            fetchUsers();
+        } catch (err) {
+            console.error("Role toggle error:", err);
+            setError("권한 변경 중 오류가 발생했습니다.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteUser = async (id, name) => {
+        if (!window.confirm(`정말 ${name} 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며, Firestore 데이터만 삭제됩니다.`)) return;
+        
+        setActionLoading(true);
+        try {
+            await db.collection('users').doc(id).delete();
+            setSuccess(`✅ ${name} 사용자가 삭제되었습니다.`);
+            fetchUsers();
+        } catch (err) {
+            console.error("Delete user error:", err);
+            setError("사용자 삭제 중 오류가 발생했습니다.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleEditUserName = async (id, currentName) => {
+        const newName = window.prompt("수정할 이름을 입력하세요:", currentName);
+        if (!newName || newName === currentName) return;
+
+        setActionLoading(true);
+        try {
+            await db.collection('users').doc(id).update({
+                name: newName
+            });
+            setSuccess(`✅ 이름이 '${newName}'으로 수정되었습니다.`);
+            fetchUsers();
+        } catch (err) {
+            console.error("Edit name error:", err);
+            setError("이름 수정 중 오류가 발생했습니다.");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // [삭제됨] fetchUsers 내로 통합되어 삭제되었습니다.
 
     const fetchPosts = async () => {
         try {
@@ -556,10 +673,15 @@ const Admin = () => {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest ${user.role === 'admin' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                                                     <td className="px-6 py-5">
+                                                        <button 
+                                                            onClick={() => handleToggleRole(user.id, user.role || 'user')}
+                                                            disabled={actionLoading}
+                                                            className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest transition-all hover:opacity-80 ${user.role === 'admin' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}
+                                                            title="클릭하여 권한 변경"
+                                                        >
                                                             {user.role?.toUpperCase() || 'USER'}
-                                                        </span>
+                                                        </button>
                                                     </td>
                                                     <td className="px-6 py-5">
                                                         <button 
@@ -571,10 +693,29 @@ const Admin = () => {
                                                             {user.isApproved ? '승인됨' : '대기중'}
                                                         </button>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex justify-center gap-2">
-                                                            <button onClick={() => handleResetPassword(user.email)} className="flex items-center gap-1 text-slate-400 hover:text-amber-600 px-3 py-1.5 rounded-lg text-xs font-black transition-all">
-                                                                <Key size={14} /> 비번재설정
+                                                     <td className="px-6 py-5">
+                                                        <div className="flex justify-center gap-1.5">
+                                                            <button 
+                                                                onClick={() => handleEditUserName(user.id, user.name)}
+                                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                                title="이름 수정"
+                                                            >
+                                                                <Edit size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleResetPassword(user.email)} 
+                                                                className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                                                                title="비밀번호 재설정"
+                                                            >
+                                                                <Key size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDeleteUser(user.id, user.name)}
+                                                                disabled={user.role === 'admin'}
+                                                                className={`p-2 rounded-lg transition-all ${user.role === 'admin' ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                                                title={user.role === 'admin' ? "관리자는 삭제할 수 없습니다" : "사용자 삭제"}
+                                                            >
+                                                                <Trash2 size={14} />
                                                             </button>
                                                         </div>
                                                     </td>

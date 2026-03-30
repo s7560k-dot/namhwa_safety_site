@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { auth, db, Timestamp } from './firebase';
+import { useAuth } from './context/AuthContext';
 import Footer from './components/Footer';
 import CookieSettingsModal from './components/CookieSettingsModal';
 import {
@@ -71,8 +72,7 @@ const ResourceCenter = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [bgError, setBgError] = useState(false);
     const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [user, setUser] = useState(null);
+    const { user, isAdmin } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
     const location = useLocation();
 

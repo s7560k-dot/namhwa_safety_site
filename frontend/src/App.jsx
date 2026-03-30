@@ -16,10 +16,13 @@ import NetworkScheduleDashboard from './components/evm/NetworkScheduleDashboard'
 import { AuthProvider } from './context/AuthContext';
 import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
 
+import PreviewModeOverlay from './components/auth/PreviewModeOverlay';
+
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <PreviewModeOverlay />
         <Routes>
           <Route path="/" element={<ResourceCenter />} />
           <Route path="/login" element={<Login />} />
