@@ -470,10 +470,11 @@ const Admin = () => {
                                 { id: 'users', label: '사용자 관리', icon: <Users size={16} /> },
                                 { id: 'posts', label: '게시물 관리', icon: <FileText size={16} /> },
                                 { id: 'inquiries', label: '문의 확인', icon: <MessageSquare size={16} /> },
+                                { id: 'hiring', label: '인재 채용', icon: <UserPlus size={16} />, navigate: '/admin/hiring' },
                             ].map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
+                                    onClick={() => tab.navigate ? navigate(tab.navigate) : setActiveTab(tab.id)}
                                     className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-slate-800 text-red-500' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
                                 >
                                     {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
@@ -537,6 +538,34 @@ const Admin = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* [NEW] Quick Access for Hiring */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div 
+                                onClick={() => navigate('/admin/hiring')}
+                                className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl cursor-pointer hover:scale-[1.01] transition-all group"
+                            >
+                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                    <UserPlus size={160} />
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
+                                        <UserPlus /> 인재 채용 관리 시스템
+                                    </h3>
+                                    <p className="text-indigo-100 text-sm max-w-md mb-6 leading-relaxed">
+                                        안전보건 전담팀 인재를 선발하기 위한 직무기술서 확인 및 다차원 BARS 평가를 진행합니다. AI 분석 리포트로 최적의 인재를 찾아보세요.
+                                    </p>
+                                    <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-indigo-700 rounded-xl font-black text-sm group-hover:bg-indigo-50 transition-colors">
+                                        시스템 바로가기 <ChevronRight size={18} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-100/50 border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center opacity-60">
+                                <Plus className="text-slate-300 mb-3" size={40} />
+                                <p className="text-slate-400 font-bold">새로운 관리 모듈 준비 중</p>
+                            </div>
                         </div>
                         <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
                             <div className="absolute top-0 right-0 w-96 h-96 bg-red-600 rounded-full blur-[100px] -mr-48 -mt-48 opacity-20"></div>
