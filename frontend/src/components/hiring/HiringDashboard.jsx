@@ -33,6 +33,7 @@ const HiringDashboard = () => {
     try {
       const data = await hiringService.getCandidates();
       setCandidates(data);
+      return data; // 최신 데이터를 반환하도록 수정
     } catch (error) {
       console.error('Error fetching candidates:', error);
     } finally {
@@ -96,125 +97,127 @@ const HiringDashboard = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'completed':
-        return <span className="flex items-center gap-1 px-3 py-1 bg-green-900/40 text-green-400 rounded-full text-xs font-medium border border-green-500/30"><CheckCircle size={14} /> 평가 완료</span>;
+        return <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 rounded-full text-xs font-bold w-fit"><CheckCircle size={14} /> 평가 완료</span>;
       case 'interviewing':
-        return <span className="flex items-center gap-1 px-3 py-1 bg-blue-900/40 text-blue-400 rounded-full text-xs font-medium border border-blue-500/30"><Clock size={14} /> 면접 진행 중</span>;
+        return <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-bold w-fit"><Clock size={14} /> 면접 진행 중</span>;
       default:
-        return <span className="flex items-center gap-1 px-3 py-1 bg-gray-800 text-gray-400 rounded-full text-xs font-medium border border-gray-700">대기 중</span>;
+        return <span className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-full text-xs font-bold w-fit">대기 중</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1117] text-gray-100 p-8">
+    <div className="min-h-[calc(100vh-80px)] bg-blue-50/85 backdrop-blur-xl shadow-[inset_0_0_100px_rgba(255,255,255,0.4)] text-slate-900 p-4 md:p-8 lg:p-12 font-sans antialiased">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent mb-2">
-            인재 채용 모니터링
-          </h1>
-          <p className="text-gray-400">안전보건 전담팀 인재 선발 대시보드</p>
-        </div>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter">
+              인재 채용 모니터링 <span className="text-blue-600">.</span>
+            </h1>
+            <p className="text-blue-700 font-bold tracking-wide uppercase text-sm lg:text-base">안전보건 전담팀 인재 선발 대시보드</p>
+          </div>
         
-        <div className="flex gap-4">
-          <button 
-            onClick={seedDemoData}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 transition-all rounded-xl font-semibold border border-gray-700"
-          >
-            <Database size={20} className="text-indigo-400" />
-            데모 데이터 로드
-          </button>
-          
-          <button 
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 transition-all rounded-xl font-semibold shadow-lg shadow-indigo-500/20 active:scale-95"
-          >
-            <UserPlus size={20} />
-            지원자 추가
-          </button>
-        </div>
+          <div className="flex gap-4">
+            <button 
+              onClick={seedDemoData}
+              className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 transition-all rounded-xl font-bold text-slate-600 border border-slate-200 shadow-sm"
+            >
+              <Database size={20} className="text-blue-500" />
+              데모 데이터 로드
+            </button>
+            
+            <button 
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white transition-all rounded-xl font-bold shadow-lg shadow-blue-500/20 active:scale-95"
+            >
+              <UserPlus size={20} />
+              지원자 추가
+            </button>
+          </div>
       </div>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {[
-          { label: '전체 지원자', value: candidates.length, color: 'blue' },
-          { label: '평가 완료', value: candidates.filter(c => c.status === 'completed').length, color: 'green' },
-          { label: '현재 진행 중', value: candidates.filter(c => c.status === 'interviewing' || c.status === 'pending').length, color: 'orange' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-[#1a1d27]/60 backdrop-blur-md p-6 rounded-2xl border border-gray-800/50 hover:border-gray-700/50 transition-colors">
-            <p className="text-gray-400 text-sm mb-1">{stat.label}</p>
-            <p className="text-3xl font-bold">{stat.value}<span className="text-sm font-normal text-gray-500 ml-1">명</span></p>
-          </div>
-        ))}
-      </div>
-
-      {/* Main List */}
-      <div className="bg-[#1a1d27]/40 backdrop-blur-xl rounded-3xl border border-gray-800/50 overflow-hidden">
-        <div className="p-6 border-b border-gray-800 flex justify-between items-center">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <FileText className="text-indigo-400" size={24} />
-            지원자 목록
-          </h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-            <input 
-              type="text" 
-              placeholder="지원자 이름 검색..."
-              className="bg-[#0f1117] border border-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all w-64"
-            />
-          </div>
+        {/* Stats Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          {[
+            { label: '전체 지원자', value: candidates.length, color: 'blue' },
+            { label: '평가 완료', value: candidates.filter(c => c.status === 'completed').length, color: 'green' },
+            { label: '현재 진행 중', value: candidates.filter(c => c.status === 'interviewing' || c.status === 'pending').length, color: 'orange' },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white p-8 rounded-3xl border border-slate-100 hover:border-blue-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">{stat.label}</p>
+              <p className="text-4xl font-black text-slate-900">{stat.value}<span className="text-sm font-bold text-slate-400 ml-1">명</span></p>
+            </div>
+          ))}
         </div>
 
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-20 text-center text-gray-500">지원자 정보를 불러오는 중...</div>
-          ) : candidates.length === 0 ? (
-            <div className="p-20 text-center text-gray-500">등록된 지원자가 없습니다.</div>
-          ) : (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-gray-500 text-sm border-b border-gray-800/50">
-                  <th className="px-8 py-4 font-medium uppercase tracking-wider">지원자</th>
-                  <th className="px-8 py-4 font-medium uppercase tracking-wider">지원 직무</th>
-                  <th className="px-8 py-4 font-medium uppercase tracking-wider">상태</th>
-                  <th className="px-8 py-4 font-medium uppercase tracking-wider">등록일시</th>
-                  <th className="px-8 py-4 font-medium text-right uppercase tracking-wider">작업</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800/30">
-                {candidates.map((candidate) => (
-                  <tr 
-                    key={candidate.id} 
-                    onClick={() => handleRowClick(candidate)}
-                    className="hover:bg-white/[0.02] transition-colors group cursor-pointer"
-                  >
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white">
-                          {candidate.name.charAt(0)}
-                        </div>
-                        <span className="font-semibold text-gray-200">{candidate.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-gray-400 text-sm">
-                      {candidate.position}
-                    </td>
-                    <td className="px-8 py-5">
-                      {getStatusBadge(candidate.status)}
-                    </td>
-                    <td className="px-8 py-5 text-gray-500 text-xs">
-                      {candidate.createdAt?.toDate().toLocaleString() || '-'}
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <button className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-all group-hover:translate-x-1">
-                        <ChevronRight size={20} />
-                      </button>
-                    </td>
+        {/* Main List */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden mb-12">
+          <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
+            <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                <FileText size={24} />
+              </div>
+              지원자 목록
+            </h2>
+            <div className="relative w-full md:w-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="지원자 이름 검색..."
+                className="bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-full md:w-64 placeholder:font-medium placeholder-slate-400"
+              />
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="p-20 text-center font-bold text-slate-400 tracking-wider">지원자 정보를 불러오는 중...</div>
+            ) : candidates.length === 0 ? (
+              <div className="p-20 text-center font-bold text-slate-400 tracking-wider">등록된 지원자가 없습니다.</div>
+            ) : (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-slate-400 text-xs border-b border-slate-100 bg-slate-50/50">
+                    <th className="px-8 py-5 font-bold uppercase tracking-widest">지원자</th>
+                    <th className="px-8 py-5 font-bold uppercase tracking-widest">지원 직무</th>
+                    <th className="px-8 py-5 font-bold uppercase tracking-widest">상태</th>
+                    <th className="px-8 py-5 font-bold uppercase tracking-widest">등록일시</th>
+                    <th className="px-8 py-5 font-bold text-right uppercase tracking-widest">작업</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {candidates.map((candidate) => (
+                    <tr 
+                      key={candidate.id} 
+                      onClick={() => handleRowClick(candidate)}
+                      className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-colors flex items-center justify-center font-black text-lg">
+                            {candidate.name.charAt(0)}
+                          </div>
+                          <span className="font-bold text-slate-900 text-lg">{candidate.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-slate-500 font-medium">
+                        {candidate.position}
+                      </td>
+                      <td className="px-8 py-5">
+                        {getStatusBadge(candidate.status)}
+                      </td>
+                      <td className="px-8 py-5 text-slate-400 font-medium text-sm">
+                        {candidate.createdAt?.toDate().toLocaleString() || '-'}
+                      </td>
+                      <td className="px-8 py-5 text-right flex justify-end">
+                        <button className="p-3 bg-slate-50 hover:bg-blue-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all font-bold text-sm flex items-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600">
+                          진입하기 <ChevronRight size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
         </div>
       </div>
 
@@ -223,7 +226,27 @@ const HiringDashboard = () => {
         <InterviewPanel 
           candidate={selectedCandidate} 
           onClose={() => setViewMode(null)}
-          onSaveSuccess={fetchCandidates}
+          onStatusChange={(newStatus) => {
+            // 1. 선택된 지원자 정보 업데이트
+            setSelectedCandidate(prev => prev ? { ...prev, status: newStatus } : null);
+            // 2. 전체 목록 정보 업데이트 (이미 목록에 반영된 데이터를 UI에 즉시 동기화)
+            setCandidates(prev => prev.map(c => 
+              c.id === selectedCandidate.id ? { ...c, status: newStatus } : c
+            ));
+          }}
+          onSaveSuccess={async () => {
+            // 1. 최신 데이터로 목록 갱신
+            const updatedList = await fetchCandidates();
+            
+            // 2. 현재 선택된 지원자의 객체 정보를 최신(status: 'completed')으로 동기화
+            const freshData = updatedList.find(c => c.id === selectedCandidate.id);
+            if (freshData) {
+              setSelectedCandidate(freshData);
+            }
+            
+            // 3. 리포트 보기 모드로 전환
+            setViewMode('report');
+          }}
         />
       )}
 
@@ -236,25 +259,25 @@ const HiringDashboard = () => {
 
       {/* Add Candidate Modal Overlay */}
       {isAdding && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-[#1a1d27] border border-gray-800 p-8 rounded-3xl w-full max-w-md shadow-2xl shadow-indigo-500/10">
-            <h3 className="text-2xl font-bold mb-6">새 지원자 등록</h3>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white border border-slate-100 p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <h3 className="text-3xl font-black text-slate-900 mb-8">새 지원자 등록</h3>
             <form onSubmit={handleAddCandidate}>
-              <div className="space-y-4 mb-8">
+              <div className="space-y-6 mb-10">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">지원자 성함</label>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원자 성함</label>
                   <input 
                     autoFocus
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     type="text"
-                    className="w-full bg-[#0f1117] border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
                     placeholder="이름을 입력하세요"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">지원 구분</label>
-                  <select className="w-full bg-[#0f1117] border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 구분</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900">
                     <option>안전보건 전담팀 (신입/경력)</option>
                     <option>현장 안전관리자</option>
                   </select>
@@ -264,13 +287,13 @@ const HiringDashboard = () => {
                 <button 
                   type="button"
                   onClick={() => setIsAdding(false)}
-                  className="flex-1 py-3 bg-gray-800 hover:bg-gray-750 transition-colors rounded-xl font-semibold"
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors rounded-xl font-bold"
                 >
                   취소
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 transition-colors rounded-xl font-semibold shadow-lg shadow-indigo-500/20"
+                  className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-xl font-bold shadow-lg shadow-blue-500/20"
                 >
                   등록하기
                 </button>
@@ -279,6 +302,7 @@ const HiringDashboard = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

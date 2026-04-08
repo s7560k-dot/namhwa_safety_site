@@ -26,8 +26,12 @@ const Login = () => {
                         const isHardcodedAdmin = user.email === 's7560k@gmail.com';
                         const isApproved = userData.isApproved === true || String(userData.isApproved) === 'true';
                         const isHardcodedStaff = ['s7560k@gmail.com', 'leejaehoon5712@gmail.com'].includes(user.email);
-                        if (isApproved || userData.role === 'admin' || isHardcodedStaff) {
-                            navigate('/');
+                        if (isApproved || userData.role === 'admin' || userData.role === 'interviewer' || isHardcodedStaff) {
+                            if (userData.role === 'interviewer' && !isHardcodedAdmin) {
+                                navigate('/admin/hiring');
+                            } else {
+                                navigate('/');
+                            }
                         } else {
                             // 승인되지 않은 유저는 보안을 위해 즉시 강제 로그아웃
                             await auth.signOut();
@@ -64,9 +68,15 @@ const Login = () => {
                 const userData = userDoc.data();
                 const isApproved = userData.isApproved === true || String(userData.isApproved) === 'true';
                 const isHardcodedStaff = ['s7560k@gmail.com', 'leejaehoon5712@gmail.com'].includes(user.email);
-                if (userData.role === 'admin' || isHardcodedStaff) {
-                    localStorage.setItem('userRole', isHardcodedStaff && user.email !== 's7560k@gmail.com' ? 'user' : 'admin');
-                    navigate(user.email === 's7560k@gmail.com' ? '/admin' : '/');
+                if (userData.role === 'admin' || userData.role === 'interviewer' || isHardcodedStaff) {
+                    localStorage.setItem('userRole', isHardcodedStaff && user.email !== 's7560k@gmail.com' ? 'user' : userData.role);
+                    if (userData.role === 'interviewer' && !isHardcodedAdmin) {
+                        navigate('/admin/hiring');
+                    } else if (userData.role === 'admin' || isHardcodedAdmin) {
+                        navigate('/admin');
+                    } else {
+                        navigate('/');
+                    }
                 } else if (!isApproved) {
                     await auth.signOut(); // 미승인 유저는 세션 바로 파기
                     setError("⚠️ 아직 관리자 승인이 완료되지 않았습니다. 승인 후 이용 가능합니다.");

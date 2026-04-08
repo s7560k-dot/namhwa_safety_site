@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import { auth, db, storage } from './firebase';
 import {
     Users,
@@ -21,7 +22,8 @@ import {
     LayoutDashboard,
     Plus,
     X,
-    Edit
+    Edit,
+    ChevronRight
 } from 'lucide-react';
 import firebase from 'firebase/compat/app';
 import { initializeApp, deleteApp, getApp, getApps } from "firebase/app";
@@ -37,8 +39,18 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-
 const Admin = () => {
+    const { userData } = useAuth();
+    const isAdmin = userData?.role === 'admin';
+    const isInterviewer = userData?.role === 'interviewer';
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (isInterviewer && !isAdmin) {
+            navigate('/admin/hiring', { replace: true });
+        }
+    }, [isInterviewer, isAdmin, navigate]);
+
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
@@ -68,8 +80,6 @@ const Admin = () => {
     // File Upload State
     const [selectedFile, setSelectedFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
-
-    const navigate = useNavigate();
 
     useEffect(() => {
         // 관리 권한 확인
@@ -241,16 +251,19 @@ const Admin = () => {
     };
 
     const handleToggleRole = async (id, currentRole) => {
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        let newRole = 'user';
+        if (currentRole === 'user' || !currentRole) newRole = 'interviewer';
+        else if (currentRole === 'interviewer') newRole = 'user';
+
         if (!window.confirm(`사용자의 권한을 ${newRole.toUpperCase()}로 변경하시겠습니까?`)) return;
         
         setActionLoading(true);
         try {
-            await db.collection('users').doc(id).update({
-                role: newRole,
-                // 관리자로 승격 시 자동으로 승인 처리
-                isApproved: newRole === 'admin' ? true : undefined 
-            });
+            const updateData = { role: newRole };
+            if (newRole === 'interviewer') {
+                updateData.isApproved = true;
+            }
+            await db.collection('users').doc(id).update(updateData);
             setSuccess(`✅ 권한이 ${newRole.toUpperCase()}로 변경되었습니다.`);
             fetchUsers();
         } catch (err) {
@@ -470,8 +483,7 @@ const Admin = () => {
                                 { id: 'users', label: '사용자 관리', icon: <Users size={16} /> },
                                 { id: 'posts', label: '게시물 관리', icon: <FileText size={16} /> },
                                 { id: 'inquiries', label: '문의 확인', icon: <MessageSquare size={16} /> },
-                                { id: 'hiring', label: '인재 채용', icon: <UserPlus size={16} />, navigate: '/admin/hiring' },
-                            ].map(tab => (
+                            ].filter(tab => isAdmin || (isInterviewer && tab.id === 'hiring')).map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => tab.navigate ? navigate(tab.navigate) : setActiveTab(tab.id)}
@@ -706,7 +718,12 @@ const Admin = () => {
                                                         <button 
                                                             onClick={() => handleToggleRole(user.id, user.role || 'user')}
                                                             disabled={actionLoading}
-                                                            className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest transition-all hover:opacity-80 ${user.role === 'admin' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}
+                                                            className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest transition-all hover:opacity-80 
+                                                                ${user.role === 'admin' 
+                                                                    ? 'bg-red-50 text-red-600 border border-red-100' 
+                                                                    : user.role === 'interviewer' 
+                                                                    ? 'bg-purple-50 text-purple-600 border border-purple-100' 
+                                                                    : 'bg-blue-50 text-blue-600 border border-blue-100'}`}
                                                             title="클릭하여 권한 변경"
                                                         >
                                                             {user.role?.toUpperCase() || 'USER'}

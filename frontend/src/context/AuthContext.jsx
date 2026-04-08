@@ -79,6 +79,7 @@ export const AuthProvider = ({ children }) => {
         userData: mockUser || userData,
         loading,
         isAdmin: (mockUser || userData)?.role === 'admin',
+        isInterviewer: (mockUser || userData)?.role === 'interviewer',
         setMockUser,
         isMock: !!mockUser
     };

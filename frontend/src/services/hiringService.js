@@ -38,13 +38,32 @@ export const hiringService = {
   async saveInterviewEvaluation(candidateId, interviewerId, evaluations, feedback) {
     const totalScore = Object.values(evaluations).reduce((a, b) => a + b, 0);
     
-    return await db.collection(COLLECTIONS.INTERVIEWS).add({
+    const batch = db.batch();
+    
+    // 1. 인터뷰 데이터 저장
+    const interviewRef = db.collection(COLLECTIONS.INTERVIEWS).doc();
+    batch.set(interviewRef, {
       candidateId,
       interviewerId,
-      evaluations, // { q1: score, q2: score, q3: score }
+      evaluations,
       feedback,
       totalScore,
       createdAt: Timestamp.now()
+    });
+
+    // 2. 지원자 상태 업데이트
+    const candidateRef = db.collection(COLLECTIONS.CANDIDATES).doc(candidateId);
+    batch.update(candidateRef, {
+      status: 'completed'
+    });
+
+    return await batch.commit();
+  },
+
+  // 4.5 지원자 상태 개별 업데이트
+  async updateCandidateStatus(candidateId, status) {
+    return await db.collection(COLLECTIONS.CANDIDATES).doc(candidateId).update({
+      status
     });
   },
 

@@ -51,7 +51,7 @@ export const AdminRoute = ({ children }) => {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
-    if (!user || (userData && userData.role !== 'admin')) {
+    if (!user || (userData && !['admin', 'interviewer'].includes(userData.role))) {
         return <Navigate to="/" replace />;
     }
 
