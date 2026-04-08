@@ -6,12 +6,107 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
+const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
+  const [copied, setCopied] = useState(false);
+
+  const emailHtml = `
+<div style="max-width: 650px; margin: 0; border: 1px solid #E0E0E0; border-radius: 8px; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; overflow: hidden; background-color: #ffffff;">
+  <div style="background-color: #9C2E21; color: #FFFFFF; padding: 20px 25px;">
+    <h2 style="margin: 0; font-size: 18px; font-weight: normal; letter-spacing: -0.5px;">[보고] 안전보건 전담팀 지원자 ${candidate.name} 면접 결과 보고</h2>
+  </div>
+
+  <div style="padding: 30px 25px; color: #333333; line-height: 1.6; font-size: 14px;">
+    <p style="margin-top: 0;">임원진 여러분, 안녕하십니까.</p>
+    <p>안전보건팀입니다.</p>
+
+    <p>다름이 아니오라, 신규 안전보건 전담팀 구축을 위한 <b>${candidate.name}</b> 지원자의 면접 평가 결과를 아래와 같이 보고드립니다.</p>
+
+    <div style="background-color: #F8F9FA; padding: 15px; border-left: 4px solid #9C2E21; margin: 20px 0;">
+      <strong style="color: #9C2E21;">■ 핵심 평가 요약</strong><br>
+      - <b>종합 점수:</b> ${reportData.totalScore} / 25점<br>
+      - <b>최종 등급:</b> ${reportData.totalScore >= 19 ? '우수(A이상)' : '보통(B이하)'} 수준<br>
+      ${aiSummary ? `- <b>AI 분석 인사이트:</b> ${aiSummary.substring(0, 150)}...` : '- 상세 분석 데이터는 시스템 리포트를 참조하십시오.'}
+    </div>
+
+    <div style="margin: 20px 0; padding: 15px; border: 1px solid #E0E0E0; border-radius: 5px;">
+      <strong style="color: #666666;">[면접관 종합 피드백]</strong><br>
+      <div style="margin-top: 10px; color: #444444; font-style: italic;">
+        "${reportData.feedback}"
+      </div>
+    </div>
+
+    <p>상세 내용은 시스템 대시보드 및 첨부된 리포트 파일을 확인해 주시기 바랍니다.</p>
+    <p>바쁘신 중에도 검토해 주셔서 감사합니다.</p>
+  </div>
+
+  <div style="background-color: #F8F9FA; padding: 20px 25px; border-top: 1px solid #E0E0E0; font-size: 13px; color: #666666; line-height: 1.6;">
+    <p style="margin: 0 0 10px 0; font-weight: bold; color: #9C2E21; font-size: 15px;">남화토건(주) 안전보건팀</p>
+    <p style="margin: 0; color: #333333;"><strong>부장 신광배</strong> <span style="color: #888888; font-size: 12px;">(M. 010-7153-7060)</span></p>
+    <p style="margin: 3px 0 0 0; color: #333333;"><strong>주임 이재훈</strong> <span style="color: #888888; font-size: 12px;">(M. 010-5712-8256)</span></p>
+  </div>
+</div>
+  `;
+
+  const handleCopy = async () => {
+    try {
+      const type = 'text/html';
+      const blob = new Blob([emailHtml], { type });
+      const data = [new ClipboardItem({ [type]: blob, 'text/plain': new Blob([emailHtml.replace(/<[^>]*>/g, '')], { type: 'text/plain' }) })];
+      await navigator.clipboard.write(data);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy email template:', err);
+      alert('복사에 실패했습니다. 브라우저 보안 설정을 확인해주세요.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h3 className="text-xl font-black text-slate-900">경영진 보고용 메일 양식 미리보기</h3>
+            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">하단 버튼을 눌러 본문을 복사한 후 메일 앱에 붙여넣으세요.</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
+            <X size={24} />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-8 bg-slate-100/50 flex justify-center">
+          <div className="shadow-lg bg-white rounded-lg overflow-hidden shrink-0" dangerouslySetInnerHTML={{ __html: emailHtml }} />
+        </div>
+
+        <div className="p-6 border-t border-slate-100 bg-white flex justify-end gap-3">
+          <button 
+            onClick={onClose}
+            className="px-6 py-3 font-bold text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            취소
+          </button>
+          <button 
+            onClick={handleCopy}
+            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-black transition-all ${
+              copied ? 'bg-green-600 text-white' : 'bg-[#9C2E21] hover:bg-[#7a241a] text-white shadow-lg shadow-red-900/20'
+            }`}
+          >
+            {copied ? <Award size={18} /> : <FileText size={18} />}
+            {copied ? '복사 완료! (아웃룩 등에 붙여넣기)' : '메일 본문 서식 복사'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CandidateReport = ({ candidate, onClose }) => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [aiSummary, setAiSummary] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const reportRef = useRef(null);
 
   useEffect(() => {
@@ -98,20 +193,7 @@ const CandidateReport = ({ candidate, onClose }) => {
   };
 
   const handleSendToExecutives = () => {
-    const subject = encodeURIComponent(`[채용 리포트] 안전보건 전담팀 지원자 ${candidate.name} 면접 결과`);
-    
-    let bodyText = `임원진 여러분,\n\n안전보건 전담팀 지원자 ${candidate.name}님의 면접 평가 결과를 송부합니다.\n\n`;
-    bodyText += `[종합 점수]: ${reportData.totalScore} / 25 점\n`;
-    bodyText += `[면접관 종합 피드백]:\n${reportData.feedback}\n\n`;
-    
-    if (aiSummary) {
-      bodyText += `[AI 종합 인사이트]:\n${aiSummary}\n\n`;
-    }
-    
-    bodyText += `※ 자세한 분석 내용은 시스템 대시보드 리포트를 참조해 주시기 바랍니다.\n`;
-    
-    const body = encodeURIComponent(bodyText);
-    window.location.href = `mailto:executive@namhwa.com?subject=${subject}&body=${body}`;
+    setShowEmailModal(true);
   };
 
   if (loading) return <div className="fixed inset-0 bg-blue-50/95 z-[100] flex items-center justify-center font-bold text-slate-500">리포트를 불러오는 중...</div>;
@@ -288,6 +370,16 @@ const CandidateReport = ({ candidate, onClose }) => {
             경영진에게 리포트 전송
           </button>
         </div>
+
+        {/* Email Preview Modal */}
+        {showEmailModal && (
+          <EmailPreviewModal 
+            candidate={candidate}
+            reportData={reportData}
+            aiSummary={aiSummary}
+            onClose={() => setShowEmailModal(false)}
+          />
+        )}
 
       </div>
     </div>
