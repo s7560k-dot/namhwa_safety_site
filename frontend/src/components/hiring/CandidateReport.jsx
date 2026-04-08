@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Award, TrendingUp, AlertTriangle, FileText, Send, Download, BrainCircuit, ChevronLeft, MessageSquare } from 'lucide-react';
+import { Award, TrendingUp, AlertTriangle, FileText, Send, Download, BrainCircuit, ChevronLeft, MessageSquare, X } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
