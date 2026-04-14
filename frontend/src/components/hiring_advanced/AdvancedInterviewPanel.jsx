@@ -221,7 +221,10 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
                       <tbody className="divide-y divide-slate-50">
                         {COMPETENCY_ITEMS.map((item) => (
                           <tr key={item.id} className="hover:bg-slate-50/30 transition-colors">
-                            <td className="px-6 py-4 font-bold text-slate-700">{item.label}</td>
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-slate-700">{item.label}</div>
+                              <div className="text-[11px] text-slate-400 mt-0.5">{item.description}</div>
+                            </td>
                             <td className="px-6 py-4 flex justify-end">
                               <RenderABCDE id={item.id} category="competency" currentScore={competencyScores[item.id]} />
                             </td>
@@ -273,7 +276,10 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
                         <tbody className="divide-y divide-slate-50">
                           {EXPERIENCED_CAREER_EVAL.map((item) => (
                             <tr key={item.id} className="hover:bg-slate-50/30 transition-colors">
-                              <td className="px-6 py-4 font-bold text-slate-700">{item.label}</td>
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-slate-700">{item.label}</div>
+                                <div className="text-[11px] text-slate-400 mt-0.5">{item.description}</div>
+                              </td>
                               <td className="px-6 py-4 flex justify-end">
                                 <RenderABCDE id={item.id} category="competency" currentScore={competencyScores[item.id]} />
                               </td>
