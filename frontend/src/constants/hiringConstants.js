@@ -17,28 +17,29 @@ export const APPEARANCE_ITEMS = [
 
 // 인성 및 공통 역량 평가 항목 (ABCDE 척도)
 export const COMPETENCY_ITEMS = [
-  { id: 'logic', label: '논리성', description: '말의 앞뒤가 맞고 조리 있게 자신의 생각을 표현하는가?' },
-  { id: 'activeness', label: '적극성', description: '매사에 의욕적이며 스스로 나서서 일을 처리하려 하는가?' },
-  { id: 'planning', label: '계획성', description: '일의 순서를 생각하고 사전에 치밀하게 준비하는 습관이 있는가?' },
-  { id: 'observation', label: '관찰력', description: '사물이나 현상을 세밀하게 살피고 핵심을 포착하는 능력이 있는가?' },
-  { id: 'understanding', label: '이해력', description: '상대방의 의도나 상황을 정확히 파악하고 적절히 대응하는가?' },
-  { id: 'reliability', label: '견실성', description: '생각이나 태도가 믿음직스럽고 중심이 잡혀 있는가?' },
-  { id: 'sincerity', label: '성실성', description: '책임감이 강하며 맡은 바 임무에 최선을 다하는 성품인가?' },
-  { id: 'teamwork', label: '협조성', description: '타인과 조화를 이루며 원만하게 협업하고 배려할 줄 아는가?' },
-  { id: 'values', label: '사상(가치관)', description: '개인의 신념과 가치관이 건전하며 올바른 인생관을 가졌는가?' },
-  { id: 'commonSense', label: '상식성', description: '사회인으로서 갖추어야 할 기본 지식과 타당한 사고를 하는가?' },
-  { id: 'sociality', label: '사회성', description: '조직 생활에 잘 적응하며 대인관계를 원만히 유지하는가?' },
-  { id: 'attention', label: '주의력', description: '집중력이 있으며 세세한 부분까지 꼼꼼하게 살피는가?' },
+  { id: 'logic', label: '논리성', description: '지금 주소에서 우리 회사까지 몇 분 걸렸습니까. 어느 노선으로 오셨습니까.' },
+  { id: 'activeness', label: '적극성', description: '왜 우리 회사를 선택하셨습니까. (그 밖에 어떤 곳에 응시했습니까.)' },
+  { id: 'planning', label: '계획성', description: '우리 회사에 대해 파악·연구, 검토를 해보셨습니까.' },
+  { id: 'observation', label: '관찰', description: '당신의 장점(특기)을 객관적으로 판단하시고 설명하십시오.' },
+  { id: 'understanding', label: '이해력', description: '우리 회사에 오셔서 보고 느낀 바를 솔직하게 말씀하십시오.' },
+  { id: 'reliability', label: '견실성', description: '아르바이트 경험이 있습니까. 직업을 어떻게 생각하십니까.' },
+  { id: 'sincerity', label: '성실성', description: '채용 된 경우 어떤 직종을 희망하십니까.' },
+  { id: 'teamwork', label: '협조성', description: '입사 후, 제1희망의 업무에 종사하지 못했을 때, 당신은 어떻게 하겠습니까.' },
+  { id: 'values', label: '사상', description: '마음에 들지 않는 업무나, 상사·선배와는 어떻게 하면 잘해 나갈 수 있겠습니까.' },
+  { id: 'commonSense', label: '상식성', description: '우리 회사는 성질상 근무상황이 매우 엄격한 때도 있습니다. 받아들일 수 있겠습니까.' },
+  { id: 'sociality', label: '사회성', description: '만일 취직한 경우, 당신은 몇 년 정도 근무할 수 있습니까. (근무할 작정입니까.)' },
+  { id: 'attention', label: '주의력', description: '당신은 평소에도 그런 복장으로 다닙니까.' },
 ];
 
 // 신입 사원 전용 - 생활 환경 및 가치관 질문
 export const NEW_ENTRY_LIFE_QUESTIONS = [
-  { id: 'relationships', label: '친구 관계 및 리더십', question: '친구와 함께 있을 때 어떻게 지내며 누가 리드합니까?' },
-  { id: 'roleModel', label: '존경하는 인물', question: '존경하는 사람은 누구이며 어디에 매력을 느낍니까?' },
-  { id: 'reading', label: '독서/신문 구독', question: '구독하고 있는 신문이나 전문 서적은 몇 권 정도 소장하고 있습니까?' },
-  { id: 'clubActivity', label: '동아리 활동', question: '학교에서 어느 동아리 활동을 했으며 무엇을 배웠습니까?' },
-  { id: 'familyComm', label: '가족 소통/건강', question: '가족과 평소 어떤 대화를 나누며 건강 상태는 어떠합니까?' },
-  { id: 'eatingHabit', label: '식습관', question: '어떤 음식을 좋아하며 싫어하는 것은 무엇입니까?' },
+  { id: 'health_status', label: '건강도', question: '친구와 함께 있을 때면 어떻게 지내며 누가 리드합니까.' },
+  { id: 'appearance_dress', label: '용모복장', question: '존경하는 사람은 누구입니까. 어디에 매력을 느낍니까.' },
+  { id: 'attitude_life', label: '태도', question: '구독하고 있는 신문은, 전문서적은 몇 권 정도 가지고 있습니까.' },
+  { id: 'expression_face', label: '표정', question: '당신은 학교에서 어느 동아리 활동에 주력했습니까. 또한 무엇을 배웠습니까.' },
+  { id: 'behavior_motion', label: '동작', question: '가족들과 평소에 어떤 이야기를 합니까. 의견이 맞지 않는 것은?' },
+  { id: 'originality', label: '독창성', question: '가족들은 모두 건강하십니까. 당신의 출석률(출근율)은?' },
+  { id: 'expressiveness', label: '표현력', question: '당신은 어떤 음식을 좋아하십니까. 싫어하는 것은 어떤 것입니까.' },
 ];
 
 // 경력 사원 전용 - 경력 세부 평가 항목 (ABCDE 척도)
