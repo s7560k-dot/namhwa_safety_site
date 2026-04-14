@@ -3,8 +3,8 @@
  * @description 채용 면접 평가에 사용되는 항목, 척도 및 질문 세트 정의
  */
 
-// 외관 인상 평가 항목 (A/B/C 척도)
-export const APPEARANCE_ITEMS = [
+// 외관 인상 평가 항목 (신입 전용) - A/B/C 척도
+export const NEW_ENTRY_APPEARANCE = [
   { id: 'health', label: '건강', criteria: { A: '혈색양호 든든', B: '보통건강체', C: '약해 보임' } },
   { id: 'dress', label: '복장', criteria: { A: '청결하며 단정', B: '일단 단정', C: '단정하지 못함' } },
   { id: 'attitude', label: '태도', criteria: { A: '침착하다', B: '보통', C: '침착하지 못함' } },
@@ -12,6 +12,18 @@ export const APPEARANCE_ITEMS = [
   { id: 'brightness', label: '명랑성', criteria: { A: '밝고 외향적', B: '보통', C: '어둡고 내향적' } },
   { id: 'cooperation', label: '협조성', criteria: { A: '사교성 있을 듯', B: '보통', C: '고독한 느낌' } },
   { id: 'conversation', label: '대화', criteria: { A: '사려 있는 발언', B: '경솔한 답변 있음', C: '즉흥적 발언 모순 있음' } },
+  { id: 'likability', label: '호감도', criteria: { A: '호감이 간다', B: '보통', C: '호감이 안감' } },
+];
+
+// 외관 인상 평가 항목 (경력 전용) - A/B/C 척도
+export const EXPERIENCED_APPEARANCE = [
+  { id: 'health', label: '건강', criteria: { A: '혈색 양호 든든', B: '보통 건강체', C: '약해 보임' } },
+  { id: 'dress', label: '복장', criteria: { A: '청결하며 단정', B: '일단 단정', C: '단정하지 못함' } },
+  { id: 'attitude', label: '태도', criteria: { A: '침착하다', B: '보통', C: '침착하지 못함' } },
+  { id: 'cooperation', label: '협조성', criteria: { A: '사교성 있을 듯', B: '보통', C: '고독한 느낌' } },
+  { id: 'conversation', label: '대화', criteria: { A: '사려 있는 발언', B: '경솔한 답변 있음', C: '즉흥적 발언 모순 있음' } },
+  { id: 'brightness', label: '명랑성', criteria: { A: '밝고 외향적', B: '보통', C: '어둡고 내향적' } },
+  { id: 'personality', label: '성격', criteria: { A: '리더쉽 발휘', B: '독선적인 느낌', C: '우유부단한 느낌' } },
   { id: 'likability', label: '호감도', criteria: { A: '호감이 간다', B: '보통', C: '호감이 안감' } },
 ];
 
@@ -42,17 +54,36 @@ export const NEW_ENTRY_LIFE_QUESTIONS = [
   { id: 'expressiveness', label: '표현력', question: '당신은 어떤 음식을 좋아하십니까. 싫어하는 것은 어떤 것입니까.' },
 ];
 
-// 경력 사원 전용 - 경력 세부 평가 항목 (ABCDE 척도)
+// 경력 사원 전용 - 기타 질문 (텍스트)
+export const EXPERIENCED_LIFE_QUESTIONS = [
+  { id: 'clubActivity', label: '기타 1', question: '당신은 학교에서 어느 동아리 활동에 주력했습니까. 또한 무엇을 배웠습니까.' },
+  { id: 'friendship', label: '기타 2', question: '친구와 함께 있을 때면 어떻게 지내며 누가 리더합니까.' },
+  { id: 'books', label: '기타 3', question: '전문 서적은 몇 권 정도 가지고 있습니까.' },
+  { id: 'network', label: '기타 4', question: '같은 업종에 재직하며 교류하고 있는 선배나 친구는 몇 명이나 됩니까?' },
+  { id: 'mentoring', label: '기타 5', question: '직장에서 근무하는 동안 후배사원을 지도한 경험은' }
+];
+
+// 경력 사원 전용 - 경력 평가 항목 (ABCDE 척도)
 export const EXPERIENCED_CAREER_EVAL = [
-  { id: 'expYears', label: '총 경력 연수 및 직무 범위', description: '관련 분야의 총 경력 기간과 수행한 직무의 전문성이 충분한가?' },
-  { id: 'recentProj', label: '최근 근무회사/프로젝트 주안점', description: '가장 최근 프로젝트에서의 역할과 실무 기여도는 어떠한가?' },
-  { id: 'projPerformance', label: '공기/품질/안전/원가 성과', description: '과거 프로젝트 수행 시 성취한 구체적인 성과와 지표가 있는가?' },
-  { id: 'techSkill', label: '도면 이해 및 물량산출 능력', description: '도면 해석 능력이 우수하며 기술적 물량 산출이 정확한가?' },
-  { id: 'swSkill', label: 'CAD/BIM 등 설계 SW 활용 능력', description: '실무에 필요한 설계 및 오피스 소프트웨어 활용 숙련도는?' },
-  { id: 'coordination', label: '협업 및 커뮤니케이션 능력', description: '유관 부서 및 외부 협력사와의 원활한 소통 및 조율이 가능한가?' },
-  { id: 'problemSolving', label: '문제 해결 능력 및 위기 관리', description: '현장 위기 상황 발생 시 논리적이고 창의적인 해결책을 제시하는가?' },
-  { id: 'culturalFit', label: '조직 문화 적응력 및 성향', description: '당사의 조직 문화와 가치관에 부합하며 긍정적인 에너지를 주는가?' },
-  { id: 'postHireGoal', label: '입사 후 구체적 목표 및 기여 계획', description: '입사 후 본인의 역량을 어떻게 발휘하고 기여할 것인지 계획이 뚜렷한가?' },
+  { id: 'exp_total', category: '경력사항 확인', label: '총 경력 연수 및 직무범위' },
+  { id: 'exp_recent', category: '경력사항 확인', label: '최근 근무회사/프로젝트' },
+  { id: 'exp_role', category: '경력사항 확인', label: '주요 수행 업무 및 역할' },
+  { id: 'proj_info', category: '프로젝트 수행 경험', label: '담당했던 주요 토목 프로젝트 개요' },
+  { id: 'proj_role', category: '프로젝트 수행 경험', label: '본인의 역할 및 공정별 참여 수준' },
+  { id: 'proj_result', category: '프로젝트 수행 경험', label: '공기, 품질, 안전 원가 측면에서의 성과' },
+  { id: 'tech_understand', category: '업무(기술) 역량', label: '토목 시공 관련 기술 이해도' },
+  { id: 'tech_calc', category: '업무(기술) 역량', label: '시방서, 도면 물량산출 능력' },
+  { id: 'tech_sw', category: '업무(기술) 역량', label: 'CAD, BIM, 설계 SW활용 능력' },
+  { id: 'comm_collab', category: '협업 및 커뮤니케이션 능력', label: '발주처, 협력사, 감리단 등과의 소통 사례' },
+  { id: 'comm_issue', category: '협업 및 커뮤니케이션 능력', label: '현장 이슈 발생 시 대응 경험' },
+  { id: 'ps_cases', category: '문제 해결능력', label: '공정 지연, 자재 문제, 민원등의 사례' },
+  { id: 'ps_solution', category: '문제 해결능력', label: '본인이 주도한 해결 방안' },
+  { id: 'org_fit1', category: '조직 적응력 및 성향', label: '야근, 지방근무 가능여부' },
+  { id: 'org_fit2', category: '조직 적응력 및 성향', label: '조직문화에 대한 이해 및 적응력' },
+  { id: 'goal_task', category: '입사 후 포부', label: '입사 후 맡고 싶은 업무' },
+  { id: 'goal_plan', category: '입사 후 포부', label: '목표 및 기여 계획' },
+  { id: 'etc_condition', category: '기타 확인사항', label: '희망 연봉 및 근무조건' },
+  { id: 'etc_date', category: '기타 확인사항', label: '입사 가능일' },
 ];
 
 // 안전보건팀 전용 - 전문 기술 질문 (Technical Safety)

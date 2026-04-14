@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { 
-  APPEARANCE_ITEMS, 
+  NEW_ENTRY_APPEARANCE,
+  EXPERIENCED_APPEARANCE,
   COMPETENCY_ITEMS, 
   NEW_ENTRY_LIFE_QUESTIONS, 
+  EXPERIENCED_LIFE_QUESTIONS,
   EXPERIENCED_CAREER_EVAL, 
   SAFETY_TECH_QUESTIONS 
 } from '../../constants/hiringConstants';
@@ -196,7 +198,7 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
                     <h3 className="text-xl font-black text-slate-900">외관 인상 평가 (A/B/C)</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {APPEARANCE_ITEMS.map((item) => (
+                    {(isExperienced ? EXPERIENCED_APPEARANCE : NEW_ENTRY_APPEARANCE).map((item) => (
                       <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">
                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
                         <RenderABC item={item} currentScore={appearanceScores[item.id]} />
@@ -288,6 +290,26 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
                         </tbody>
                       </table>
                     </div>
+
+                    <div className="flex items-center gap-3 mb-6 mt-12">
+                      <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-black text-sm">Q</div>
+                      <h3 className="text-xl font-black text-slate-900">기타 병행 질문</h3>
+                    </div>
+                    <div className="space-y-4 mb-8">
+                      {EXPERIENCED_LIFE_QUESTIONS.map((q) => (
+                        <div key={q.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                          <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">{q.label}</label>
+                          <p className="text-sm font-bold text-slate-700 mb-4">{q.question}</p>
+                          <textarea 
+                            className="w-full h-24 bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none shadow-inner"
+                            placeholder="추가 질문에 대한 답변을 기록하세요..."
+                            value={specificAnswers[q.id] || ''}
+                            onChange={(e) => setSpecificAnswers({...specificAnswers, [q.id]: e.target.value})}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                         <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">희망 연봉 및 구체적 조건</label>

@@ -251,15 +251,15 @@ const AdvancedCandidateReport = ({ candidate, onClose }) => {
               <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><ClipboardCheck size={20} className="text-blue-600"/> 세부 평가 항목</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">외관 인상 (8항목)</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">외관 인상 ({Object.keys(evaluationData.appearance || {}).length || 8}항목)</span>
                   <div className="text-3xl font-black text-slate-900">{chartData[0].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">인성 역량 (12항목)</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">직무/역량 평가 ({Object.keys(evaluationData.competency || {}).length || (candidate.type === 'experienced' ? 31 : 12)}항목)</span>
                   <div className="text-3xl font-black text-slate-900">{chartData[1].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">전문 기술 (4항목)</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">전문 기술 ({Object.keys(evaluationData.safetyTech || {}).length || 4}항목)</span>
                   <div className="text-3xl font-black text-slate-900">{chartData[2].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
                 </div>
               </div>
