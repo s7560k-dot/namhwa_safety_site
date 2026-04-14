@@ -552,8 +552,9 @@ const Admin = () => {
                             ))}
                         </div>
 
-                        {/* [NEW] Quick Access for Hiring */}
+                        {/* [NEW] Expanded Hiring Modules */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Card 1: Legacy BARS System */}
                             <div 
                                 onClick={() => navigate('/admin/hiring')}
                                 className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl cursor-pointer hover:scale-[1.01] transition-all group"
@@ -563,20 +564,36 @@ const Admin = () => {
                                 </div>
                                 <div className="relative z-10">
                                     <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
-                                        <UserPlus /> 인재 채용 관리 시스템
+                                        <UserPlus /> 안전보건 전담팀 인재 선발 시스템
                                     </h3>
                                     <p className="text-indigo-100 text-sm max-w-md mb-6 leading-relaxed">
-                                        안전보건 전담팀 인재를 선발하기 위한 직무기술서 확인 및 다차원 BARS 평가를 진행합니다. AI 분석 리포트로 최적의 인재를 찾아보세요.
+                                        현장 안전관리 역량을 다차원 BARS 척도로 평가하는 기존 정기 선발 시스템입니다. (기존 데이터 호환 가능)
                                     </p>
                                     <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-indigo-700 rounded-xl font-black text-sm group-hover:bg-indigo-50 transition-colors">
-                                        시스템 바로가기 <ChevronRight size={18} />
+                                        BARS 시스템 바로가기 <ChevronRight size={18} />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-100/50 border-2 border-dashed border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center opacity-60">
-                                <Plus className="text-slate-300 mb-3" size={40} />
-                                <p className="text-slate-400 font-bold">새로운 관리 모듈 준비 중</p>
+                            {/* Card 2: Advanced New/Experienced System */}
+                            <div 
+                                onClick={() => navigate('/admin/hiring-advanced')}
+                                className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl cursor-pointer hover:scale-[1.01] transition-all group"
+                            >
+                                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                    <Database size={160} />
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
+                                        <Database /> 신입/경력 인재 채용 고도화 시스템
+                                    </h3>
+                                    <p className="text-blue-100 text-sm max-w-md mb-6 leading-relaxed">
+                                        오늘 업데이트된 고도화 모듈입니다. 외관 인상, 인성 역량 및 전문 기술 면접을 포함한 통합 리포트를 생성합니다.
+                                    </p>
+                                    <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-700 rounded-xl font-black text-sm group-hover:bg-blue-50 transition-colors">
+                                        고도화 시스템 바로가기 <ChevronRight size={18} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">

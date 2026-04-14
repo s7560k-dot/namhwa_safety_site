@@ -13,6 +13,7 @@ import CivilQuantityTakeoff from './components/CivilQuantityTakeoff';
 import FloorPlanTo3DApp from './components/FloorPlanTo3DApp';
 import NetworkScheduleDashboard from './components/evm/NetworkScheduleDashboard';
 import HiringDashboard from './components/hiring/HiringDashboard';
+import AdvancedHiringDashboard from './components/hiring_advanced/AdvancedHiringDashboard';
 
 import { AuthProvider } from './context/AuthContext';
 import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
@@ -35,6 +36,11 @@ function App() {
           <Route path="/admin/hiring" element={
             <AdminRoute>
               <HiringDashboard />
+            </AdminRoute>
+          } />
+          <Route path="/admin/hiring-advanced" element={
+            <AdminRoute>
+              <AdvancedHiringDashboard />
             </AdminRoute>
           } />
           <Route path="/privacy" element={<PrivacyPolicy />} />

@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { db, Timestamp } from '../../firebase';
 import { Search, UserPlus, FileText, ChevronRight, CheckCircle, Clock, Database } from 'lucide-react';
-import InterviewPanel from './InterviewPanel';
-import CandidateReport from './CandidateReport';
+import InterviewPanel from './AdvancedInterviewPanel';
+import CandidateReport from './AdvancedCandidateReport';
 
-const HiringDashboard = () => {
+const AdvancedHiringDashboard = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [newCandidate, setNewCandidate] = useState({
+    name: '',
+    type: 'new_entry',
+    examNumber: '',
+    position: '안전보건팀 (신입)'
+  });
   
   // New state for active views
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -43,10 +48,15 @@ const HiringDashboard = () => {
 
   const handleAddCandidate = async (e) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newCandidate.name.trim()) return;
     try {
-      await hiringService.addCandidate(newName);
-      setNewName('');
+      await hiringService.addCandidate(newCandidate);
+      setNewCandidate({
+        name: '',
+        type: 'new_entry',
+        examNumber: '',
+        position: '안전보건팀 (신입)'
+      });
       setIsAdding(false);
       fetchCandidates();
     } catch (error) {
@@ -260,27 +270,57 @@ const HiringDashboard = () => {
       {/* Add Candidate Modal Overlay */}
       {isAdding && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-white border border-slate-100 p-10 rounded-3xl w-full max-w-md shadow-2xl">
+          <div className="bg-white border border-slate-100 p-10 rounded-3xl w-full max-w-lg shadow-2xl">
             <h3 className="text-3xl font-black text-slate-900 mb-8">새 지원자 등록</h3>
             <form onSubmit={handleAddCandidate}>
-              <div className="space-y-6 mb-10">
-                <div>
+              <div className="grid grid-cols-2 gap-6 mb-10">
+                <div className="col-span-2">
                   <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원자 성함</label>
                   <input 
                     autoFocus
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    value={newCandidate.name}
+                    onChange={(e) => setNewCandidate({...newCandidate, name: e.target.value})}
                     type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
                     placeholder="이름을 입력하세요"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 구분</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900">
-                    <option>안전보건 전담팀 (신입/경력)</option>
-                    <option>현장 안전관리자</option>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">구분</label>
+                  <select 
+                    value={newCandidate.type}
+                    onChange={(e) => {
+                      const type = e.target.value;
+                      setNewCandidate({
+                        ...newCandidate, 
+                        type, 
+                        position: type === 'new_entry' ? '안전보건팀 (신입)' : '안전보건팀 (경력)'
+                      });
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                  >
+                    <option value="new_entry">신입 (New Entry)</option>
+                    <option value="experienced">경력 (Experienced)</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">수험번호</label>
+                  <input 
+                    value={newCandidate.examNumber}
+                    onChange={(e) => setNewCandidate({...newCandidate, examNumber: e.target.value})}
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                    placeholder="수험번호"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 직무</label>
+                  <input 
+                    value={newCandidate.position}
+                    onChange={(e) => setNewCandidate({...newCandidate, position: e.target.value})}
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                  />
                 </div>
               </div>
               <div className="flex gap-4">
@@ -307,4 +347,4 @@ const HiringDashboard = () => {
   );
 };
 
-export default HiringDashboard;
+export default AdvancedHiringDashboard;
