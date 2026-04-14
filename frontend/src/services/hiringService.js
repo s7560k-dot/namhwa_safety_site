@@ -25,18 +25,30 @@ export const hiringService = {
   },
 
   // 3. 지원자 등록
-  async addCandidate(name, position = '안전보건 전담팀') {
+  async addCandidate(candidateData) {
+    const { name, type, examNumber, position = '안전보건팀' } = candidateData;
     return await db.collection(COLLECTIONS.CANDIDATES).add({
       name,
+      type, // 'new_entry' or 'experienced'
+      examNumber,
       position,
       status: 'pending', // pending, interviewing, completed
-      createdAt: Timestamp.now()
+      createdAt: Timestamp.now(),
+      ...candidateData // 기타 추가 필드 (생년월일, 학력 등)
     });
   },
 
   // 4. 면접 평가 데이터 저장
-  async saveInterviewEvaluation(candidateId, interviewerId, evaluations, feedback) {
-    const totalScore = Object.values(evaluations).reduce((a, b) => a + b, 0);
+  async saveInterviewEvaluation(candidateId, interviewerId, evaluationData) {
+    const { 
+      appearance, 
+      competency, 
+      specific, 
+      safetyTech, 
+      bars, 
+      feedback, 
+      interviewerName 
+    } = evaluationData;
     
     const batch = db.batch();
     
@@ -45,9 +57,15 @@ export const hiringService = {
     batch.set(interviewRef, {
       candidateId,
       interviewerId,
-      evaluations,
+      interviewerName,
+      evaluationData: {
+        appearance,
+        competency,
+        specific,
+        safetyTech,
+        bars,
+      },
       feedback,
-      totalScore,
       createdAt: Timestamp.now()
     });
 
