@@ -270,7 +270,13 @@ const AdvancedHiringDashboard = () => {
                         >
                           <Trash2 size={16} />
                         </button>
-                        <button className="p-3 bg-slate-50 hover:bg-blue-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all font-bold text-sm flex items-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(candidate);
+                          }}
+                          className="p-3 bg-slate-50 hover:bg-blue-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all font-bold text-sm flex items-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600"
+                        >
                           진입하기 <ChevronRight size={16} />
                         </button>
                       </td>

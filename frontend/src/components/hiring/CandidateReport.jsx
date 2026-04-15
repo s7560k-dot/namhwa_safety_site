@@ -31,7 +31,7 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
     <div style="margin: 20px 0; padding: 15px; border: 1px solid #E0E0E0; border-radius: 5px;">
       <strong style="color: #666666;">[면접관 종합 피드백]</strong><br>
       <div style="margin-top: 10px; color: #444444; font-style: italic;">
-        "${reportData.feedback}"
+        "${reportData.feedback || "등록된 평가 피드백이 없습니다."}"
       </div>
     </div>
 
@@ -242,7 +242,7 @@ const CandidateReport = ({ candidate, onClose }) => {
                 </div>
                 <h1 className="text-4xl font-black mb-2 text-slate-900">{candidate.name} <span className="text-2xl font-bold text-slate-400">지원자</span></h1>
                 <p className="text-slate-500 font-medium max-w-md italic leading-relaxed">
-                  "{reportData.feedback.substring(0, 80)}..."
+                  "{reportData.feedback ? (reportData.feedback.length > 80 ? reportData.feedback.substring(0, 80) + "..." : reportData.feedback) : "등록된 평가 의견이 없습니다."}"
                 </p>
               </div>
             </div>
@@ -344,7 +344,7 @@ const CandidateReport = ({ candidate, onClose }) => {
             </h3>
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 shadow-inner">
               <p className="text-slate-700 leading-loose whitespace-pre-wrap text-[15px] font-bold">
-                "{reportData.feedback}"
+                "{reportData.feedback || "등록된 면접 피드백이 없습니다."}"
               </p>
             </div>
           </div>

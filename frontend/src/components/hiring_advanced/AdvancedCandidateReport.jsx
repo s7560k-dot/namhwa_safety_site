@@ -37,7 +37,7 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
     <div style="margin: 20px 0; padding: 15px; border: 1px solid #E2E8F0; border-radius: 8px;">
       <strong style="color: #64748B;">[면접관 최종 피드백]</strong><br>
       <div style="margin-top: 10px; color: #1E293B; font-weight: bold;">
-        "${feedback}"
+        "${feedback || "등록된 면접 피드백이 없습니다."}"
       </div>
       <div style="margin-top: 10px; text-align: right; color: #94A3B8; font-size: 12px;">
         면접관: ${interviewerName} (기명 서명됨)
@@ -121,7 +121,7 @@ const AdvancedCandidateReport = ({ candidate, onClose }) => {
         이름: ${candidate.name}
         구분: ${candidate.type === 'experienced' ? '경력' : '신입'}
         직무: ${candidate.position}
-        면접관 의견: ${reportData.feedback}
+        면접관 의견: ${reportData.feedback || "의견 없음"}
         평가 데이터: ${JSON.stringify(reportData.evaluationData)}
         
         형식:
@@ -268,7 +268,7 @@ const AdvancedCandidateReport = ({ candidate, onClose }) => {
             {/* Feedback Section */}
             <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-10">
               <h3 className="text-xl font-black mb-6 flex items-center gap-3"><MessageSquare size={24} className="text-blue-600"/> 면접관 최종 피드백</h3>
-              <p className="text-lg font-bold text-slate-800 leading-relaxed italic">"{reportData.feedback}"</p>
+              <p className="text-lg font-bold text-slate-800 leading-relaxed italic">"{reportData.feedback || "등록된 최종 피드백이 없습니다."}"</p>
             </div>
           </div>
         </div>
