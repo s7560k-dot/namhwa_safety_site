@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { db, Timestamp } from '../../firebase';
-import { Search, UserPlus, FileText, ChevronRight, CheckCircle, Clock, Database } from 'lucide-react';
+import { Search, UserPlus, FileText, ChevronRight, CheckCircle, Clock, Database, Trash2, Edit } from 'lucide-react';
 import InterviewPanel from './AdvancedInterviewPanel';
 import CandidateReport from './AdvancedCandidateReport';
 
@@ -15,6 +15,8 @@ const AdvancedHiringDashboard = () => {
     examNumber: '',
     position: '안전보건팀 (신입)'
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editCandidateData, setEditCandidateData] = useState(null);
   
   // New state for active views
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -61,6 +63,37 @@ const AdvancedHiringDashboard = () => {
       fetchCandidates();
     } catch (error) {
       console.error('Error adding candidate:', error);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editCandidateData.name.trim()) return;
+    try {
+      await hiringService.updateCandidate(editCandidateData.id, {
+        name: editCandidateData.name,
+        type: editCandidateData.type || 'new_entry',
+        examNumber: editCandidateData.examNumber || '',
+        position: editCandidateData.position || ''
+      });
+      setIsEditing(false);
+      setEditCandidateData(null);
+      fetchCandidates();
+    } catch (error) {
+      console.error('Error updating candidate:', error);
+      alert('업데이트 중 오류가 발생했습니다. 모든 필드가 올바른지 확인해주세요.');
+    }
+  };
+
+  const handleDeleteCandidate = async (candidateId, e) => {
+    e.stopPropagation();
+    if (window.confirm('정말 삭제하시겠습니까? 데이터가 완전히 삭제됩니다.')) {
+      try {
+        await hiringService.deleteCandidate(candidateId);
+        fetchCandidates();
+      } catch (error) {
+        console.error('Error deleting candidate:', error);
+      }
     }
   };
 
@@ -218,7 +251,25 @@ const AdvancedHiringDashboard = () => {
                       <td className="px-8 py-5 text-slate-400 font-medium text-sm">
                         {candidate.createdAt?.toDate().toLocaleString() || '-'}
                       </td>
-                      <td className="px-8 py-5 text-right flex justify-end">
+                      <td className="px-8 py-5 text-right flex justify-end gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditCandidateData(candidate);
+                            setIsEditing(true);
+                          }}
+                          className="p-3 bg-slate-50 hover:bg-emerald-100 rounded-xl text-slate-400 hover:text-emerald-600 transition-all font-bold text-sm flex items-center justify-center opacity-0 group-hover:opacity-100"
+                          title="수정"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDeleteCandidate(candidate.id, e)}
+                          className="p-3 bg-slate-50 hover:bg-red-100 rounded-xl text-slate-400 hover:text-red-600 transition-all font-bold text-sm flex items-center justify-center opacity-0 group-hover:opacity-100"
+                          title="삭제"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                         <button className="p-3 bg-slate-50 hover:bg-blue-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all font-bold text-sm flex items-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600">
                           진입하기 <ChevronRight size={16} />
                         </button>
@@ -336,6 +387,79 @@ const AdvancedHiringDashboard = () => {
                   className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-xl font-bold shadow-lg shadow-blue-500/20"
                 >
                   등록하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Candidate Modal Overlay */}
+      {isEditing && editCandidateData && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-6">
+          <div className="bg-white border border-slate-100 p-10 rounded-3xl w-full max-w-lg shadow-2xl">
+            <h3 className="text-3xl font-black text-slate-900 mb-8">지원자 정보 수정</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="grid grid-cols-2 gap-6 mb-10">
+                <div className="col-span-2">
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원자 성함</label>
+                  <input 
+                    autoFocus
+                    value={editCandidateData.name}
+                    onChange={(e) => setEditCandidateData({...editCandidateData, name: e.target.value})}
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">구분</label>
+                  <select 
+                    value={editCandidateData.type}
+                    onChange={(e) => {
+                      const type = e.target.value;
+                      setEditCandidateData({
+                        ...editCandidateData, 
+                        type, 
+                        position: type === 'new_entry' ? '안전보건팀 (신입)' : '안전보건팀 (경력)'
+                      });
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                  >
+                    <option value="new_entry">신입 (New Entry)</option>
+                    <option value="experienced">경력 (Experienced)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">수험번호</label>
+                  <input 
+                    value={editCandidateData.examNumber || ''}
+                    onChange={(e) => setEditCandidateData({...editCandidateData, examNumber: e.target.value})}
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 직무</label>
+                  <input 
+                    value={editCandidateData.position || ''}
+                    onChange={(e) => setEditCandidateData({...editCandidateData, position: e.target.value})}
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors rounded-xl font-bold"
+                >
+                  취소
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white transition-colors rounded-xl font-bold shadow-lg shadow-emerald-500/20"
+                >
+                  수정하기
                 </button>
               </div>
             </form>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { db, Timestamp } from '../../firebase';
-import { Search, UserPlus, FileText, ChevronRight, CheckCircle, Clock, Database } from 'lucide-react';
+import { Search, UserPlus, FileText, ChevronRight, CheckCircle, Clock, Database, Trash2, Edit } from 'lucide-react';
 import InterviewPanel from './InterviewPanel';
 import CandidateReport from './CandidateReport';
 
@@ -10,6 +10,8 @@ const HiringDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editCandidateData, setEditCandidateData] = useState(null);
   
   // New state for active views
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -51,6 +53,33 @@ const HiringDashboard = () => {
       fetchCandidates();
     } catch (error) {
       console.error('Error adding candidate:', error);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editCandidateData.name.trim()) return;
+    try {
+      await hiringService.updateCandidate(editCandidateData.id, {
+        name: editCandidateData.name,
+      });
+      setIsEditing(false);
+      setEditCandidateData(null);
+      fetchCandidates();
+    } catch (error) {
+      console.error('Error updating candidate:', error);
+    }
+  };
+
+  const handleDeleteCandidate = async (candidateId, e) => {
+    e.stopPropagation();
+    if (window.confirm('정말 삭제하시겠습니까? 관련 데이터가 완전히 삭제됩니다.')) {
+      try {
+        await hiringService.deleteCandidate(candidateId);
+        fetchCandidates();
+      } catch (error) {
+        console.error('Error deleting candidate:', error);
+      }
     }
   };
 
@@ -208,8 +237,32 @@ const HiringDashboard = () => {
                       <td className="px-8 py-5 text-slate-400 font-medium text-sm">
                         {candidate.createdAt?.toDate().toLocaleString() || '-'}
                       </td>
-                      <td className="px-8 py-5 text-right flex justify-end">
-                        <button className="p-3 bg-slate-50 hover:bg-blue-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all font-bold text-sm flex items-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600">
+                      <td className="px-8 py-5 text-right flex justify-end gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditCandidateData(candidate);
+                            setIsEditing(true);
+                          }}
+                          className="p-3 bg-slate-50 hover:bg-emerald-100 rounded-xl text-slate-400 hover:text-emerald-600 transition-all font-bold text-sm flex items-center justify-center opacity-0 group-hover:opacity-100"
+                          title="수정"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDeleteCandidate(candidate.id, e)}
+                          className="p-3 bg-slate-50 hover:bg-red-100 rounded-xl text-slate-400 hover:text-red-600 transition-all font-bold text-sm flex items-center justify-center opacity-0 group-hover:opacity-100"
+                          title="삭제"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(candidate);
+                          }}
+                          className="p-3 bg-slate-50 hover:bg-blue-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all font-bold text-sm flex items-center gap-2 group-hover:bg-blue-50 group-hover:text-blue-600"
+                        >
                           진입하기 <ChevronRight size={16} />
                         </button>
                       </td>
@@ -235,17 +288,12 @@ const HiringDashboard = () => {
             ));
           }}
           onSaveSuccess={async () => {
-            // 1. 최신 데이터로 목록 갱신
-            const updatedList = await fetchCandidates();
-            
-            // 2. 현재 선택된 지원자의 객체 정보를 최신(status: 'completed')으로 동기화
-            const freshData = updatedList.find(c => c.id === selectedCandidate.id);
-            if (freshData) {
-              setSelectedCandidate(freshData);
-            }
-            
-            // 3. 리포트 보기 모드로 전환
+            // 1. 즉각적인 UI 피드백을 위해 로컬 상태 업데이트
+            setSelectedCandidate(prev => ({ ...prev, status: 'completed' }));
             setViewMode('report');
+            
+            // 2. 백그라운드에서 최신 데이터로 전체 목록 갱신
+            fetchCandidates();
           }}
         />
       )}
@@ -296,6 +344,43 @@ const HiringDashboard = () => {
                   className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white transition-colors rounded-xl font-bold shadow-lg shadow-blue-500/20"
                 >
                   등록하기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Candidate Modal Overlay */}
+      {isEditing && editCandidateData && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-6">
+          <div className="bg-white border border-slate-100 p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <h3 className="text-3xl font-black text-slate-900 mb-8">지원자 이름 수정</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="space-y-6 mb-10">
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원자 성함</label>
+                  <input 
+                    autoFocus
+                    value={editCandidateData.name}
+                    onChange={(e) => setEditCandidateData({...editCandidateData, name: e.target.value})}
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors rounded-xl font-bold"
+                >
+                  취소
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white transition-colors rounded-xl font-bold shadow-lg shadow-emerald-500/20"
+                >
+                  수정하기
                 </button>
               </div>
             </form>

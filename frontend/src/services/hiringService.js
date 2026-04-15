@@ -50,7 +50,7 @@ export const hiringService = {
   },
 
   // 4. 면접 평가 데이터 저장 (기존/신규 하이브리드 지원)
-  async saveInterviewEvaluation(candidateId, interviewerId, evaluationInput) {
+  async saveInterviewEvaluation(candidateId, interviewerId, evaluationInput, feedbackParam) {
     const batch = db.batch();
     const interviewRef = db.collection(COLLECTIONS.INTERVIEWS).doc();
     
@@ -71,14 +71,15 @@ export const hiringService = {
         ...saveData,
         interviewerName,
         evaluationData: { appearance, competency, specific, safetyTech, bars },
-        feedback
+        feedback: feedback || feedbackParam
       };
     } else {
       // 레거시 BARS 시스템 대응 (평면적인 evaluations 객체)
       saveData = {
         ...saveData,
         evaluations: evaluationInput, // 기존 필드명 유지
-        totalScore: Object.values(evaluationInput).reduce((a, b) => a + (Number(b) || 0), 0)
+        totalScore: Object.values(evaluationInput).reduce((a, b) => a + (Number(b) || 0), 0),
+        feedback: feedbackParam
       };
     }
 
@@ -105,5 +106,27 @@ export const hiringService = {
       .get();
     
     return snapshot.docs.map(doc => doc.data());
+  },
+
+  // 6. 지원자 정보 수정
+  async updateCandidate(candidateId, updateData) {
+    return await db.collection(COLLECTIONS.CANDIDATES).doc(candidateId).update(updateData);
+  },
+
+  // 7. 지원자 삭제 (관련 면접 데이터 포함)
+  async deleteCandidate(candidateId) {
+    // 1) 지원자 삭제
+    await db.collection(COLLECTIONS.CANDIDATES).doc(candidateId).delete();
+    
+    // 2) 연관된 면접 데이터 파기
+    const snapshot = await db.collection(COLLECTIONS.INTERVIEWS).where('candidateId', '==', candidateId).get();
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    if (!snapshot.empty) {
+      await batch.commit();
+    }
   }
 };
