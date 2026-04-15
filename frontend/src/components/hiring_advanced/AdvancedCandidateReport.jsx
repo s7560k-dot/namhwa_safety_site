@@ -9,11 +9,7 @@ import {
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { 
-  APPEARANCE_ITEMS, 
-  COMPETENCY_ITEMS, 
-  SAFETY_TECH_QUESTIONS 
-} from '../../constants/hiringConstants';
+
 
 const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
   const [copied, setCopied] = useState(false);
