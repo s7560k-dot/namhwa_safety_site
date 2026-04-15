@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { Star, MessageSquare, AlertCircle, Save, X, Info, Target, LayoutList, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 

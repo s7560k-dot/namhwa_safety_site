@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { 
   NEW_ENTRY_APPEARANCE,
