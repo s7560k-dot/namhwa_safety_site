@@ -196,11 +196,20 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
       pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
       heightLeft -= (pageHeight - MARGIN_MM * 2);
       
+      // 첫 페이지 하단 여백 가리기 (배경색 bg-slate-50 = rgb(248,250,252) 일치)
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
+      
       while (heightLeft > 0) {
         position -= (pageHeight - MARGIN_MM * 2);
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
         heightLeft -= (pageHeight - MARGIN_MM * 2);
+        
+        // 추가 페이지 상하단 여백 가리기 (중복 출력 방지)
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(0, 0, pageWidth, MARGIN_MM, 'F'); // 상단
+        pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F'); // 하단
       }
       
       pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);

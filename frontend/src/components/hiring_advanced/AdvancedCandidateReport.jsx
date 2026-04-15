@@ -158,12 +158,21 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
       
       pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
       heightLeft -= (pageHeight - MARGIN_MM * 2);
+
+      // 첫 페이지 하단 여백 가리기 (배경색 bg-white = 흰색)
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
       
       while (heightLeft > 0) {
         position -= (pageHeight - MARGIN_MM * 2);
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
         heightLeft -= (pageHeight - MARGIN_MM * 2);
+
+        // 추가 페이지 상하단 여백 가리기
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pageWidth, MARGIN_MM, 'F'); // 상단
+        pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F'); // 하단
       }
       
       pdf.save(`면접리포트_${candidate.name}.pdf`);
