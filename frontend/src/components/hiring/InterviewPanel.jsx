@@ -9,6 +9,30 @@ const InterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusChange }) =
   const [evaluations, setEvaluations] = useState({ q1: 0, q2: 0, q3: 0, q4: 0, q5: 0 });
   const [feedback, setFeedback] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [existingReportId, setExistingReportId] = useState(null);
+
+  useEffect(() => {
+    if (candidate.status === 'completed') {
+      const fetchExistingData = async () => {
+        try {
+          const reports = await hiringService.getCandidateReport(candidate.id);
+          if (reports && reports.length > 0) {
+            const report = reports[0];
+            setExistingReportId(report.id);
+            if (report.evaluations) {
+              setEvaluations(report.evaluations);
+            }
+            if (report.feedback) {
+              setFeedback(report.feedback);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load existing report data", err);
+        }
+      };
+      fetchExistingData();
+    }
+  }, [candidate.id, candidate.status]);
 
   const BARS_QUESTIONS = [
     {
@@ -180,7 +204,8 @@ const InterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusChange }) =
         candidate.id, 
         'admin', 
         evaluations, 
-        feedback
+        feedback,
+        existingReportId
       );
       alert('평가가 성공적으로 저장되었습니다.');
       // 3. 부모 컴포넌트의 새로고침 및 전환 로직이 완료될 때까지 대기
@@ -427,7 +452,7 @@ const InterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusChange }) =
                 className="w-full py-4 bg-slate-900 hover:bg-black transition-all rounded-xl font-bold text-white shadow-xl flex items-center justify-center gap-2 active:scale-95"
               >
                 <Save size={18} />
-                {isSaving ? '저장 중...' : '면접 완료 및 점수 최종 저장'}
+                {isSaving ? '저장 중...' : (existingReportId ? '면접 평가 결과 갱신' : '면접 완료 및 점수 최종 저장')}
               </button>
             </div>
           </div>

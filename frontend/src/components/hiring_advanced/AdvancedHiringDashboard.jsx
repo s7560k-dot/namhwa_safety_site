@@ -321,6 +321,7 @@ const AdvancedHiringDashboard = () => {
         <CandidateReport 
           candidate={selectedCandidate} 
           onClose={() => setViewMode(null)}
+          onEdit={() => setViewMode('interview')}
         />
       )}
 

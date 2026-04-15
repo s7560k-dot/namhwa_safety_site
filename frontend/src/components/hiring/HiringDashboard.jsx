@@ -302,6 +302,7 @@ const HiringDashboard = () => {
         <CandidateReport 
           candidate={selectedCandidate} 
           onClose={() => setViewMode(null)}
+          onEdit={() => setViewMode('interview')}
         />
       )}
 

@@ -4,7 +4,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import { 
   Award, TrendingUp, AlertTriangle, FileText, Send, Download, 
   BrainCircuit, ChevronLeft, MessageSquare, X, Shield, 
-  UserCheck, ClipboardCheck 
+  UserCheck, ClipboardCheck, Edit
 } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
@@ -80,7 +80,7 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
   );
 };
 
-const AdvancedCandidateReport = ({ candidate, onClose }) => {
+const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [aiSummary, setAiSummary] = useState('');
@@ -140,12 +140,35 @@ const AdvancedCandidateReport = ({ candidate, onClose }) => {
     setIsExporting(true);
     try {
       const canvas = await html2canvas(reportRef.current, { scale: 2, useCORS: true, backgroundColor: '#f8fafc' });
+      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
+      
+      // 1. 계획: 물리적인 A4 용지 크기에 맞게 여백을 확보하여 깔끔한 문서를 생성함.
+      // 2. 검증: 페이지 너비(page width)에서 양쪽 여백을 빼서 실제 이미지가 들어갈 너비(pdfWidth)를 계산.
+      // 3. 구현: MARGIN_MM 상수를 사용하여 매직 넘버(하드코딩)를 방지함. 세로 길이가 길 경우 여러 페이지로 분할.
+      const MARGIN_MM = 15;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      const pdfWidth = pageWidth - (MARGIN_MM * 2);
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      let heightLeft = pdfHeight;
+      let position = MARGIN_MM;
+      
+      pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
+      heightLeft -= (pageHeight - MARGIN_MM * 2);
+      
+      while (heightLeft > 0) {
+        position -= (pageHeight - MARGIN_MM * 2);
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
+        heightLeft -= (pageHeight - MARGIN_MM * 2);
+      }
+      
       pdf.save(`면접리포트_${candidate.name}.pdf`);
     } catch (err) {
+      console.error('PDF 생성 실패:', err);
       alert('PDF 생성 실패');
     } finally {
       setIsExporting(false);
@@ -270,6 +293,11 @@ const AdvancedCandidateReport = ({ candidate, onClose }) => {
         </div>
 
         <div className="flex justify-end gap-4 pt-12">
+          {onEdit && (
+            <button onClick={onEdit} className="px-8 py-4 bg-white border border-slate-200 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-50 shadow-sm transition-all active:scale-95 text-slate-700">
+              <Edit size={20} className="text-slate-400" /> 평가 결과 수정하기
+            </button>
+          )}
           <button onClick={handleDownloadPdf} disabled={isExporting} className="px-8 py-4 bg-white border border-slate-200 rounded-2xl font-bold flex items-center gap-2 hover:bg-slate-50 shadow-sm transition-all active:scale-95">
             <Download size={20} /> {isExporting ? '생성 중...' : 'PDF 리포트 다운로드'}
           </button>

@@ -26,6 +26,32 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
   const [safetyTechScores, setSafetyTechScores] = useState({}); // Scores for tech safety (1~5)
   const [feedback, setFeedback] = useState('');
   const [interviewerName, setInterviewerName] = useState('');
+  const [existingReportId, setExistingReportId] = useState(null);
+
+  useEffect(() => {
+    if (candidate.status === 'completed') {
+      const fetchExistingData = async () => {
+        try {
+          const reports = await hiringService.getCandidateReport(candidate.id);
+          if (reports && reports.length > 0) {
+            const report = reports[0];
+            setExistingReportId(report.id);
+            if (report.evaluationData) {
+              setAppearanceScores(report.evaluationData.appearance || {});
+              setCompetencyScores(report.evaluationData.competency || {});
+              setSpecificAnswers(report.evaluationData.specific || {});
+              setSafetyTechScores(report.evaluationData.safetyTech || {});
+            }
+            if (report.feedback) setFeedback(report.feedback);
+            if (report.interviewerName) setInterviewerName(report.interviewerName);
+          }
+        } catch (err) {
+          console.error("Failed to load existing report data", err);
+        }
+      };
+      fetchExistingData();
+    }
+  }, [candidate.id, candidate.status]);
 
   const isExperienced = candidate.type === 'experienced';
 
@@ -66,7 +92,7 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
         interviewerName
       };
 
-      await hiringService.saveInterviewEvaluation(candidate.id, 'admin', evaluationData);
+      await hiringService.saveInterviewEvaluation(candidate.id, 'admin', evaluationData, '', existingReportId);
       alert('평가가 성공적으로 저장되었습니다.');
       await onSaveSuccess();
     } catch (error) {
@@ -416,7 +442,7 @@ const AdvancedInterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusCha
               className="mt-8 w-full py-5 bg-slate-900 hover:bg-black text-white rounded-2xl font-black shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
             >
               <Save size={20} />
-              {isSaving ? '평가 데이터 전송 중...' : '평가 완료 및 최종 저장'}
+              {isSaving ? '평가 데이터 전송 중...' : (existingReportId ? '평가 데이터 갱신하기' : '평가 완료 및 최종 저장')}
             </button>
           </div>
         </div>

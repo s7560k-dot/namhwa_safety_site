@@ -50,15 +50,20 @@ export const hiringService = {
   },
 
   // 4. 면접 평가 데이터 저장 (기존/신규 하이브리드 지원)
-  async saveInterviewEvaluation(candidateId, interviewerId, evaluationInput, feedbackParam) {
+  async saveInterviewEvaluation(candidateId, interviewerId, evaluationInput, feedbackParam, existingReportId = null) {
     const batch = db.batch();
-    const interviewRef = db.collection(COLLECTIONS.INTERVIEWS).doc();
+    const interviewRef = existingReportId 
+      ? db.collection(COLLECTIONS.INTERVIEWS).doc(existingReportId)
+      : db.collection(COLLECTIONS.INTERVIEWS).doc();
     
     let saveData = {
       candidateId,
       interviewerId,
-      createdAt: Timestamp.now()
+      updatedAt: Timestamp.now()
     };
+    if (!existingReportId) {
+      saveData.createdAt = Timestamp.now();
+    }
 
     // evaluationInput이 중첩된 구조(신규 시스템)인지 확인
     if (evaluationInput.appearance || evaluationInput.competency || evaluationInput.safetyTech) {
@@ -83,7 +88,7 @@ export const hiringService = {
       };
     }
 
-    batch.set(interviewRef, saveData);
+    batch.set(interviewRef, saveData, { merge: true });
 
     // 2. 지원자 상태 업데이트
     const candidateRef = db.collection(COLLECTIONS.CANDIDATES).doc(candidateId);
@@ -105,7 +110,7 @@ export const hiringService = {
       .where('candidateId', '==', candidateId)
       .get();
     
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
   // 6. 지원자 정보 수정

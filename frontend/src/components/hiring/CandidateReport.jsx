@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { hiringService } from '../../services/hiringService';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Award, TrendingUp, AlertTriangle, FileText, Send, Download, BrainCircuit, ChevronLeft, MessageSquare, X } from 'lucide-react';
+import { Award, TrendingUp, AlertTriangle, FileText, Send, Download, BrainCircuit, ChevronLeft, MessageSquare, X, Edit } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -100,7 +100,7 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
   );
 };
 
-const CandidateReport = ({ candidate, onClose }) => {
+const CandidateReport = ({ candidate, onClose, onEdit }) => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [aiSummary, setAiSummary] = useState('');
@@ -179,10 +179,30 @@ const CandidateReport = ({ candidate, onClose }) => {
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
+      
+      // 1. 계획: 문서의 가독성을 높이기 위해 15mm 여백을 설정하고, 이미지가 페이지 단위 길이를 초과하면 분할 생성
+      // 2. 검증: A4 너비에서 양쪽 여백(30mm)을 뺀 영역에 이미지를 삽입하며, 상하 여백과 비율을 준수함
+      // 3. 구현:
+      const MARGIN_MM = 15;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      const pdfWidth = pageWidth - (MARGIN_MM * 2);
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      let heightLeft = pdfHeight;
+      let position = MARGIN_MM;
+      
+      pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
+      heightLeft -= (pageHeight - MARGIN_MM * 2);
+      
+      while (heightLeft > 0) {
+        position -= (pageHeight - MARGIN_MM * 2);
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
+        heightLeft -= (pageHeight - MARGIN_MM * 2);
+      }
+      
       pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);
     } catch (err) {
       console.error('PDF 다운로드 실패:', err);
@@ -353,6 +373,15 @@ const CandidateReport = ({ candidate, onClose }) => {
 
         {/* Action Bar (Not captured in PDF if outside the ref, but we definitely don't want buttons in the PDF so we placed them outside) */}
         <div className="flex flex-col md:flex-row gap-4 justify-end pt-8">
+          {onEdit && (
+            <button 
+              onClick={onEdit}
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-white hover:bg-slate-50 border border-slate-200 transition-all rounded-2xl font-bold text-slate-700 shadow-sm active:scale-95"
+            >
+              <Edit size={20} className="text-slate-400" />
+              평가 결과 수정하기
+            </button>
+          )}
           <button 
             onClick={handleDownloadPdf}
             disabled={isExporting}
