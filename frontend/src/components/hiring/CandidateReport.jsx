@@ -141,7 +141,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const prompt = `
-        건설업 안전보건 전담팀 지원자 면접 평가 분석을 평어체(한국어)로 작성해줘.
+        건설업 안전보건 전담팀 지원자 면접 평가 분석을 정중한 경어체(어미를 '~습니다.', '~보입니다.' 등으로 확실하게 통일)로 작성해줘.
         지원자 이름: ${candidate.name}
         역량 점수 (총 25점 만점, 각 5점): 
         - 1. 법규 시스템 융합: ${reportData.evaluations.q1 || 0}/5
@@ -155,6 +155,9 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         1. 핵심 강점 요약
         2. 우려사항 또는 보완점
         3. 최종 채용 추천 근거
+        
+        주의사항:
+        모든 문장의 끝맺음을 "~다", "~것이다", "~있다"와 같은 평어체를 절대 사용하지 말고, 반드시 "~습니다.", "~비니다.", "~보입니다." 와 같은 정중한 표현으로 철저히 통일할 것.
       `;
 
       const result = await model.generateContent(prompt);
