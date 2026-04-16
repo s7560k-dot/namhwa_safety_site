@@ -294,49 +294,54 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* Detailed Analysis Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          {/* Vertical Stack Layout */}
+          <div className="flex flex-col gap-4 mb-4">
+            
             {/* Competency Chart */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-              <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+              <h3 className="text-lg font-black mb-3 flex items-center gap-2 text-slate-900">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                   <TrendingUp size={20} />
                 </div>
                 다차원 역량 분석
               </h3>
-              <div className="h-56 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 13, fontWeight: 'bold' }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
-                    <Radar
-                      name={candidate.name}
-                      dataKey="A"
-                      stroke="#3b82f6"
-                      fill="#3b82f6"
-                      fillOpacity={0.6}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex flex-wrap gap-4 mt-8 justify-center">
-                {chartData.map((d, i) => (
-                  <div key={i} className="text-center bg-slate-50 py-3 px-4 rounded-xl border border-slate-100 min-w-[100px]">
-                    <div className="text-3xl font-black text-blue-600">{d.A}</div>
-                    <div className="text-[10px] text-slate-500 font-black uppercase tracking-tighter mt-1">{d.subject}</div>
-                  </div>
-                ))}
+              
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="h-44 w-full md:w-1/2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
+                      <PolarGrid stroke="#e2e8f0" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 'bold' }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
+                      <Radar
+                        name={candidate.name}
+                        dataKey="A"
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
+                        fillOpacity={0.6}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                <div className="w-full md:w-1/2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {chartData.map((d, i) => (
+                    <div key={i} className="text-center bg-slate-50 py-3 px-2 rounded-xl border border-slate-100 flex flex-col justify-center items-center">
+                      <div className="text-2xl font-black text-blue-600 leading-none mb-1">{d.A}</div>
+                      <div className="text-[11px] text-slate-500 font-bold tracking-tight text-center break-keep w-[90%] leading-tight">{d.subject}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* AI Insights */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col relative overflow-hidden group shadow-sm">
-              <div className="absolute -top-10 -right-10 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                <BrainCircuit size={200} className="text-blue-600" />
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                <BrainCircuit size={160} className="text-blue-600" />
               </div>
               
-              <div className="flex justify-between items-center mb-4 relative z-10">
+              <div className="flex justify-between items-center mb-3 relative z-10 w-full">
                 <h3 className="text-lg font-black flex items-center gap-2 text-slate-900">
                   <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                     <BrainCircuit size={20} />
@@ -346,22 +351,22 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 <button 
                   onClick={generateAiSummary}
                   disabled={isGeneratingAi}
-                  className="flex items-center gap-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-2.5 rounded-xl text-white disabled:opacity-50 shadow-md shadow-indigo-500/20 active:scale-95"
+                  className="flex items-center gap-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 transition-colors px-4 py-2 rounded-xl text-white disabled:opacity-50 shadow-md shadow-indigo-500/20 active:scale-95"
                 >
-                  {isGeneratingAi ? '안전보건 AI 분석 중...' : 'AI 전문 분석 실행'}
+                  {isGeneratingAi ? '분석 중...' : 'AI 분석 실행'}
                 </button>
               </div>
 
-              <div className="flex-1 bg-slate-50 rounded-2xl p-5 border border-slate-100 relative z-10">
+              <div className="w-full bg-slate-50 rounded-2xl p-4 border border-slate-100 relative z-10 min-h-[120px]">
                 {aiSummary ? (
-                  <div className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap font-medium">
+                  <div className="text-slate-700 leading-relaxed text-[13.5px] whitespace-pre-wrap font-medium">
                     {aiSummary}
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                    <FileText className="text-slate-300 mb-4" size={48} />
-                    <p className="text-slate-400 font-bold text-sm max-w-[200px] leading-relaxed">
-                      'AI 분석 실행' 버튼을 눌러 정량/정성 평가를 종합적으로 요약해 보세요.
+                  <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                    <FileText className="text-slate-300 mb-3" size={36} />
+                    <p className="text-slate-400 font-bold text-xs max-w-[250px] leading-relaxed">
+                      'AI 분석 실행'을 눌러 종합 리포트를 받아보세요.
                     </p>
                   </div>
                 )}
@@ -370,7 +375,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Qualitative Feedback */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 mb-4 shadow-sm mx-0.5">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
             <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
               <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                 <MessageSquare size={20} />
