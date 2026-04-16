@@ -108,6 +108,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const reportRef = useRef(null);
+  const guideRef = useRef(null);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -171,46 +172,48 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
     if (!reportRef.current) return;
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2, // 고해상도 
-        useCORS: true,
-        backgroundColor: '#f8fafc', // bg-slate-50 equivalent
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // 1. 계획: 문서의 가독성을 높이기 위해 15mm 여백을 설정하고, 이미지가 페이지 단위 길이를 초과하면 분할 생성
-      // 2. 검증: A4 너비에서 양쪽 여백(30mm)을 뺀 영역에 이미지를 삽입하며, 상하 여백과 비율을 준수함
-      // 3. 구현:
       const MARGIN_MM = 15;
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      
       const pdfWidth = pageWidth - (MARGIN_MM * 2);
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      let heightLeft = pdfHeight;
-      let position = MARGIN_MM;
-      
-      pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
-      heightLeft -= (pageHeight - MARGIN_MM * 2);
-      
-      // 첫 페이지 하단 여백 가리기 (배경색 bg-slate-50 = rgb(248,250,252) 일치)
-      pdf.setFillColor(248, 250, 252);
-      pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
-      
-      while (heightLeft > 0) {
-        position -= (pageHeight - MARGIN_MM * 2);
-        pdf.addPage();
+
+      const renderCanvasToPdf = async (elementRef, isFirstRender = false) => {
+        if (!elementRef.current) return;
+        
+        const canvas = await html2canvas(elementRef.current, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#f8fafc',
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        let heightLeft = pdfHeight;
+        let position = MARGIN_MM;
+        
+        if (!isFirstRender) pdf.addPage();
+        
         pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
         heightLeft -= (pageHeight - MARGIN_MM * 2);
         
-        // 추가 페이지 상하단 여백 가리기 (중복 출력 방지)
         pdf.setFillColor(248, 250, 252);
-        pdf.rect(0, 0, pageWidth, MARGIN_MM, 'F'); // 상단
-        pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F'); // 하단
-      }
+        pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
+        
+        while (heightLeft > 0) {
+          position -= (pageHeight - MARGIN_MM * 2);
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
+          heightLeft -= (pageHeight - MARGIN_MM * 2);
+          
+          pdf.setFillColor(248, 250, 252);
+          pdf.rect(0, 0, pageWidth, MARGIN_MM, 'F');
+          pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
+        }
+      };
+
+      await renderCanvasToPdf(reportRef, true);
+      await renderCanvasToPdf(guideRef, false);
       
       pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);
     } catch (err) {
@@ -251,15 +254,12 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         </button>
 
         {/* PDF Export Target Container */}
-        <div ref={reportRef} className="bg-slate-50 pb-8 rounded-3xl" style={{ minHeight: '800px' }}>
+        <div ref={reportRef} className="bg-slate-50 pb-6 rounded-3xl" style={{ minHeight: '600px' }}>
           
           {/* Hero Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             {/* Left: General Info */}
-            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-center shadow-lg">
-              <div className="w-32 h-32 rounded-3xl bg-blue-100 flex items-center justify-center text-5xl font-black text-blue-600 shadow-sm border border-blue-200 shrink-0">
-                {candidate.name.charAt(0)}
-              </div>
+            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 flex items-center justify-center md:justify-start shadow-sm">
               <div className="text-center md:text-left">
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
                   <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold border border-blue-200 uppercase tracking-widest">
@@ -269,19 +269,16 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                     평가 리포트
                   </span>
                 </div>
-                <h1 className="text-4xl font-black mb-2 text-slate-900">{candidate.name} <span className="text-2xl font-bold text-slate-400">지원자</span></h1>
-                <p className="text-slate-500 font-medium max-w-md italic leading-relaxed">
-                  "{reportData.feedback ? (reportData.feedback.length > 80 ? reportData.feedback.substring(0, 80) + "..." : reportData.feedback) : "등록된 평가 의견이 없습니다."}"
-                </p>
+                <h1 className="text-4xl font-black text-slate-900">{candidate.name} <span className="text-2xl font-bold text-slate-400">지원자</span></h1>
               </div>
             </div>
 
             {/* Right: Grade Card */}
-            <div className={`${grade.bg} border-2 border-dashed ${grade.border} rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden`}>
+            <div className={`${grade.bg} border-2 border-dashed ${grade.border} rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden`}>
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-bl-full -z-0"></div>
-              <p className="text-sm font-black uppercase tracking-widest text-slate-600 mb-2 z-10">최종 평가 등급</p>
-              <div className={`text-8xl font-black ${grade.color} mb-2 z-10`}>{grade.label}</div>
-              <p className={`text-lg font-bold ${grade.color} z-10`}>{grade.desc}</p>
+              <p className="text-sm font-black uppercase tracking-widest text-slate-600 mb-1 z-10">최종 평가 등급</p>
+              <div className={`text-7xl leading-none font-black ${grade.color} mb-3 z-10`}>{grade.label}</div>
+              <p className={`text-base font-bold ${grade.color} z-10 leading-tight`}>{grade.desc}</p>
               <div className="mt-4 px-4 py-1.5 bg-white/60 rounded-full text-slate-700 font-bold z-10 shadow-sm text-sm border border-white/50">
                 종합 점수: <span className="text-lg text-slate-900">{reportData.totalScore}</span> / 25
               </div>
@@ -289,16 +286,16 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Detailed Analysis Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
             {/* Competency Chart */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-lg">
-              <h3 className="text-xl font-black mb-8 flex items-center gap-2 text-slate-900">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+              <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                   <TrendingUp size={20} />
                 </div>
                 다차원 역량 분석
               </h3>
-              <div className="h-72 w-full">
+              <div className="h-56 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
                     <PolarGrid stroke="#e2e8f0" />
@@ -325,13 +322,13 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* AI Insights */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col relative overflow-hidden group shadow-lg">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col relative overflow-hidden group shadow-sm">
               <div className="absolute -top-10 -right-10 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <BrainCircuit size={200} className="text-blue-600" />
               </div>
               
-              <div className="flex justify-between items-center mb-8 relative z-10">
-                <h3 className="text-xl font-black flex items-center gap-2 text-slate-900">
+              <div className="flex justify-between items-center mb-4 relative z-10">
+                <h3 className="text-lg font-black flex items-center gap-2 text-slate-900">
                   <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                     <BrainCircuit size={20} />
                   </div>
@@ -346,7 +343,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 </button>
               </div>
 
-              <div className="flex-1 bg-slate-50 rounded-2xl p-6 border border-slate-100 relative z-10">
+              <div className="flex-1 bg-slate-50 rounded-2xl p-5 border border-slate-100 relative z-10">
                 {aiSummary ? (
                   <div className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap font-medium">
                     {aiSummary}
@@ -364,20 +361,59 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Qualitative Feedback */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 mb-4 shadow-lg mx-0.5">
-            <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-900">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 mb-4 shadow-sm mx-0.5">
+            <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
               <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                 <MessageSquare size={20} />
               </div>
               면접관 종합 피드백
             </h3>
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 shadow-inner">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-inner">
               <p className="text-slate-700 leading-loose whitespace-pre-wrap text-[15px] font-bold">
                 "{reportData.feedback || "등록된 면접 피드백이 없습니다."}"
               </p>
             </div>
           </div>
-          
+        </div>
+
+        {/* PDF Export Target 2: BARS Guide Page */}
+        <div ref={guideRef} className="bg-slate-50 pt-8 pb-8 rounded-3xl mt-8">
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm mx-0.5">
+            <h3 className="text-xl font-black mb-8 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-5">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <Target size={24} />
+              </div>
+              다차원 역량 분석(BARS) 배점 기준 요약표
+            </h3>
+            
+            <div className="space-y-4 mb-8">
+              {[
+                { score: 5, label: '탁월 (Outstanding)', desc: '해당 역량과 관련하여 즉시 현장 적용 및 지도/전파가 가능한 최고 수준' },
+                { score: 4, label: '우수 (Exceeds)', desc: '주어진 질문과 상황에 대해 명확한 기준과 구체적인 대처 방안을 완벽히 숙지함' },
+                { score: 3, label: '보통 (Meets)', desc: '기본적인 원칙을 이해하고 있으나 활용 측면에서 다소 구체성이 떨어질 수 있음' },
+                { score: 2, label: '미흡 (Needs Imp.)', desc: '이해도가 부족하며, 상황 투입 전 재교육 및 면밀한 모니터링이 필수적임' },
+                { score: 1, label: '부적합 (Unacceptable)', desc: '해당 영역에 대한 개념과 원칙 파악이 미달되어 사고 예방 및 대응이 불가함' }
+              ].map(item => (
+                <div key={item.score} className="flex flex-col md:flex-row gap-4 md:items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                  <div className="flex items-center gap-4 md:w-56 shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                      {item.score}
+                    </div>
+                    <span className="font-bold text-slate-800 text-lg">{item.label}</span>
+                  </div>
+                  <p className="text-slate-600 font-medium leading-relaxed flex-1">
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="p-5 bg-indigo-50/50 rounded-xl border border-indigo-100">
+              <p className="text-sm font-bold text-indigo-800 leading-relaxed">
+                * 위 배점 기준표는 면접관의 주관적 평가를 객관화하기 위한 BARS(Behaviorally Anchored Rating Scales) 기반의 평가 척도입니다. 레이더 차트는 이 기준에 따라 5개 영역(법규/시스템, 위험성평가, 위기 대응력, 소통/갈등, 리더십/문화)에서 획득한 점수를 나타냅니다.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Action Bar (Not captured in PDF if outside the ref, but we definitely don't want buttons in the PDF so we placed them outside) */}
