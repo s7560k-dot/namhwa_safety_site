@@ -240,6 +240,9 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   ];
 
   const grade = getGrade(reportData.totalScore);
+  
+  const currentYear = new Date().getFullYear();
+  const birthYearText = candidate.birthYear ? `${candidate.birthYear}년생 (만 ${currentYear - candidate.birthYear}세)` : '';
 
   return (
     <div className="fixed inset-0 bg-blue-50/95 backdrop-blur-md z-[100] overflow-y-auto custom-scrollbar font-sans antialiased text-slate-800">
@@ -269,7 +272,10 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                     평가 리포트
                   </span>
                 </div>
-                <h1 className="text-4xl font-black text-slate-900">{candidate.name} <span className="text-2xl font-bold text-slate-400">지원자</span></h1>
+                <h1 className="text-4xl font-black text-slate-900 mb-1">{candidate.name} <span className="text-2xl font-bold text-slate-400">지원자</span></h1>
+                {birthYearText && (
+                  <p className="text-slate-500 font-bold text-sm tracking-wide">{birthYearText}</p>
+                )}
               </div>
             </div>
 

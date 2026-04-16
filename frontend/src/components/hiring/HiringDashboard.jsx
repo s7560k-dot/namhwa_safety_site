@@ -10,6 +10,7 @@ const HiringDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newBirthYear, setNewBirthYear] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editCandidateData, setEditCandidateData] = useState(null);
   
@@ -47,8 +48,12 @@ const HiringDashboard = () => {
     e.preventDefault();
     if (!newName.trim()) return;
     try {
-      await hiringService.addCandidate(newName);
+      await hiringService.addCandidate({
+        name: newName,
+        birthYear: parseInt(newBirthYear) || null
+      });
       setNewName('');
+      setNewBirthYear('');
       setIsAdding(false);
       fetchCandidates();
     } catch (error) {
@@ -62,6 +67,7 @@ const HiringDashboard = () => {
     try {
       await hiringService.updateCandidate(editCandidateData.id, {
         name: editCandidateData.name,
+        birthYear: parseInt(editCandidateData.birthYear) || null
       });
       setIsEditing(false);
       setEditCandidateData(null);
@@ -325,6 +331,18 @@ const HiringDashboard = () => {
                   />
                 </div>
                 <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">출생년도 (선택)</label>
+                  <input 
+                    value={newBirthYear}
+                    onChange={(e) => setNewBirthYear(e.target.value)}
+                    type="number"
+                    min="1900"
+                    max="2010"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
+                    placeholder="예: 1990"
+                  />
+                </div>
+                <div>
                   <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 구분</label>
                   <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900">
                     <option>안전보건 전담팀 (신입/경력)</option>
@@ -366,6 +384,18 @@ const HiringDashboard = () => {
                     onChange={(e) => setEditCandidateData({...editCandidateData, name: e.target.value})}
                     type="text"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">출생년도</label>
+                  <input 
+                    value={editCandidateData.birthYear || ''}
+                    onChange={(e) => setEditCandidateData({...editCandidateData, birthYear: e.target.value})}
+                    type="number"
+                    min="1900"
+                    max="2010"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900 placeholder-slate-400"
+                    placeholder="예: 1990"
                   />
                 </div>
               </div>
