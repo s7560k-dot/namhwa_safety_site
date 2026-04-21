@@ -106,6 +106,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   const [aiSummary, setAiSummary] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPdfMode, setIsPdfMode] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const reportRef = useRef(null);
   const guideRef = useRef(null);
@@ -174,57 +175,56 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   const handleDownloadPdf = async () => {
     if (!reportRef.current) return;
     setIsExporting(true);
-    try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const MARGIN_MM = 15;
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const pdfWidth = pageWidth - (MARGIN_MM * 2);
+    setIsPdfMode(true);
+    
+    // DOM 업데이트 후 캡처를 위해 대기
+    setTimeout(async () => {
+      try {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const MARGIN_MM = 15;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const maxPdfHeight = pageHeight - (MARGIN_MM * 2);
 
-      const renderCanvasToPdf = async (elementRef, isFirstRender = false) => {
-        if (!elementRef.current) return;
-        
-        const canvas = await html2canvas(elementRef.current, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#f8fafc',
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        let heightLeft = pdfHeight;
-        let position = MARGIN_MM;
-        
-        if (!isFirstRender) pdf.addPage();
-        
-        pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
-        heightLeft -= (pageHeight - MARGIN_MM * 2);
-        
-        pdf.setFillColor(248, 250, 252);
-        pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
-        
-        while (heightLeft > 0) {
-          position -= (pageHeight - MARGIN_MM * 2);
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
-          heightLeft -= (pageHeight - MARGIN_MM * 2);
+        const renderCanvasToPdf = async (elementRef, isFirstRender = false) => {
+          if (!elementRef.current) return;
           
-          pdf.setFillColor(248, 250, 252);
-          pdf.rect(0, 0, pageWidth, MARGIN_MM, 'F');
-          pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
-        }
-      };
+          const canvas = await html2canvas(elementRef.current, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#f8fafc',
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          let finalPdfWidth = pageWidth - (MARGIN_MM * 2);
+          let finalPdfHeight = (canvas.height * finalPdfWidth) / canvas.width;
+          
+          // 세로 높이가 1페이지를 초과하면 1페이지에 딱 맞게 비율 축소
+          if (finalPdfHeight > maxPdfHeight) {
+            finalPdfHeight = maxPdfHeight;
+            finalPdfWidth = (canvas.width * finalPdfHeight) / canvas.height;
+          }
+          
+          // 가운데 정렬
+          const xOffset = MARGIN_MM + ((pageWidth - (MARGIN_MM * 2) - finalPdfWidth) / 2);
+          
+          if (!isFirstRender) pdf.addPage();
+          
+          pdf.addImage(imgData, 'PNG', xOffset, MARGIN_MM, finalPdfWidth, finalPdfHeight);
+        };
 
-      await renderCanvasToPdf(reportRef, true);
-      await renderCanvasToPdf(guideRef, false);
-      
-      pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);
-    } catch (err) {
-      console.error('PDF 다운로드 실패:', err);
-      alert('PDF 생성에 실패했습니다.');
-    } finally {
-      setIsExporting(false);
-    }
+        await renderCanvasToPdf(reportRef, true);
+        await renderCanvasToPdf(guideRef, false);
+        
+        pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);
+      } catch (err) {
+        console.error('PDF 다운로드 실패:', err);
+        alert('PDF 생성에 실패했습니다.');
+      } finally {
+        setIsPdfMode(false);
+        setIsExporting(false);
+      }
+    }, 150);
   };
 
   const handleSendToExecutives = () => {
@@ -260,12 +260,12 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         </button>
 
         {/* PDF Export Target Container */}
-        <div ref={reportRef} className="bg-slate-50 pb-6 rounded-3xl" style={{ minHeight: '600px' }}>
+        <div ref={reportRef} className={`bg-slate-50 ${isPdfMode ? 'pb-2' : 'pb-6'} rounded-3xl`} style={{ minHeight: isPdfMode ? 'auto' : '600px' }}>
           
           {/* Hero Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className={`grid grid-cols-1 lg:grid-cols-3 ${isPdfMode ? 'gap-3 mb-3' : 'gap-6 mb-6'}`}>
             {/* Left: General Info */}
-            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 flex items-center justify-center md:justify-start shadow-sm">
+            <div className={`lg:col-span-2 bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4' : 'p-6'} flex items-center justify-center md:justify-start shadow-sm`}>
               <div className="text-center md:text-left">
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
                   <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold border border-blue-200 uppercase tracking-widest">
@@ -283,10 +283,10 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Right: Grade Card */}
-            <div className={`${grade.bg} border-2 border-dashed ${grade.border} rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden`}>
+            <div className={`${grade.bg} border-2 border-dashed ${grade.border} rounded-3xl ${isPdfMode ? 'p-3' : 'p-6'} flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden`}>
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-bl-full -z-0"></div>
               <p className="text-sm font-black uppercase tracking-widest text-slate-600 mb-1 z-10">최종 평가 등급</p>
-              <div className={`text-7xl leading-none font-black ${grade.color} mb-3 z-10`}>{grade.label}</div>
+              <div className={`${isPdfMode ? 'text-5xl mb-1' : 'text-7xl mb-3'} leading-none font-black ${grade.color} z-10`}>{grade.label}</div>
               <p className={`text-base font-bold ${grade.color} z-10 leading-tight`}>{grade.desc}</p>
               <div className="mt-4 px-4 py-1.5 bg-white/60 rounded-full text-slate-700 font-bold z-10 shadow-sm text-sm border border-white/50">
                 종합 점수: <span className="text-lg text-slate-900">{reportData.totalScore}</span> / 25
@@ -295,10 +295,10 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Vertical Stack Layout */}
-          <div className="flex flex-col gap-4 mb-4">
+          <div className={`flex flex-col ${isPdfMode ? 'gap-2 mb-2' : 'gap-4 mb-4'}`}>
             
             {/* Competency Chart */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-3' : 'p-5'} shadow-sm`}>
               <h3 className="text-lg font-black mb-3 flex items-center gap-2 text-slate-900">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                   <TrendingUp size={20} />
@@ -306,8 +306,8 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 다차원 역량 분석
               </h3>
               
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="h-44 w-full md:w-1/2">
+              <div className={`flex flex-col md:flex-row items-center ${isPdfMode ? 'gap-2' : 'gap-6'}`}>
+                <div className={`${isPdfMode ? 'h-36' : 'h-44'} w-full md:w-1/2`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
                       <PolarGrid stroke="#e2e8f0" />
@@ -326,8 +326,8 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 
                 <div className="w-full md:w-1/2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {chartData.map((d, i) => (
-                    <div key={i} className="text-center bg-slate-50 py-3 px-2 rounded-xl border border-slate-100 flex flex-col justify-center items-center">
-                      <div className="text-2xl font-black text-blue-600 leading-none mb-1">{d.A}</div>
+                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-2 px-1' : 'py-3 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
+                      <div className={`${isPdfMode ? 'text-xl' : 'text-2xl'} font-black text-blue-600 leading-none mb-1`}>{d.A}</div>
                       <div className="text-[11px] text-slate-500 font-bold tracking-tight text-center break-keep w-[90%] leading-tight">{d.subject}</div>
                     </div>
                   ))}
@@ -336,12 +336,12 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* AI Insights */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm relative overflow-hidden group">
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-3' : 'p-5'} shadow-sm relative overflow-hidden group`}>
               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                 <BrainCircuit size={160} className="text-blue-600" />
               </div>
               
-              <div className="flex justify-between items-center mb-3 relative z-10 w-full">
+              <div className={`flex justify-between items-center ${isPdfMode ? 'mb-2' : 'mb-3'} relative z-10 w-full`}>
                 <h3 className="text-lg font-black flex items-center gap-2 text-slate-900">
                   <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                     <BrainCircuit size={20} />
@@ -357,7 +357,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 </button>
               </div>
 
-              <div className="w-full bg-slate-50 rounded-2xl p-4 border border-slate-100 relative z-10 min-h-[120px]">
+              <div className={`w-full bg-slate-50 rounded-2xl ${isPdfMode ? 'p-3 min-h-[80px]' : 'p-4 min-h-[120px]'} border border-slate-100 relative z-10`}>
                 {aiSummary ? (
                   <div className="text-slate-700 leading-relaxed text-[13.5px] whitespace-pre-wrap font-medium">
                     {aiSummary}
@@ -375,14 +375,14 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Qualitative Feedback */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
-            <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
+          <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-3' : 'p-5'} shadow-sm`}>
+            <h3 className={`text-lg font-black ${isPdfMode ? 'mb-2' : 'mb-4'} flex items-center gap-2 text-slate-900`}>
               <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                 <MessageSquare size={20} />
               </div>
               면접관 종합 피드백
             </h3>
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-inner">
+            <div className={`bg-slate-50 border border-slate-200 rounded-2xl ${isPdfMode ? 'p-4' : 'p-6'} shadow-inner`}>
               <p className="text-slate-700 leading-loose whitespace-pre-wrap text-[15px] font-bold">
                 "{reportData.feedback || "등록된 면접 피드백이 없습니다."}"
               </p>

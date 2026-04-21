@@ -86,6 +86,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
   const [aiSummary, setAiSummary] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPdfMode, setIsPdfMode] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const reportRef = useRef(null);
 
@@ -138,50 +139,43 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
   const handleDownloadPdf = async () => {
     if (!reportRef.current) return;
     setIsExporting(true);
-    try {
-      const canvas = await html2canvas(reportRef.current, { scale: 2, useCORS: true, backgroundColor: '#f8fafc' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // 1. 계획: 물리적인 A4 용지 크기에 맞게 여백을 확보하여 깔끔한 문서를 생성함.
-      // 2. 검증: 페이지 너비(page width)에서 양쪽 여백을 빼서 실제 이미지가 들어갈 너비(pdfWidth)를 계산.
-      // 3. 구현: MARGIN_MM 상수를 사용하여 매직 넘버(하드코딩)를 방지함. 세로 길이가 길 경우 여러 페이지로 분할.
-      const MARGIN_MM = 15;
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      const pdfWidth = pageWidth - (MARGIN_MM * 2);
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      let heightLeft = pdfHeight;
-      let position = MARGIN_MM;
-      
-      pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
-      heightLeft -= (pageHeight - MARGIN_MM * 2);
-
-      // 첫 페이지 하단 여백 가리기 (배경색 bg-white = 흰색)
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F');
-      
-      while (heightLeft > 0) {
-        position -= (pageHeight - MARGIN_MM * 2);
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', MARGIN_MM, position, pdfWidth, pdfHeight);
-        heightLeft -= (pageHeight - MARGIN_MM * 2);
-
-        // 추가 페이지 상하단 여백 가리기
-        pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, 0, pageWidth, MARGIN_MM, 'F'); // 상단
-        pdf.rect(0, pageHeight - MARGIN_MM, pageWidth, MARGIN_MM, 'F'); // 하단
+    setIsPdfMode(true);
+    
+    // DOM 업데이트 후 캡처를 위해 대기
+    setTimeout(async () => {
+      try {
+        const canvas = await html2canvas(reportRef.current, { scale: 2, useCORS: true, backgroundColor: '#f8fafc' });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const MARGIN_MM = 15;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const maxPdfHeight = pageHeight - (MARGIN_MM * 2);
+        
+        let finalPdfWidth = pageWidth - (MARGIN_MM * 2);
+        let finalPdfHeight = (canvas.height * finalPdfWidth) / canvas.width;
+        
+        // 세로 높이가 1페이지를 초과하면 1페이지에 딱 맞게 비율 축소
+        if (finalPdfHeight > maxPdfHeight) {
+          finalPdfHeight = maxPdfHeight;
+          finalPdfWidth = (canvas.width * finalPdfHeight) / canvas.height;
+        }
+        
+        // 가운데 정렬
+        const xOffset = MARGIN_MM + ((pageWidth - (MARGIN_MM * 2) - finalPdfWidth) / 2);
+        
+        pdf.addImage(imgData, 'PNG', xOffset, MARGIN_MM, finalPdfWidth, finalPdfHeight);
+        
+        pdf.save(`면접리포트_${candidate.name}.pdf`);
+      } catch (err) {
+        console.error('PDF 생성 실패:', err);
+        alert('PDF 생성 실패');
+      } finally {
+        setIsPdfMode(false);
+        setIsExporting(false);
       }
-      
-      pdf.save(`면접리포트_${candidate.name}.pdf`);
-    } catch (err) {
-      console.error('PDF 생성 실패:', err);
-      alert('PDF 생성 실패');
-    } finally {
-      setIsExporting(false);
-    }
+    }, 150);
   };
 
   if (loading) return <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center font-bold">로딩 중...</div>;
@@ -206,6 +200,9 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
     { subject: '전문 기술', A: calculateAvg(evaluationData.safetyTech), fullMark: 5 },
   ];
 
+  const currentYear = new Date().getFullYear();
+  const birthYearText = candidate.birthYear ? `${candidate.birthYear}년생 (만 ${currentYear - candidate.birthYear}세)` : '';
+
   return (
     <div className="fixed inset-0 bg-slate-50 z-[100] overflow-y-auto custom-scrollbar font-sans antialiased text-slate-900">
       <div className="max-w-5xl mx-auto p-4 md:p-12">
@@ -215,21 +212,24 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
 
         <div ref={reportRef} className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
           {/* Hero Section */}
-          <div className="bg-slate-900 p-12 text-white">
+          <div className={`bg-slate-900 ${isPdfMode ? 'p-6' : 'p-12'} text-white`}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
               <div className="flex items-center gap-8">
                 <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md flex items-center justify-center text-4xl font-black border border-white/20">
                   {candidate.name.charAt(0)}
                 </div>
                 <div>
-                  <div className="flex gap-2 mb-3">
+                  <div className={`flex gap-2 ${isPdfMode ? 'mb-1' : 'mb-3'}`}>
                     <span className="px-3 py-1 bg-blue-500 text-[10px] font-black uppercase tracking-widest rounded-full">{candidate.position}</span>
                     <span className="px-3 py-1 bg-white/10 text-[10px] font-black uppercase tracking-widest rounded-full border border-white/20">
                       {candidate.type === 'experienced' ? '경력 사원' : '신입 사원'}
                     </span>
                   </div>
-                  <h1 className="text-5xl font-black tracking-tighter">{candidate.name} <span className="text-2xl font-medium text-white/40 italic">Candidate</span></h1>
-                  <p className="mt-2 text-white/60 font-medium">수험번호: {candidate.examNumber || 'N/A'}</p>
+                  <h1 className={`${isPdfMode ? 'text-4xl' : 'text-5xl'} font-black tracking-tighter`}>{candidate.name} <span className={`${isPdfMode ? 'text-xl' : 'text-2xl'} font-medium text-white/40 italic`}>Candidate</span></h1>
+                  {birthYearText && (
+                    <p className={`mt-1 text-white/80 font-bold ${isPdfMode ? 'text-sm' : 'text-base'} tracking-wide`}>{birthYearText}</p>
+                  )}
+                  <p className="mt-1 text-white/60 font-medium">수험번호: {candidate.examNumber || 'N/A'}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -242,12 +242,12 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
           </div>
 
-          <div className="p-12 space-y-12">
+          <div className={`${isPdfMode ? 'p-6 space-y-6' : 'p-12 space-y-12'}`}>
             {/* Analysis Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div className="space-y-6">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 ${isPdfMode ? 'gap-6' : 'gap-12'}`}>
+              <div className={`${isPdfMode ? 'space-y-3' : 'space-y-6'}`}>
                 <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-blue-600"/> 다차원 역량 분석</h3>
-                <div className="h-64 bg-slate-50 rounded-3xl p-4 border border-slate-100">
+                <div className={`${isPdfMode ? 'h-48' : 'h-64'} bg-slate-50 rounded-3xl p-4 border border-slate-100`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
                       <PolarGrid stroke="#e2e8f0" />
@@ -259,9 +259,9 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className={`${isPdfMode ? 'space-y-3' : 'space-y-6'}`}>
                 <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><BrainCircuit size={20} className="text-indigo-600"/> AI 분석 요약</h3>
-                <div className="bg-indigo-50/50 rounded-3xl p-8 border border-indigo-100 min-h-[256px]">
+                <div className={`bg-indigo-50/50 rounded-3xl ${isPdfMode ? 'p-4 min-h-[192px]' : 'p-8 min-h-[256px]'} border border-indigo-100`}>
                   {aiSummary ? (
                     <div className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap font-medium">{aiSummary}</div>
                   ) : (
@@ -275,28 +275,28 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Detailed Evaluation Content */}
-            <div className="space-y-8">
+            <div className={`${isPdfMode ? 'space-y-4' : 'space-y-8'}`}>
               <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><ClipboardCheck size={20} className="text-blue-600"/> 세부 평가 항목</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+              <div className={`grid grid-cols-1 md:grid-cols-3 ${isPdfMode ? 'gap-3' : 'gap-6'}`}>
+                <div className={`bg-white ${isPdfMode ? 'p-4 gap-2' : 'p-6 gap-4'} rounded-3xl border border-slate-100 shadow-sm flex flex-col`}>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">외관 인상 ({Object.keys(evaluationData.appearance || {}).length || 8}항목)</span>
-                  <div className="text-3xl font-black text-slate-900">{chartData[0].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
+                  <div className={`${isPdfMode ? 'text-2xl' : 'text-3xl'} font-black text-slate-900`}>{chartData[0].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+                <div className={`bg-white ${isPdfMode ? 'p-4 gap-2' : 'p-6 gap-4'} rounded-3xl border border-slate-100 shadow-sm flex flex-col`}>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">직무/역량 평가 ({Object.keys(evaluationData.competency || {}).length || (candidate.type === 'experienced' ? 31 : 12)}항목)</span>
-                  <div className="text-3xl font-black text-slate-900">{chartData[1].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
+                  <div className={`${isPdfMode ? 'text-2xl' : 'text-3xl'} font-black text-slate-900`}>{chartData[1].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4">
+                <div className={`bg-white ${isPdfMode ? 'p-4 gap-2' : 'p-6 gap-4'} rounded-3xl border border-slate-100 shadow-sm flex flex-col`}>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">전문 기술 ({Object.keys(evaluationData.safetyTech || {}).length || 4}항목)</span>
-                  <div className="text-3xl font-black text-slate-900">{chartData[2].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
+                  <div className={`${isPdfMode ? 'text-2xl' : 'text-3xl'} font-black text-slate-900`}>{chartData[2].A.toFixed(1)} <span className="text-sm font-bold text-slate-300">/ 5.0</span></div>
                 </div>
               </div>
             </div>
 
             {/* Feedback Section */}
-            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-10">
-              <h3 className="text-xl font-black mb-6 flex items-center gap-3"><MessageSquare size={24} className="text-blue-600"/> 면접관 최종 피드백</h3>
-              <p className="text-lg font-bold text-slate-800 leading-relaxed italic">"{reportData.feedback || "등록된 최종 피드백이 없습니다."}"</p>
+            <div className={`bg-slate-50 border border-slate-100 rounded-[2rem] ${isPdfMode ? 'p-6' : 'p-10'}`}>
+              <h3 className={`text-xl font-black ${isPdfMode ? 'mb-3' : 'mb-6'} flex items-center gap-3`}><MessageSquare size={24} className="text-blue-600"/> 면접관 최종 피드백</h3>
+              <p className={`${isPdfMode ? 'text-base' : 'text-lg'} font-bold text-slate-800 leading-relaxed italic`}>"{reportData.feedback || "등록된 최종 피드백이 없습니다."}"</p>
             </div>
           </div>
         </div>
