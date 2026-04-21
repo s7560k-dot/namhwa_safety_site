@@ -201,7 +201,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
   ];
 
   const currentYear = new Date().getFullYear();
-  const birthYearText = candidate.birthYear ? `${candidate.birthYear}년생 (만 ${currentYear - candidate.birthYear}세)` : '';
+  const birthYearText = candidate.birthYear ? `${candidate.birthYear}년생 (만 ${currentYear - candidate.birthYear}세)` : '생년월일 미입력';
 
   return (
     <div className="fixed inset-0 bg-slate-50 z-[100] overflow-y-auto custom-scrollbar font-sans antialiased text-slate-900">
@@ -210,9 +210,9 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
           <ChevronLeft size={20} className="group-hover:-translate-x-1" /> 목록으로 돌아가기
         </button>
 
-        <div ref={reportRef} className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+        <div ref={reportRef} className={`bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 ${isPdfMode ? 'flex flex-col' : ''}`} style={isPdfMode ? { width: '1024px', height: '1519px' } : {}}>
           {/* Hero Section */}
-          <div className={`bg-slate-900 ${isPdfMode ? 'p-6' : 'p-12'} text-white`}>
+          <div className={`bg-slate-900 ${isPdfMode ? 'p-6 shrink-0' : 'p-12'} text-white`}>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
               <div className="flex items-center gap-8">
                 <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md flex items-center justify-center text-4xl font-black border border-white/20">
@@ -226,9 +226,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
                     </span>
                   </div>
                   <h1 className={`${isPdfMode ? 'text-4xl' : 'text-5xl'} font-black tracking-tighter`}>{candidate.name} <span className={`${isPdfMode ? 'text-xl' : 'text-2xl'} font-medium text-white/40 italic`}>Candidate</span></h1>
-                  {birthYearText && (
-                    <p className={`mt-1 text-white/80 font-bold ${isPdfMode ? 'text-sm' : 'text-base'} tracking-wide`}>{birthYearText}</p>
-                  )}
+                  <p className={`mt-1 font-bold ${isPdfMode ? 'text-sm' : 'text-base'} tracking-wide ${candidate.birthYear ? 'text-white/80' : 'text-red-400'}`}>{birthYearText}</p>
                   <p className="mt-1 text-white/60 font-medium">수험번호: {candidate.examNumber || 'N/A'}</p>
                 </div>
               </div>
@@ -242,12 +240,12 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
           </div>
 
-          <div className={`${isPdfMode ? 'p-6 space-y-6' : 'p-12 space-y-12'}`}>
+          <div className={`${isPdfMode ? 'p-6 gap-6 flex flex-col flex-1' : 'p-12 space-y-12'}`}>
             {/* Analysis Grid */}
-            <div className={`grid grid-cols-1 lg:grid-cols-2 ${isPdfMode ? 'gap-6' : 'gap-12'}`}>
-              <div className={`${isPdfMode ? 'space-y-3' : 'space-y-6'}`}>
+            <div className={`grid grid-cols-1 lg:grid-cols-2 ${isPdfMode ? 'gap-6 flex-1' : 'gap-12'}`}>
+              <div className={`${isPdfMode ? 'flex flex-col gap-3' : 'space-y-6'}`}>
                 <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-blue-600"/> 다차원 역량 분석</h3>
-                <div className={`${isPdfMode ? 'h-48' : 'h-64'} bg-slate-50 rounded-3xl p-4 border border-slate-100`}>
+                <div className={`${isPdfMode ? 'flex-1 min-h-[192px]' : 'h-64'} bg-slate-50 rounded-3xl p-4 border border-slate-100`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
                       <PolarGrid stroke="#e2e8f0" />
@@ -259,9 +257,9 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
                 </div>
               </div>
 
-              <div className={`${isPdfMode ? 'space-y-3' : 'space-y-6'}`}>
+              <div className={`${isPdfMode ? 'flex flex-col gap-3' : 'space-y-6'}`}>
                 <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><BrainCircuit size={20} className="text-indigo-600"/> AI 분석 요약</h3>
-                <div className={`bg-indigo-50/50 rounded-3xl ${isPdfMode ? 'p-4 min-h-[192px]' : 'p-8 min-h-[256px]'} border border-indigo-100`}>
+                <div className={`bg-indigo-50/50 rounded-3xl ${isPdfMode ? 'p-4 flex-1' : 'p-8 min-h-[256px]'} border border-indigo-100`}>
                   {aiSummary ? (
                     <div className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap font-medium">{aiSummary}</div>
                   ) : (
@@ -275,7 +273,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Detailed Evaluation Content */}
-            <div className={`${isPdfMode ? 'space-y-4' : 'space-y-8'}`}>
+            <div className={`${isPdfMode ? 'gap-4 flex flex-col shrink-0' : 'space-y-8'}`}>
               <h3 className="text-xl font-black flex items-center gap-2 uppercase tracking-widest"><ClipboardCheck size={20} className="text-blue-600"/> 세부 평가 항목</h3>
               <div className={`grid grid-cols-1 md:grid-cols-3 ${isPdfMode ? 'gap-3' : 'gap-6'}`}>
                 <div className={`bg-white ${isPdfMode ? 'p-4 gap-2' : 'p-6 gap-4'} rounded-3xl border border-slate-100 shadow-sm flex flex-col`}>
@@ -294,7 +292,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Feedback Section */}
-            <div className={`bg-slate-50 border border-slate-100 rounded-[2rem] ${isPdfMode ? 'p-6' : 'p-10'}`}>
+            <div className={`bg-slate-50 border border-slate-100 rounded-[2rem] ${isPdfMode ? 'p-6 shrink-0' : 'p-10'}`}>
               <h3 className={`text-xl font-black ${isPdfMode ? 'mb-3' : 'mb-6'} flex items-center gap-3`}><MessageSquare size={24} className="text-blue-600"/> 면접관 최종 피드백</h3>
               <p className={`${isPdfMode ? 'text-base' : 'text-lg'} font-bold text-slate-800 leading-relaxed italic`}>"{reportData.feedback || "등록된 최종 피드백이 없습니다."}"</p>
             </div>
