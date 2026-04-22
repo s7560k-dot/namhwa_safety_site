@@ -12,6 +12,7 @@ const HiringDashboard = () => {
   const [newBirthYear, setNewBirthYear] = useState('');
   const [newPosition, setNewPosition] = useState('안전보건 전담팀 (신입/경력)');
   const [isEditing, setIsEditing] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [editCandidateData, setEditCandidateData] = useState(null);
   
   // New state for active views
