@@ -224,7 +224,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         setIsPdfMode(false);
         setIsExporting(false);
       }
-    }, 150);
+    }, 800);
   };
 
   const handleSendToExecutives = () => {
@@ -317,6 +317,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                         stroke="#3b82f6"
                         fill="#3b82f6"
                         fillOpacity={0.6}
+                        isAnimationActive={false}
                       />
                     </RadarChart>
                   </ResponsiveContainer>

@@ -175,7 +175,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
         setIsPdfMode(false);
         setIsExporting(false);
       }
-    }, 150);
+    }, 800);
   };
 
   if (loading) return <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center font-bold">로딩 중...</div>;
@@ -251,7 +251,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
                       <PolarGrid stroke="#e2e8f0" />
                       <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} />
                       <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
-                      <Radar name={candidate.name} dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                      <Radar name={candidate.name} dataKey="A" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} isAnimationActive={false} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
