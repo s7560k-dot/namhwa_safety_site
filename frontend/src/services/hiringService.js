@@ -37,16 +37,21 @@ export const hiringService = {
     }
 
     // 객체인 경우 고도화 버전 대응
-    const { name, type, examNumber, position = '안전보건팀' } = candidateData;
-    return await db.collection(COLLECTIONS.CANDIDATES).add({
-      name,
-      type, // 'new_entry' or 'experienced'
-      examNumber,
-      position,
+    const dataToSave = {
+      position: candidateData.position || '안전보건팀',
       status: 'pending',
       createdAt: Timestamp.now(),
       ...candidateData
+    };
+
+    // Firebase는 undefined 값을 허용하지 않으므로 제거
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
     });
+
+    return await db.collection(COLLECTIONS.CANDIDATES).add(dataToSave);
   },
 
   // 4. 면접 평가 데이터 저장 (기존/신규 하이브리드 지원)

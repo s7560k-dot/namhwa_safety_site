@@ -8,9 +8,9 @@ import CandidateReport from './CandidateReport';
 const HiringDashboard = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newBirthYear, setNewBirthYear] = useState('');
+  const [newPosition, setNewPosition] = useState('안전보건 전담팀 (신입/경력)');
   const [isEditing, setIsEditing] = useState(false);
   const [editCandidateData, setEditCandidateData] = useState(null);
   
@@ -50,10 +50,12 @@ const HiringDashboard = () => {
     try {
       await hiringService.addCandidate({
         name: newName,
-        birthYear: parseInt(newBirthYear) || null
+        birthYear: parseInt(newBirthYear) || null,
+        position: newPosition
       });
       setNewName('');
       setNewBirthYear('');
+      setNewPosition('안전보건 전담팀 (신입/경력)');
       setIsAdding(false);
       fetchCandidates();
     } catch (error) {
@@ -344,9 +346,13 @@ const HiringDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 구분</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900">
-                    <option>안전보건 전담팀 (신입/경력)</option>
-                    <option>현장 안전관리자</option>
+                  <select 
+                    value={newPosition}
+                    onChange={(e) => setNewPosition(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
+                  >
+                    <option value="안전보건 전담팀 (신입/경력)">안전보건 전담팀 (신입/경력)</option>
+                    <option value="현장 안전관리자">현장 안전관리자</option>
                   </select>
                 </div>
               </div>
