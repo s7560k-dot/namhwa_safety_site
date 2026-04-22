@@ -26,7 +26,7 @@ import {
     ChevronRight,
     Database
 } from 'lucide-react';
-import firebase from 'firebase/compat/app';
+import firebase from './firebase';
 import { initializeApp, deleteApp, getApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 // import { firebaseConfig } from './firebase_config'; // 제거됨 (보안을 위해 .env 사용)
