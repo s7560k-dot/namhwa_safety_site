@@ -1460,17 +1460,26 @@
             }
 
             function updateAllScores() {
+                // 1. 계획: 대분류 소계 산출 시 공식 배점(Cap)을 초과하지 않도록 보정합니다.
+                // 2. 검증: 대분류 항목 소계가 공식 배점을 초과할 경우, 해당 배점 한도로 제한하여 화면 표시 점수와 내부 환산 점수의 합계를 일치시킵니다.
+                // 3. 구현: 각 대분류별 공식 배점을 정의하고 Math.min을 적용합니다.
+                const baseScores = { 1: 5, 2: 30, 3: 10, 4: 20, 5: 10, 6: 20, 7: 5 };
                 document.querySelectorAll('.main-table').forEach((table, index) => {
                     let sectionSubtotal = 0;
                     table.querySelectorAll('tbody .score-input').forEach(input => {
                         sectionSubtotal += parseFloat(input.value) || 0;
                     });
+                    
+                    const maxAllowed = baseScores[index + 1] || 100;
+                    // 대분류 배점 한도 초과분 제한 처리 (이유: 화면 소계 및 종합 표 합계가 내부 환산 기준과 일치되도록 수정)
+                    const cappedSubtotal = Math.min(sectionSubtotal, maxAllowed);
+                    
                     const subtotalCell = table.querySelector('tfoot .section-subtotal');
-                    if (subtotalCell) subtotalCell.textContent = sectionSubtotal.toFixed(1);
+                    if (subtotalCell) subtotalCell.textContent = cappedSubtotal.toFixed(1);
 
                     const compScoreInput = document.getElementById(`comp-score-${index + 1}`);
                     if (compScoreInput) {
-                        compScoreInput.value = sectionSubtotal.toFixed(1);
+                        compScoreInput.value = cappedSubtotal.toFixed(1);
                     }
                 });
                 updateComprehensiveResults();
