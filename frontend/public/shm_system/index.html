@@ -1340,9 +1340,10 @@
                 document.getElementById('field-base-score-display').textContent = maxFieldScore;
 
                 // Update Field Input attributes
+                // 100점 만점 기준으로 입력받기 위해 최대 입력 한도를 항상 100으로 고정합니다. (이전의 maxFieldScore 한계값 오작동 해결)
                 const fInput = document.getElementById('field-score-input');
-                fInput.max = maxFieldScore;
-                if (parseFloat(fInput.value) > maxFieldScore) fInput.value = maxFieldScore;
+                fInput.max = 100;
+                if (parseFloat(fInput.value) > 100) fInput.value = 100;
 
                 // Update Badge
                 phaseBadge.textContent = phaseText;
@@ -1415,19 +1416,17 @@
 
 
                 // --- Field Score ---
+                // 1. 계획: 입력된 현장 안전관리 점수를 100점 만점 스케일로 간주하여 무조건 공정 단계별 최대 배점 비중(maxFieldScore)으로 자동 환산합니다.
+                // 2. 검증: 입력값이 maxFieldScore보다 낮을 때도 환산이 정상 동작하게 보장하여 일관성 있는 객관적 총점을 구합니다.
+                // 3. 구현: 기존 조건문 분기를 제거하고 항상 비중식으로 환산하여 디스플레이 및 프리뷰를 처리합니다.
                 let fieldScore = parseFloat(fieldScoreInput.value) || 0;
                 const previewEl = document.getElementById('field-calc-preview');
                 
-                // Logic: 만약 입력값이 maxFieldScore보다 크고 100 이하이면, 100점 만점 기준으로 간주하여 환산
-                if (fieldScore > maxFieldScore && fieldScore <= 100) {
-                    const originalInput = fieldScore;
-                    fieldScore = (fieldScore / 100) * maxFieldScore;
-                    if (previewEl) {
-                        previewEl.textContent = `(${originalInput}점 → ${fieldScore.toFixed(1)}점 환산)`;
-                        previewEl.style.display = 'block';
-                    }
-                } else {
-                    if (previewEl) previewEl.style.display = 'none';
+                const originalInput = fieldScore;
+                fieldScore = (fieldScore / 100) * maxFieldScore;
+                if (previewEl) {
+                    previewEl.textContent = `(${originalInput.toFixed(1)}점 → ${fieldScore.toFixed(1)}점 환산)`;
+                    previewEl.style.display = 'block';
                 }
 
                 const clampedFieldScore = Math.min(maxFieldScore, Math.max(0, fieldScore));
