@@ -926,14 +926,25 @@
             if (grandTotalMaxPossibleWeightedScore > 0) {
                 baseScore = (grandTotalWeightedScore / grandTotalMaxPossibleWeightedScore) * 100 * kFactor;
             }
+            // 최하 점수가 0점 이하로 내려가지 않도록 보강 (방어 코드)
+            baseScore = Math.max(0, baseScore);
 
             // Add Bonus Points
             const bonusImprovement = parseFloat(document.getElementById('bonus-improvement').value) || 0;
             const bonusIdea = parseFloat(document.getElementById('bonus-idea').value) || 0;
-            const finalScore = baseScore + bonusImprovement + bonusIdea;
+            // 최종 점수 역시 음수가 되지 않도록 하한선 0점 적용
+            let finalScore = baseScore + bonusImprovement + bonusIdea;
+            finalScore = Math.max(0, finalScore);
 
             document.getElementById('grandtotal-count').textContent = grandTotalIssueCount;
-            document.getElementById('grandtotal-score').textContent = grandTotalWeightedScore.toFixed(2);
+            
+            // 1. 계획: 표의 총 합계 점수 칸에 단순 가중합과 100점 만점 환산점(가점 제외)을 병기합니다.
+            // 2. 검증: 사용자가 느끼는 획득 가중합과 최종 백분율 환산 점수의 괴리를 해결하여 사칙연산 일치감을 보장합니다.
+            // 3. 구현: 템플릿 리터럴을 통해 가중합 및 환산 점수를 괄호 형태로 표기합니다.
+            const displayScoreText = grandTotalMaxPossibleWeightedScore > 0 
+                ? `${grandTotalWeightedScore.toFixed(2)} (환산: ${baseScore.toFixed(2)}점)`
+                : grandTotalWeightedScore.toFixed(2);
+            document.getElementById('grandtotal-score').textContent = displayScoreText;
             scoreKeys.forEach(key => {
                 document.getElementById(`grandtotal-rating-${scoreIdKeys[key]}`).textContent = grandTotalRatingCounts[key];
             });
