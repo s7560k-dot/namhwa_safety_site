@@ -1,0 +1,17 @@
+[
+    {
+        "keyword": "세륜기",
+        "primary_risk": "장비 양중 시 중량물 낙하 및 설치 중 협착 위험",
+        "checklist_required": "크레인 작업허가서(PTW), 줄걸이 용구 점검표"
+    },
+    {
+        "keyword": "철근",
+        "primary_risk": "철근 운반 중 요통 및 가공 중 베임/찔림",
+        "checklist_required": "중량물 취급 작업계획서, 보호구 지급 대장"
+    },
+    {
+        "keyword": "철골",
+        "primary_risk": "고소작업 중 추락 및 양중물 낙하",
+        "checklist_required": "고소작업허가서(PTW), 양중기 안전점검표, 추락방지망 설치 확인서"
+    }
+]

@@ -14,6 +14,7 @@ import FloorPlanTo3DApp from './components/FloorPlanTo3DApp';
 import NetworkScheduleDashboard from './components/evm/NetworkScheduleDashboard';
 import HiringDashboard from './components/hiring/HiringDashboard';
 import AdvancedHiringDashboard from './components/hiring_advanced/AdvancedHiringDashboard';
+import WbsGeneratorPage from './WbsGeneratorPage';
 
 import { AuthProvider } from './context/AuthContext';
 import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
@@ -76,6 +77,11 @@ function App() {
           <Route path="/network-schedule/:siteId" element={
             <ApprovedRoute>
               <NetworkScheduleDashboard />
+            </ApprovedRoute>
+          } />
+          <Route path="/wbs-generator" element={
+            <ApprovedRoute>
+              <WbsGeneratorPage />
             </ApprovedRoute>
           } />
           {/* Fallback route */}

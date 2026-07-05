@@ -534,7 +534,7 @@ const ResourceCenter = () => {
                             {[
                                 { title: "전사 공지사항", sub: "Notice", icon: <FileText />, link: "/board/global", isReady: true },
                                 { title: "현장 건의함", sub: "Suggestion", icon: <BookOpen />, link: "#", isReady: false },
-                                { title: "안전보건 자료실", sub: "Data Room", icon: <CheckSquare />, link: "#", isReady: false }
+                                { title: "스마트 WBS 자료실", sub: "WBS Auto Generator", icon: <CheckSquare />, link: "/wbs-generator", isReady: true }
                             ].map((item, index) => (
                                 <a
                                     href={item.link}

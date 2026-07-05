@@ -15,6 +15,7 @@ const STEPS = [
 
 const WbsDataUploader: React.FC<WbsDataUploaderProps> = ({ onComplete, onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // 단계 이동 핸들러
     const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, 4));
@@ -69,13 +70,19 @@ const WbsDataUploader: React.FC<WbsDataUploaderProps> = ({ onComplete, onClose }
             <p className="text-sm text-gray-600 mb-6">WBS 세분화를 위해 현장의 원가, 공간, 공정 엑셀 데이터를 업로드 해주세요. (CSV, XLSX 지원)</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* CBS Dropzone */}
-                <div className="border-2 border-dashed border-gray-200 hover:border-violet-400 bg-gray-50 hover:bg-violet-50/30 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group">
-                    <div className="bg-white p-3 rounded-xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                        <FileSpreadsheet className="text-blue-500" size={28} />
+                <label className="border-2 border-dashed border-gray-200 hover:border-violet-400 bg-gray-50 hover:bg-violet-50/30 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group">
+                    <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                            setSelectedFile(e.target.files[0]);
+                            // 파일 선택 시 자동으로 다음 단계로 넘어가지 않고 준비 상태 시각화
+                        }
+                    }} />
+                    <div className={`p-3 rounded-xl shadow-sm mb-4 group-hover:scale-110 transition-transform ${selectedFile ? 'bg-violet-100' : 'bg-white'}`}>
+                        {selectedFile ? <CheckCircle className="text-violet-600" size={28} /> : <FileSpreadsheet className="text-blue-500" size={28} />}
                     </div>
-                    <h5 className="font-bold text-gray-800 mb-1">비용(CBS) 데이터</h5>
-                    <p className="text-xs text-gray-400">도급/실행 내역서 엑셀 (필수)</p>
-                </div>
+                    <h5 className="font-bold text-gray-800 mb-1">{selectedFile ? selectedFile.name : "비용(CBS) 데이터"}</h5>
+                    <p className="text-xs text-gray-400">{selectedFile ? "업로드 준비됨" : "도급/실행 내역서 엑셀 (클릭하여 첨부)"}</p>
+                </label>
 
                 {/* PBS Dropzone */}
                 <div className="border-2 border-dashed border-gray-200 hover:border-violet-400 bg-gray-50 hover:bg-violet-50/30 rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group">
@@ -156,8 +163,9 @@ const WbsDataUploader: React.FC<WbsDataUploaderProps> = ({ onComplete, onClose }
                         </button>
                     ) : (
                         <button
-                            onClick={() => onComplete({})}
-                            className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm bg-violet-600 text-white hover:bg-violet-700 transition-all shadow-md shadow-violet-200"
+                            onClick={() => onComplete({ file: selectedFile })}
+                            disabled={!selectedFile}
+                            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all shadow-md ${!selectedFile ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-violet-600 text-white hover:bg-violet-700 shadow-violet-200'}`}
                         >
                             <CheckCircle size={16} /> Execute WBS Pipeline
                         </button>

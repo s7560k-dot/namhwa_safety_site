@@ -1,0 +1,29 @@
+[
+    {
+        "level_1_code": "PRJ-A1-001",
+        "level_1_name": "건축공사 전체",
+        "level_2_code": "PRJ-A2-010",
+        "level_2_name": "가설 및 토공사",
+        "level_3_code": "PRJ-A3-015",
+        "level_3_name": "세륜기 및 가설시설물 설치/해체",
+        "keywords": ["자동세륜기", "가설시설물", "세륜기설치", "세륜기해체"]
+    },
+    {
+        "level_1_code": "PRJ-A1-001",
+        "level_1_name": "건축공사 전체",
+        "level_2_code": "PRJ-A2-020",
+        "level_2_name": "철근콘크리트공사",
+        "level_3_code": "PRJ-A3-021",
+        "level_3_name": "기초 철근 배근",
+        "keywords": ["철근", "배근", "기초", "이형철근"]
+    },
+    {
+        "level_1_code": "PRJ-A1-001",
+        "level_1_name": "건축공사 전체",
+        "level_2_code": "PRJ-A2-030",
+        "level_2_name": "철골공사",
+        "level_3_code": "PRJ-A3-035",
+        "level_3_name": "철골 세우기",
+        "keywords": ["철골", "H빔", "세우기", "철골조"]
+    }
+]
