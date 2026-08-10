@@ -10,28 +10,50 @@
     <meta http-equiv="Expires" content="0">
     <title>현장 안전보건경영시스템 점검 결과표</title>
     <script>
-        (function () {
-            // 관리자 비밀번호 (임의 설정)
-            const ADMIN_PASSWORD = "1152";
+        // 1. 계획: DOM 로드 완료 후 세션스토리지를 조회하여 인증 여부 판별
+        // 2. 검증: 미인증 시 메인 화면을 blur 처리하고 관리자 비밀번호 입력 모달 노출
+        // 3. 구현: 사용자가 올바른 비밀번호를 입력하면 모달을 닫고 blur를 제거하여 화면 노출 (스레드 블로킹 우회)
+        const ADMIN_PASSWORD = "1152";
 
-            // 이미 인증된 세션인지 확인
-            if (!sessionStorage.getItem("isAdminAuthenticated")) {
-                let inputPwd = prompt("관리자 비밀번호를 입력하세요:", "");
+        document.addEventListener('DOMContentLoaded', () => {
+            const hasAuth = sessionStorage.getItem("isAdminAuthenticated") === "true";
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+            const pwdInput = document.getElementById('admin-password-input');
 
-                if (inputPwd === ADMIN_PASSWORD) {
-                    sessionStorage.setItem("isAdminAuthenticated", "true");
-                    alert("인증되었습니다.");
-                } else {
-                    alert("비밀번호가 일치하지 않습니다. 접근이 차단됩니다.");
-                    document.documentElement.innerHTML = ""; // 화면 지우기
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else {
-                        window.location.href = "../index.html"; // 랜딩 페이지로 리다이렉트
-                    }
+            if (hasAuth) {
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (mainContent) mainContent.style.filter = 'blur(5px)';
+                if (modal) modal.style.display = 'flex';
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') submitAdminPassword();
+                    });
                 }
             }
-        })();
+        });
+
+        function submitAdminPassword() {
+            const input = document.getElementById('admin-password-input');
+            const error = document.getElementById('password-error');
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+
+            if (input.value === ADMIN_PASSWORD) {
+                sessionStorage.setItem("isAdminAuthenticated", "true");
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (error) {
+                    error.style.display = 'block';
+                }
+                input.value = '';
+                input.focus();
+            }
+        }
     </script>
     <style>
         body {
@@ -479,7 +501,7 @@
 
 <body>
 
-    <div class="container">
+    <div class="container" id="main-content">
 
         <div id="action-btn-container" class="no-print"
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1707,6 +1729,30 @@
         });
     </script>
 
+    <!-- 관리자 비밀번호 입력 모달 (비동기식, 스레드 블로킹 방지) -->
+    <div id="password-modal" style="position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background-color: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); text-align: center; width: 100%; max-width: 400px; border: 1px solid #f1f5f9; box-sizing: border-box; font-family: sans-serif;">
+            <div style="width: 64px; height: 64px; background-color: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #2563eb;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 32px; height: 32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">관리자 인증</h2>
+            <p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">페이지에 접근하려면 관리자 비밀번호를 입력해 주세요.</p>
+            
+            <div style="margin-bottom: 24px;">
+                <input type="password" id="admin-password-input" 
+                    style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; text-align: center; font-family: monospace; font-size: 24px; tracking-widest; letter-spacing: 0.25em; box-sizing: border-box; transition: border-color 0.2s;"
+                    placeholder="••••" autofocus>
+                <p id="password-error" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none; font-weight: 600;">비밀번호가 일치하지 않습니다.</p>
+            </div>
+
+            <button onclick="submitAdminPassword()"
+                style="width: 100%; background-color: #2563eb; color: #ffffff; font-weight: 700; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; transition: background-color 0.2s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                인증하기
+            </button>
+        </div>
+    </div>
 </body>
 
 </html>
