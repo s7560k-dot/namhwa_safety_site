@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { auth, db, Timestamp } from './firebase';
 import { useAuth } from './context/AuthContext';
 import Footer from './components/Footer';
@@ -74,7 +74,6 @@ const ResourceCenter = () => {
     const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
     const { user, isAdmin } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
-    const location = useLocation();
 
     // Background Image URL (Local Asset per user request)
     const BG_IMAGE_URL = "/night_view.jpg";

@@ -69,7 +69,7 @@ export default function FloorPlanTo3DApp() {
                     // 에러 응답이 JSON 포맷이라면 상세 메시지 추출
                     const errorJson = JSON.parse(responseText);
                     errorMessage = errorJson.detail || errorMessage;
-                } catch (e) {
+                } catch {
                     // HTML 문서 등 파싱 불가능한 텍스트일 경우
                     errorMessage = `서버 통신 오류 (상태: ${response.status}). 자세한 내용은 콘솔(F12)을 확인하세요.`;
                 }
@@ -80,7 +80,7 @@ export default function FloorPlanTo3DApp() {
             let result;
             try {
                 result = JSON.parse(responseText);
-            } catch (e) {
+            } catch {
                 console.error("[JSON 파싱 에러] 서버에서 받은 응답:", responseText);
                 throw new Error("서버가 유효하지 않은 데이터(JSON 아님)를 반환했습니다.");
             }

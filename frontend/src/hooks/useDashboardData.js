@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 /**
  * ============================================================================
  * 🚨 [DATA ISOLATION GUIDE] 현장별 데이터 분리 및 파이어베이스 연동 훅 🚨
@@ -59,7 +59,7 @@ export const useDashboardData = (siteId) => {
                 setHeaderInfo(data.headerInfo || null);
                 setKpiData(data.kpiData || []);
             }
-        }, error => {
+        }, () => {
             // console.error("Error fetching site doc:", error); // Suppressed for dev
         });
 

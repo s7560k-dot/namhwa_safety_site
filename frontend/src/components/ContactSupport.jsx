@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { db } from '../firebase';
 import firebase from '../firebase';
 
 const ContactSupport = () => {
-    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
         phone: '',

@@ -27,7 +27,7 @@ import {
     Database
 } from 'lucide-react';
 import firebase from './firebase';
-import { initializeApp, deleteApp, getApp, getApps } from "firebase/app";
+import { initializeApp, deleteApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 // import { firebaseConfig } from './firebase_config'; // 제거됨 (보안을 위해 .env 사용)
 
@@ -440,7 +440,7 @@ const Admin = () => {
             await db.collection('inquiries').doc(id).update({ status: newStatus });
             setSuccess("처리가 완료되었습니다.");
             fetchInquiries();
-        } catch (err) {
+        } catch {
             setError("상태 업데이트 중 오류가 발생했습니다.");
         } finally {
             setActionLoading(false);
@@ -454,7 +454,7 @@ const Admin = () => {
             await db.collection('posts').doc(id).delete();
             setSuccess("게시물이 삭제되었습니다.");
             fetchPosts();
-        } catch (err) {
+        } catch {
             setError("삭제 중 오류가 발생했습니다.");
         } finally {
             setActionLoading(false);

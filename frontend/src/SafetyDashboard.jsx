@@ -22,7 +22,7 @@ const NamhwaSymbol = ({ className }) => (
 
 class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, errorInfo: null, error: null }; }
-    static getDerivedStateFromError(error) { return { hasError: true }; }
+    static getDerivedStateFromError(_error) { return { hasError: true }; }
     componentDidCatch(error, errorInfo) { this.setState({ errorInfo, error }); console.error("ErrorBoundary caught an error", error, errorInfo); }
     render() {
         if (this.state.hasError) {
@@ -167,7 +167,6 @@ const SafetyDashboardInner = () => {
             eduCompleted: 0, assessment: '', createdAt: Date.now()
         });
     };
-    const handleWorkEdit = (id) => setEditingWorkId(id);
     // Image Compression Utility
     const compressImage = (file, maxWidth = 1280, quality = 0.7) => {
         return new Promise((resolve, reject) => {

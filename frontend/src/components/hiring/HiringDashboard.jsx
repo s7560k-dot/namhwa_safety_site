@@ -105,7 +105,7 @@ const HiringDashboard = () => {
         createdAt: Timestamp.now()
       });
 
-      const c2 = await db.collection('candidates').add({
+      await db.collection('candidates').add({
         name: '이몽룡 (테스트)',
         position: '현장 안전관리자 (신입)',
         status: 'pending',

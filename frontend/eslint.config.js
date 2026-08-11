@@ -23,7 +23,21 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    // Node-context build/dev scripts (not bundled, run directly via `node`).
+    files: ['scripts/**/*.js', 'logTest.js', 'seedEVM.js', 'public/download_bg.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
+    // Loaded via <script> tag before the Firebase compat SDK, outside the bundle.
+    files: ['public/auth-guard.js'],
+    languageOptions: {
+      globals: { ...globals.browser, firebase: 'readonly' },
     },
   },
 ])
