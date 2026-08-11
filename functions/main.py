@@ -1,7 +1,6 @@
 import json
 import os
 import ezdxf
-import io
 import tempfile
 import traceback
 import google.generativeai as genai
@@ -277,6 +276,7 @@ def export_excel(req: https_fn.Request) -> https_fn.Response:
         return set_cors_headers(resp)
     except Exception as e:
         error_msg = traceback.format_exc()
+        print(f"Excel Export Error: {error_msg}")
         resp = https_fn.Response(json.dumps({"detail": f"Excel Export Error: {str(e)}"}), status=500)
         return set_cors_headers(resp)
 
