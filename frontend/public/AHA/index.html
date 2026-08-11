@@ -177,6 +177,32 @@
             cursor: pointer;
             color: #6b7280;
         }
+        .hazard-major-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+        .hazard-major-tab-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+            cursor: pointer;
+        }
+        .hazard-major-tab-btn:hover {
+            background-color: #f3f4f6;
+        }
+        .hazard-major-tab-btn.active {
+            background-color: #1f2937;
+            border-color: #1f2937;
+            color: #fff;
+        }
         .hazard-modal-body {
             display: flex;
             flex: 1;
@@ -747,6 +773,7 @@
                 <h3>공종별 유해위험요인 선택</h3>
                 <button id="hazard-modal-close-x" type="button" class="hazard-modal-close-btn">&times;</button>
             </div>
+            <div id="hazard-major-tabs" class="hazard-major-tabs"></div>
             <div class="hazard-modal-body">
                 <div id="hazard-category-panel" class="hazard-category-panel"></div>
                 <div id="hazard-item-panel" class="hazard-item-panel"></div>
@@ -793,97 +820,221 @@
         // --------------------------------------------------
 
         // --------------------------------------------------
-        // [신규] 건축공사 공종별 유해위험요인 / 감소대책 카탈로그
+        // [신규] 건설공사 대분류(토목/건축)별 공종별 유해위험요인 / 감소대책 카탈로그
+        // (건설산업기본법 시행령 [별표 1] 건설공사의 종류 - 토목공사/건축공사
+        //  대분류 체계를 기준으로 공종을 구성)
         // 항목을 체크하면 감소대책이 자동으로 채워진 행이 추가됩니다.
-        // 여기에서 공종·항목을 추가/수정하세요.
+        // 여기에서 대분류·공종·항목을 추가/수정하세요.
         // --------------------------------------------------
         const hazardCatalog = [
             {
-                category: "가설공사(비계·가시설)",
-                items: [
-                    { risk: "강관비계 조립·해체 중 추락", measure: "안전대 부착설비 설치 및 안전대 착용, 승강용 사다리 설치" },
-                    { risk: "비계 자재(강관·클램프) 낙하로 인한 하부 근로자 재해", measure: "낙하물방지망·수직보호망 설치, 작업구역 하부 출입통제" },
-                    { risk: "강풍·태풍 시 비계 전도", measure: "벽이음재(Tie) 규정 간격 설치, 강풍 예보 시 작업중지" },
-                    { risk: "개구부 방호 미흡으로 인한 추락", measure: "안전난간 및 덮개 설치, 위험표지판 부착" },
-                    { risk: "이동식 사다리 사용 중 전도·추락", measure: "사다리 전도방지조치 실시, 단독작업 금지(2인 1조)" }
+                major: "토목공사",
+                subCategories: [
+                    {
+                        category: "가설공사(가시설·비계)",
+                        items: [
+                            { risk: "강관동바리·비계 조립·해체 중 추락", measure: "안전대 부착설비 및 승강설비 설치, 안전대 착용" },
+                            { risk: "가설도로 통행 중 근로자-장비 충돌", measure: "가설도로 노면 정리, 통행속도 제한 및 유도자 배치" },
+                            { risk: "가설전기 누전으로 인한 감전", measure: "누전차단기 설치, 정기 절연저항 측정" },
+                            { risk: "자재 야적장 붕괴·전도", measure: "적재높이 제한 준수, 결속상태 정기점검" },
+                            { risk: "강풍 시 가설구조물 전도", measure: "버팀재·와이어 긴결상태 확인, 기상특보 시 작업중지" }
+                        ]
+                    },
+                    {
+                        category: "토공사(굴착·성토)",
+                        items: [
+                            { risk: "굴착면 붕괴로 인한 매몰", measure: "흙막이 지보공 설치, 굴착 구배기준 준수" },
+                            { risk: "중장비(굴삭기 등)와 근로자 충돌", measure: "유도자 배치, 근로자 접근금지구역 설정" },
+                            { risk: "굴착기 전도", measure: "작업지반 다짐상태 확인, 경사지 작업 시 아웃트리거 사용" },
+                            { risk: "지하매설물(가스관·전선로·상수도관) 손상", measure: "굴착 전 매설물 조사 및 표시, 매설물 인근 인력굴착 병행" },
+                            { risk: "우천 시 사면 붕괴", measure: "배수로 사전 설치, 강우 시 작업중지 및 사면 점검" },
+                            { risk: "성토·다짐 작업 중 장비 전도", measure: "층따기 다짐 실시, 급경사 구간 작업 금지" }
+                        ]
+                    },
+                    {
+                        category: "흙막이·지반보강공사",
+                        items: [
+                            { risk: "흙막이 벽체(엄지말뚝·강널말뚝 등) 붕괴", measure: "계측관리(변위·응력) 실시, 버팀보·어스앵커 시공품질 확인" },
+                            { risk: "어스앵커 인장작업 중 강선 파단·비래", measure: "인장작업구역 출입통제, 규정 인장력 준수" },
+                            { risk: "지하수 유입으로 인한 보일링·히빙", measure: "차수그라우팅 시공, 배수펌프 상시 가동 및 수위 관리" },
+                            { risk: "굴착 배면 지반침하로 인한 인접구조물 손상", measure: "침하계측 실시, 배면 지표침하 관리기준 설정 및 모니터링" }
+                        ]
+                    },
+                    {
+                        category: "콘크리트구조물공사(교량·옹벽 등)",
+                        items: [
+                            { risk: "거푸집 동바리 붕괴", measure: "설계도서에 따른 동바리 규격·간격 준수 및 조립도 사전 검토" },
+                            { risk: "콘크리트 타설 중 편심에 의한 붕괴", measure: "대칭 순서 타설, 타설 전 지지구조 안전점검" },
+                            { risk: "콘크리트 펌프카 붐대에 의한 협착·충돌", measure: "붐대 작업반경 내 출입통제, 신호수 배치" },
+                            { risk: "고소 거푸집 작업 중 추락", measure: "작업발판·안전난간 설치, 안전대 착용" },
+                            { risk: "동절기 콘크리트 양생 중 갈탄 등에 의한 화재·중독", measure: "밀폐공간 환기 실시, 화기작업 감시자 배치" }
+                        ]
+                    },
+                    {
+                        category: "강교·철골가설공사",
+                        items: [
+                            { risk: "강재 인양 중 낙하·충돌", measure: "크레인 정격하중 준수, 인양경로 하부 통제" },
+                            { risk: "교량 가설 작업 중 추락", measure: "안전대 부착설비 및 추락방지망 설치" },
+                            { risk: "압출·인상(ILM·FCM 등) 작업 중 구조물 탈락", measure: "잭 용량 및 반력 사전 검토, 작업 전 구조검토 실시" },
+                            { risk: "용접·용단 작업 중 화재·화상", measure: "불티비산방지덮개 설치, 소화기 비치 및 화재감시자 배치" }
+                        ]
+                    },
+                    {
+                        category: "포장공사",
+                        items: [
+                            { risk: "아스팔트 피니셔·롤러에 의한 협착", measure: "장비 후진 시 후방감지장치 확인 및 신호수 운용" },
+                            { risk: "고온 아스팔트 취급 중 화상", measure: "보호장갑·보호복 착용, 살포온도 관리" },
+                            { risk: "절단기 사용 중 비산물에 의한 상해", measure: "절단기 방호덮개 설치, 보안경 착용" },
+                            { risk: "야간 도로포장 작업 중 통행차량 충돌", measure: "안전표지·라바콘 설치, 유도자 배치" }
+                        ]
+                    },
+                    {
+                        category: "상하수도·관로공사",
+                        items: [
+                            { risk: "관로 매설 굴착면 붕괴", measure: "흙막이 지보공 설치, 되메우기 전 안전점검" },
+                            { risk: "밀폐공간(맨홀·관거) 작업 중 질식·중독", measure: "작업 전 산소·유해가스 농도 측정, 환기 및 감시인 배치" },
+                            { risk: "대형관 인양·부설 중 협착", measure: "줄걸이 상태 점검, 작업반경 출입통제" },
+                            { risk: "관로 압력시험 중 이탈물에 의한 비래", measure: "시험압력 기준 준수, 시험구간 출입통제" }
+                        ]
+                    },
+                    {
+                        category: "준설·수중공사",
+                        items: [
+                            { risk: "준설선 작업 중 익수", measure: "구명조끼 착용, 수상작업 안전수칙 준수" },
+                            { risk: "수중구조물 작업 중 잠수사 감압병", measure: "잠수시간·수심 기준 준수, 수면 감시자 배치" },
+                            { risk: "준설토 이송관 파손으로 인한 비래", measure: "이송압력 관리, 배관 정기점검" }
+                        ]
+                    },
+                    {
+                        category: "조경공사(토목부문)",
+                        items: [
+                            { risk: "수목 식재 중 중량물 취급 협착", measure: "크레인·굴삭기 인양작업 시 신호수 배치" },
+                            { risk: "관수시설 굴착 중 매설물 손상", measure: "사전 매설물 조사 및 표시 후 굴착" }
+                        ]
+                    }
                 ]
             },
             {
-                category: "토공사(굴착·성토)",
-                items: [
-                    { risk: "굴착면 붕괴로 인한 매몰", measure: "흙막이 지보공 설치, 굴착 구배기준 준수" },
-                    { risk: "중장비(굴삭기 등)와 근로자 충돌", measure: "유도자 배치, 근로자 접근금지구역 설정" },
-                    { risk: "굴착기 전도", measure: "작업지반 다짐상태 확인, 경사지 작업 시 아웃트리거 사용" },
-                    { risk: "지하매설물(가스관·전선로) 손상", measure: "굴착 전 매설물 조사 및 표시, 매설물 인근 수작업 병행" },
-                    { risk: "우천 시 사면 붕괴", measure: "배수로 사전 설치, 강우 시 작업중지 및 사면 점검" }
-                ]
-            },
-            {
-                category: "철근콘크리트공사(거푸집·철근·타설)",
-                items: [
-                    { risk: "거푸집 동바리 붕괴", measure: "설계도서에 따른 동바리 규격·간격 준수 및 조립도 사전 검토" },
-                    { risk: "철근 인양 중 낙하", measure: "인양로프·후크 사전점검, 인양경로 하부 출입통제" },
-                    { risk: "철근 돌출부에 의한 자상·찔림", measure: "철근 캡(보호덮개) 설치, 보호장갑 착용" },
-                    { risk: "콘크리트 타설 중 동바리 붕괴", measure: "타설 전 지지구조 안전점검, 편심 방지를 위한 순서 타설" },
-                    { risk: "콘크리트 펌프카 붐대에 의한 협착·충돌", measure: "붐대 작업반경 내 출입통제, 신호수 배치" }
-                ]
-            },
-            {
-                category: "철골공사",
-                items: [
-                    { risk: "철골 조립 중 추락", measure: "안전대 부착설비 및 추락방지망 설치" },
-                    { risk: "철골 인양 중 낙하·충돌", measure: "크레인 정격하중 준수, 인양경로 하부 통제" },
-                    { risk: "용접·용단 작업 중 화재·화상", measure: "불티비산방지덮개 설치, 소화기 비치 및 화재감시자 배치" },
-                    { risk: "고소 이동 중 실족 추락", measure: "안전통로 확보, 안전대 걸이시설 설치" }
-                ]
-            },
-            {
-                category: "비계·고소작업(공통)",
-                items: [
-                    { risk: "고소작업대(차량탑재형) 전도·추락", measure: "아웃트리거 고정 확인, 안전대 착용 및 탑승정원 준수" },
-                    { risk: "작업발판 미설치 구간 추락", measure: "작업발판 설치 및 안전난간 설치" },
-                    { risk: "안전대 미착용 상태 고소작업", measure: "작업 전 안전대 착용상태 확인 및 관리감독자 점검" }
-                ]
-            },
-            {
-                category: "조적·미장·방수공사",
-                items: [
-                    { risk: "조적자재 낙하", measure: "자재 적재높이 준수, 하부 통제구역 설정" },
-                    { risk: "고소 조적작업 중 추락", measure: "작업발판 및 안전난간 설치" },
-                    { risk: "방수재(우레탄 등) 화학물질 노출", measure: "국소배기장치 가동, 방독마스크 착용" },
-                    { risk: "미장작업 중 근골격계질환", measure: "작업자세 개선 및 정기적 휴식시간 확보" }
-                ]
-            },
-            {
-                category: "도장공사",
-                items: [
-                    { risk: "유기용제 중독·화재", measure: "환기설비 가동, 방독마스크 및 보안경 착용" },
-                    { risk: "고소 도장작업 중 추락", measure: "달비계·고소작업대 안전점검, 안전대 착용" },
-                    { risk: "스프레이 도장 중 인화성 물질 폭발", measure: "화기작업 통제, 정전기 방지조치" }
-                ]
-            },
-            {
-                category: "전기·설비공사",
-                items: [
-                    { risk: "활선작업 중 감전", measure: "정전작업 원칙 준수, 검전 후 작업 실시" },
-                    { risk: "임시배선 누전으로 인한 감전", measure: "누전차단기 설치 및 정기점검" },
-                    { risk: "배관 설치 중 중량물에 의한 협착", measure: "중량물 취급 시 2인 1조 작업, 보호구 착용" }
-                ]
-            },
-            {
-                category: "해체공사",
-                items: [
-                    { risk: "구조물 붕괴", measure: "해체계획서에 따른 순서 준수, 사전 구조검토 실시" },
-                    { risk: "해체 잔재물 낙하", measure: "방호선반·낙하물방지망 설치" },
-                    { risk: "분진 흡입으로 인한 호흡기질환", measure: "살수 작업 병행, 방진마스크 착용" }
-                ]
-            },
-            {
-                category: "양중·운반작업(공통)",
-                items: [
-                    { risk: "크레인 인양물 낙하", measure: "정격하중 준수, 줄걸이 상태 사전점검" },
-                    { risk: "지게차 운전 중 근로자 충돌", measure: "유도자 배치, 운전자 자격 확인" },
-                    { risk: "운반차량 후진 중 충돌", measure: "후방감지장치 확인, 신호수 배치" }
+                major: "건축공사",
+                subCategories: [
+                    {
+                        category: "가설공사(비계·가시설)",
+                        items: [
+                            { risk: "강관비계 조립·해체 중 추락", measure: "안전대 부착설비 설치 및 안전대 착용, 승강용 사다리 설치" },
+                            { risk: "비계 자재(강관·클램프) 낙하로 인한 하부 근로자 재해", measure: "낙하물방지망·수직보호망 설치, 작업구역 하부 출입통제" },
+                            { risk: "강풍·태풍 시 비계 전도", measure: "벽이음재(Tie) 규정 간격 설치, 강풍 예보 시 작업중지" },
+                            { risk: "개구부 방호 미흡으로 인한 추락", measure: "안전난간 및 덮개 설치, 위험표지판 부착" },
+                            { risk: "이동식 사다리 사용 중 전도·추락", measure: "사다리 전도방지조치 실시, 단독작업 금지(2인 1조)" },
+                            { risk: "시스템비계 체결불량으로 인한 붕괴", measure: "조립도 준수, 체결상태 정기점검" }
+                        ]
+                    },
+                    {
+                        category: "토공사(터파기)",
+                        items: [
+                            { risk: "굴착면 붕괴로 인한 매몰", measure: "흙막이 지보공 설치, 굴착 구배기준 준수" },
+                            { risk: "지하층 굴착 중 인접 건물 균열·침하", measure: "계측관리 실시, 언더피닝 등 보강공법 사전 검토" },
+                            { risk: "중장비와 근로자 충돌", measure: "유도자 배치, 근로자 접근금지구역 설정" },
+                            { risk: "되메우기 다짐 중 장비 전도", measure: "층다짐 실시, 경사지 작업 통제" }
+                        ]
+                    },
+                    {
+                        category: "철근콘크리트공사(거푸집·철근·타설)",
+                        items: [
+                            { risk: "거푸집 동바리 붕괴", measure: "설계도서에 따른 동바리 규격·간격 준수 및 조립도 사전 검토" },
+                            { risk: "철근 인양 중 낙하", measure: "인양로프·후크 사전점검, 인양경로 하부 출입통제" },
+                            { risk: "철근 돌출부에 의한 자상·찔림", measure: "철근 캡(보호덮개) 설치, 보호장갑 착용" },
+                            { risk: "콘크리트 타설 중 동바리 붕괴", measure: "타설 전 지지구조 안전점검, 편심 방지를 위한 순서 타설" },
+                            { risk: "콘크리트 펌프카 붐대에 의한 협착·충돌", measure: "붐대 작업반경 내 출입통제, 신호수 배치" },
+                            { risk: "고소 슬래브 단부 추락", measure: "단부 안전난간 설치, 개구부 안전덮개 설치" }
+                        ]
+                    },
+                    {
+                        category: "철골공사",
+                        items: [
+                            { risk: "철골 조립 중 추락", measure: "안전대 부착설비 및 추락방지망 설치" },
+                            { risk: "철골 인양 중 낙하·충돌", measure: "크레인 정격하중 준수, 인양경로 하부 통제" },
+                            { risk: "용접·용단 작업 중 화재·화상", measure: "불티비산방지덮개 설치, 소화기 비치 및 화재감시자 배치" },
+                            { risk: "고소 이동 중 실족 추락", measure: "안전통로 확보, 안전대 걸이시설 설치" },
+                            { risk: "볼트 체결 불량으로 인한 구조 붕괴", measure: "체결토크 관리 및 검사기록 관리" }
+                        ]
+                    },
+                    {
+                        category: "조적·미장·방수공사",
+                        items: [
+                            { risk: "조적자재 낙하", measure: "자재 적재높이 준수, 하부 통제구역 설정" },
+                            { risk: "고소 조적작업 중 추락", measure: "작업발판 및 안전난간 설치" },
+                            { risk: "방수재(우레탄 등) 화학물질 노출", measure: "국소배기장치 가동, 방독마스크 착용" },
+                            { risk: "미장작업 중 근골격계질환", measure: "작업자세 개선 및 정기적 휴식시간 확보" },
+                            { risk: "옥상 방수공사 중 단부 추락", measure: "옥상 단부 안전난간 설치" }
+                        ]
+                    },
+                    {
+                        category: "석공사·타일공사",
+                        items: [
+                            { risk: "석재 판넬 인양·설치 중 낙하", measure: "앵커 체결상태 점검, 인양 줄걸이 상태 점검" },
+                            { risk: "습식 커팅작업 중 분진·비산", measure: "국소배기 실시, 보안경·방진마스크 착용" },
+                            { risk: "외벽 석공사 중 고소 추락", measure: "곤돌라·달비계 안전점검, 안전대 착용" }
+                        ]
+                    },
+                    {
+                        category: "창호·유리공사",
+                        items: [
+                            { risk: "대형 유리 인양·설치 중 낙하·파손", measure: "흡착식 유리운반기 사용, 하부 통제구역 설정" },
+                            { risk: "고소 창호 설치 중 추락", measure: "곤돌라 안전점검, 안전대 착용" },
+                            { risk: "유리 파손에 의한 열상", measure: "보호장갑 착용, 파손유리 즉시 수거" }
+                        ]
+                    },
+                    {
+                        category: "지붕·판금공사",
+                        items: [
+                            { risk: "경사지붕 작업 중 추락", measure: "안전대 부착설비 및 추락방지망 설치" },
+                            { risk: "지붕 채광창(개구부) 추락", measure: "개구부 안전덮개 및 위험표지 설치" },
+                            { risk: "판금 절단 작업 중 자상", measure: "절단기 방호덮개 설치, 보호장갑 착용" }
+                        ]
+                    },
+                    {
+                        category: "도장공사",
+                        items: [
+                            { risk: "유기용제 중독·화재", measure: "환기설비 가동, 방독마스크 및 보안경 착용" },
+                            { risk: "고소 도장작업 중 추락", measure: "달비계·고소작업대 안전점검, 안전대 착용" },
+                            { risk: "스프레이 도장 중 인화성 물질 폭발", measure: "화기작업 통제, 정전기 방지조치" }
+                        ]
+                    },
+                    {
+                        category: "전기·설비공사",
+                        items: [
+                            { risk: "활선작업 중 감전", measure: "정전작업 원칙 준수, 검전 후 작업 실시" },
+                            { risk: "임시배선 누전으로 인한 감전", measure: "누전차단기 설치 및 정기점검" },
+                            { risk: "배관 설치 중 중량물에 의한 협착", measure: "중량물 취급 시 2인 1조 작업, 보호구 착용" },
+                            { risk: "덕트·배관 고소작업 중 추락", measure: "작업발판 및 안전대 부착설비 설치" }
+                        ]
+                    },
+                    {
+                        category: "마감·내장공사",
+                        items: [
+                            { risk: "경량철골 천장틀 설치 중 자재 낙하", measure: "자재 임시고정 철저, 하부 통제구역 설정" },
+                            { risk: "실내 고소작업대 사용 중 전도", measure: "아웃트리거 고정 확인, 안전대 착용" },
+                            { risk: "마감재 절단 중 분진·소음 노출", measure: "국소배기 실시, 방진마스크·귀마개 착용" }
+                        ]
+                    },
+                    {
+                        category: "해체공사",
+                        items: [
+                            { risk: "구조물 붕괴", measure: "해체계획서에 따른 순서 준수, 사전 구조검토 실시" },
+                            { risk: "해체 잔재물 낙하", measure: "방호선반·낙하물방지망 설치" },
+                            { risk: "분진 흡입으로 인한 호흡기질환", measure: "살수 작업 병행, 방진마스크 착용" },
+                            { risk: "해체 중장비(브레이커 등) 전도", measure: "해체 반력 사전 검토, 작업반경 통제" }
+                        ]
+                    },
+                    {
+                        category: "양중·운반작업(공통)",
+                        items: [
+                            { risk: "크레인 인양물 낙하", measure: "정격하중 준수, 줄걸이 상태 사전점검" },
+                            { risk: "지게차 운전 중 근로자 충돌", measure: "유도자 배치, 운전자 자격 확인" },
+                            { risk: "운반차량 후진 중 충돌", measure: "후방감지장치 확인, 신호수 배치" },
+                            { risk: "건설용 리프트 탑승 중 추락", measure: "탑승정원 준수, 방호울 설치" }
+                        ]
+                    }
                 ]
             }
         ];
@@ -1294,24 +1445,45 @@
             document.getElementById('print-btn').addEventListener('click', () => window.print());
 
             // --------------------------------------------------
-            // [신규] 공종별 유해위험요인 선택 모달
+            // [신규] 대분류(토목/건축) → 공종 → 유해위험요인 선택 모달
             // --------------------------------------------------
             const hazardModal = document.getElementById('hazard-picker-modal');
+            const hazardMajorTabs = document.getElementById('hazard-major-tabs');
             const hazardCategoryPanel = document.getElementById('hazard-category-panel');
             const hazardItemPanel = document.getElementById('hazard-item-panel');
             const hazardSelectedCountEl = document.getElementById('hazard-selected-count');
 
+            let activeHazardMajorIndex = 0;
             let activeHazardCategoryIndex = 0;
-            // key: "카테고리인덱스-항목인덱스" -> { risk, measure }
+            // key: "대분류인덱스-공종인덱스-항목인덱스" -> { risk, measure }
             const selectedHazards = new Map();
 
             const updateHazardSelectedCount = () => {
                 hazardSelectedCountEl.textContent = `${selectedHazards.size}개 선택됨`;
             };
 
+            const renderHazardMajorTabs = () => {
+                hazardMajorTabs.innerHTML = '';
+                hazardCatalog.forEach((majorGroup, majorIndex) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'hazard-major-tab-btn' + (majorIndex === activeHazardMajorIndex ? ' active' : '');
+                    btn.textContent = majorGroup.major;
+                    btn.addEventListener('click', () => {
+                        activeHazardMajorIndex = majorIndex;
+                        activeHazardCategoryIndex = 0;
+                        renderHazardMajorTabs();
+                        renderHazardCategoryPanel();
+                        renderHazardItemPanel();
+                    });
+                    hazardMajorTabs.appendChild(btn);
+                });
+            };
+
             const renderHazardCategoryPanel = () => {
                 hazardCategoryPanel.innerHTML = '';
-                hazardCatalog.forEach((cat, catIndex) => {
+                const subCategories = hazardCatalog[activeHazardMajorIndex].subCategories;
+                subCategories.forEach((cat, catIndex) => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'hazard-category-btn' + (catIndex === activeHazardCategoryIndex ? ' active' : '');
@@ -1327,11 +1499,11 @@
 
             const renderHazardItemPanel = () => {
                 hazardItemPanel.innerHTML = '';
-                const cat = hazardCatalog[activeHazardCategoryIndex];
+                const cat = hazardCatalog[activeHazardMajorIndex].subCategories[activeHazardCategoryIndex];
                 if (!cat) return;
 
                 cat.items.forEach((item, itemIndex) => {
-                    const key = `${activeHazardCategoryIndex}-${itemIndex}`;
+                    const key = `${activeHazardMajorIndex}-${activeHazardCategoryIndex}-${itemIndex}`;
                     const card = document.createElement('label');
                     card.className = 'hazard-item-card';
                     card.innerHTML = `
@@ -1355,7 +1527,9 @@
             };
 
             const openHazardModal = () => {
+                activeHazardMajorIndex = 0;
                 activeHazardCategoryIndex = 0;
+                renderHazardMajorTabs();
                 renderHazardCategoryPanel();
                 renderHazardItemPanel();
                 updateHazardSelectedCount();
