@@ -130,6 +130,132 @@
         .hover\:bg-blue-600:hover { background-color: #2563eb; }
         .bg-red-500 { background-color: #ef4444; }
         .hover\:bg-red-600:hover { background-color: #dc2626; }
+        .bg-purple-500 { background-color: #8b5cf6; }
+        .hover\:bg-purple-600:hover { background-color: #7c3aed; }
+
+        /* 공종별 유해위험요인 선택 모달 */
+        .hazard-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .hazard-modal-overlay.open {
+            display: flex;
+        }
+        .hazard-modal-box {
+            background: #fff;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .hazard-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .hazard-modal-header h3 {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .hazard-modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .hazard-modal-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .hazard-category-panel {
+            width: 38%;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+        .hazard-item-panel {
+            width: 62%;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .hazard-category-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        .hazard-category-btn:hover {
+            background-color: #f3f4f6;
+        }
+        .hazard-category-btn.active {
+            background-color: #3b82f6;
+            color: #fff;
+            font-weight: bold;
+        }
+        .hazard-item-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .hazard-item-card:hover {
+            background-color: #eff6ff;
+        }
+        .hazard-item-card input[type="checkbox"] {
+            width: auto;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .hazard-item-risk {
+            font-weight: bold;
+            font-size: 13px;
+            color: #1f2937;
+        }
+        .hazard-item-measure {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .hazard-modal-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .hazard-modal-body { flex-direction: column; }
+            .hazard-category-panel, .hazard-item-panel { width: 100%; }
+            .hazard-category-panel { border-right: none; border-bottom: 1px solid #e5e7eb; max-height: 30vh; }
+        }
         
         /* 삭제 버튼 스타일 */
         .delete-btn {
@@ -460,6 +586,7 @@
 
     <div class="print-btn-container no-print">
         <!-- [수정] onclick 제거, id 추가 -->
+        <button id="hazard-picker-btn" type="button" class="action-button bg-purple-500 hover:bg-purple-600">공종별 위험요인 선택</button>
         <button id="save-btn" class="action-button bg-blue-500 hover:bg-blue-600">내용 저장</button>
         <button id="clear-btn" class="action-button bg-red-500 hover:bg-red-600">초기화</button>
         <button id="print-btn" class="action-button">인쇄</button>
@@ -612,7 +739,28 @@
         <option value="계획 중"></option>
         <option value="해당 없음"></option>
     </datalist>
-    
+
+    <!-- =============== 공종별 유해위험요인 선택 모달 =============== -->
+    <div id="hazard-picker-modal" class="hazard-modal-overlay no-print">
+        <div class="hazard-modal-box">
+            <div class="hazard-modal-header">
+                <h3>공종별 유해위험요인 선택</h3>
+                <button id="hazard-modal-close-x" type="button" class="hazard-modal-close-btn">&times;</button>
+            </div>
+            <div class="hazard-modal-body">
+                <div id="hazard-category-panel" class="hazard-category-panel"></div>
+                <div id="hazard-item-panel" class="hazard-item-panel"></div>
+            </div>
+            <div class="hazard-modal-footer">
+                <span id="hazard-selected-count">0개 선택됨</span>
+                <div style="display:flex; gap:8px;">
+                    <button id="hazard-modal-cancel" type="button" class="action-button" style="background-color:#9ca3af;">취소</button>
+                    <button id="hazard-modal-add" type="button" class="action-button bg-blue-500 hover:bg-blue-600">선택 항목 추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --------------------------------------------------
         // [데이터 수정] 여기에서 '작업명' 목록을 수정하세요.
@@ -641,6 +789,103 @@
               { "risk": "굴착면 붕괴 위험", "measure": "흙막이 지보공 설치, 경사면 확보" }
             ]
           }
+        ];
+        // --------------------------------------------------
+
+        // --------------------------------------------------
+        // [신규] 건축공사 공종별 유해위험요인 / 감소대책 카탈로그
+        // 항목을 체크하면 감소대책이 자동으로 채워진 행이 추가됩니다.
+        // 여기에서 공종·항목을 추가/수정하세요.
+        // --------------------------------------------------
+        const hazardCatalog = [
+            {
+                category: "가설공사(비계·가시설)",
+                items: [
+                    { risk: "강관비계 조립·해체 중 추락", measure: "안전대 부착설비 설치 및 안전대 착용, 승강용 사다리 설치" },
+                    { risk: "비계 자재(강관·클램프) 낙하로 인한 하부 근로자 재해", measure: "낙하물방지망·수직보호망 설치, 작업구역 하부 출입통제" },
+                    { risk: "강풍·태풍 시 비계 전도", measure: "벽이음재(Tie) 규정 간격 설치, 강풍 예보 시 작업중지" },
+                    { risk: "개구부 방호 미흡으로 인한 추락", measure: "안전난간 및 덮개 설치, 위험표지판 부착" },
+                    { risk: "이동식 사다리 사용 중 전도·추락", measure: "사다리 전도방지조치 실시, 단독작업 금지(2인 1조)" }
+                ]
+            },
+            {
+                category: "토공사(굴착·성토)",
+                items: [
+                    { risk: "굴착면 붕괴로 인한 매몰", measure: "흙막이 지보공 설치, 굴착 구배기준 준수" },
+                    { risk: "중장비(굴삭기 등)와 근로자 충돌", measure: "유도자 배치, 근로자 접근금지구역 설정" },
+                    { risk: "굴착기 전도", measure: "작업지반 다짐상태 확인, 경사지 작업 시 아웃트리거 사용" },
+                    { risk: "지하매설물(가스관·전선로) 손상", measure: "굴착 전 매설물 조사 및 표시, 매설물 인근 수작업 병행" },
+                    { risk: "우천 시 사면 붕괴", measure: "배수로 사전 설치, 강우 시 작업중지 및 사면 점검" }
+                ]
+            },
+            {
+                category: "철근콘크리트공사(거푸집·철근·타설)",
+                items: [
+                    { risk: "거푸집 동바리 붕괴", measure: "설계도서에 따른 동바리 규격·간격 준수 및 조립도 사전 검토" },
+                    { risk: "철근 인양 중 낙하", measure: "인양로프·후크 사전점검, 인양경로 하부 출입통제" },
+                    { risk: "철근 돌출부에 의한 자상·찔림", measure: "철근 캡(보호덮개) 설치, 보호장갑 착용" },
+                    { risk: "콘크리트 타설 중 동바리 붕괴", measure: "타설 전 지지구조 안전점검, 편심 방지를 위한 순서 타설" },
+                    { risk: "콘크리트 펌프카 붐대에 의한 협착·충돌", measure: "붐대 작업반경 내 출입통제, 신호수 배치" }
+                ]
+            },
+            {
+                category: "철골공사",
+                items: [
+                    { risk: "철골 조립 중 추락", measure: "안전대 부착설비 및 추락방지망 설치" },
+                    { risk: "철골 인양 중 낙하·충돌", measure: "크레인 정격하중 준수, 인양경로 하부 통제" },
+                    { risk: "용접·용단 작업 중 화재·화상", measure: "불티비산방지덮개 설치, 소화기 비치 및 화재감시자 배치" },
+                    { risk: "고소 이동 중 실족 추락", measure: "안전통로 확보, 안전대 걸이시설 설치" }
+                ]
+            },
+            {
+                category: "비계·고소작업(공통)",
+                items: [
+                    { risk: "고소작업대(차량탑재형) 전도·추락", measure: "아웃트리거 고정 확인, 안전대 착용 및 탑승정원 준수" },
+                    { risk: "작업발판 미설치 구간 추락", measure: "작업발판 설치 및 안전난간 설치" },
+                    { risk: "안전대 미착용 상태 고소작업", measure: "작업 전 안전대 착용상태 확인 및 관리감독자 점검" }
+                ]
+            },
+            {
+                category: "조적·미장·방수공사",
+                items: [
+                    { risk: "조적자재 낙하", measure: "자재 적재높이 준수, 하부 통제구역 설정" },
+                    { risk: "고소 조적작업 중 추락", measure: "작업발판 및 안전난간 설치" },
+                    { risk: "방수재(우레탄 등) 화학물질 노출", measure: "국소배기장치 가동, 방독마스크 착용" },
+                    { risk: "미장작업 중 근골격계질환", measure: "작업자세 개선 및 정기적 휴식시간 확보" }
+                ]
+            },
+            {
+                category: "도장공사",
+                items: [
+                    { risk: "유기용제 중독·화재", measure: "환기설비 가동, 방독마스크 및 보안경 착용" },
+                    { risk: "고소 도장작업 중 추락", measure: "달비계·고소작업대 안전점검, 안전대 착용" },
+                    { risk: "스프레이 도장 중 인화성 물질 폭발", measure: "화기작업 통제, 정전기 방지조치" }
+                ]
+            },
+            {
+                category: "전기·설비공사",
+                items: [
+                    { risk: "활선작업 중 감전", measure: "정전작업 원칙 준수, 검전 후 작업 실시" },
+                    { risk: "임시배선 누전으로 인한 감전", measure: "누전차단기 설치 및 정기점검" },
+                    { risk: "배관 설치 중 중량물에 의한 협착", measure: "중량물 취급 시 2인 1조 작업, 보호구 착용" }
+                ]
+            },
+            {
+                category: "해체공사",
+                items: [
+                    { risk: "구조물 붕괴", measure: "해체계획서에 따른 순서 준수, 사전 구조검토 실시" },
+                    { risk: "해체 잔재물 낙하", measure: "방호선반·낙하물방지망 설치" },
+                    { risk: "분진 흡입으로 인한 호흡기질환", measure: "살수 작업 병행, 방진마스크 착용" }
+                ]
+            },
+            {
+                category: "양중·운반작업(공통)",
+                items: [
+                    { risk: "크레인 인양물 낙하", measure: "정격하중 준수, 줄걸이 상태 사전점검" },
+                    { risk: "지게차 운전 중 근로자 충돌", measure: "유도자 배치, 운전자 자격 확인" },
+                    { risk: "운반차량 후진 중 충돌", measure: "후방감지장치 확인, 신호수 배치" }
+                ]
+            }
         ];
         // --------------------------------------------------
 
@@ -1047,6 +1292,118 @@
             document.getElementById('save-btn').addEventListener('click', saveData);
             document.getElementById('clear-btn').addEventListener('click', clearData);
             document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+            // --------------------------------------------------
+            // [신규] 공종별 유해위험요인 선택 모달
+            // --------------------------------------------------
+            const hazardModal = document.getElementById('hazard-picker-modal');
+            const hazardCategoryPanel = document.getElementById('hazard-category-panel');
+            const hazardItemPanel = document.getElementById('hazard-item-panel');
+            const hazardSelectedCountEl = document.getElementById('hazard-selected-count');
+
+            let activeHazardCategoryIndex = 0;
+            // key: "카테고리인덱스-항목인덱스" -> { risk, measure }
+            const selectedHazards = new Map();
+
+            const updateHazardSelectedCount = () => {
+                hazardSelectedCountEl.textContent = `${selectedHazards.size}개 선택됨`;
+            };
+
+            const renderHazardCategoryPanel = () => {
+                hazardCategoryPanel.innerHTML = '';
+                hazardCatalog.forEach((cat, catIndex) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'hazard-category-btn' + (catIndex === activeHazardCategoryIndex ? ' active' : '');
+                    btn.textContent = `${cat.category} (${cat.items.length})`;
+                    btn.addEventListener('click', () => {
+                        activeHazardCategoryIndex = catIndex;
+                        renderHazardCategoryPanel();
+                        renderHazardItemPanel();
+                    });
+                    hazardCategoryPanel.appendChild(btn);
+                });
+            };
+
+            const renderHazardItemPanel = () => {
+                hazardItemPanel.innerHTML = '';
+                const cat = hazardCatalog[activeHazardCategoryIndex];
+                if (!cat) return;
+
+                cat.items.forEach((item, itemIndex) => {
+                    const key = `${activeHazardCategoryIndex}-${itemIndex}`;
+                    const card = document.createElement('label');
+                    card.className = 'hazard-item-card';
+                    card.innerHTML = `
+                        <input type="checkbox" class="hazard-item-checkbox" data-key="${key}" ${selectedHazards.has(key) ? 'checked' : ''}>
+                        <div>
+                            <p class="hazard-item-risk">${item.risk}</p>
+                            <p class="hazard-item-measure">↳ 감소대책(자동입력): ${item.measure}</p>
+                        </div>
+                    `;
+                    const checkbox = card.querySelector('.hazard-item-checkbox');
+                    checkbox.addEventListener('change', () => {
+                        if (checkbox.checked) {
+                            selectedHazards.set(key, { risk: item.risk, measure: item.measure });
+                        } else {
+                            selectedHazards.delete(key);
+                        }
+                        updateHazardSelectedCount();
+                    });
+                    hazardItemPanel.appendChild(card);
+                });
+            };
+
+            const openHazardModal = () => {
+                activeHazardCategoryIndex = 0;
+                renderHazardCategoryPanel();
+                renderHazardItemPanel();
+                updateHazardSelectedCount();
+                hazardModal.classList.add('open');
+            };
+
+            const closeHazardModal = () => {
+                hazardModal.classList.remove('open');
+            };
+
+            document.getElementById('hazard-picker-btn').addEventListener('click', openHazardModal);
+            document.getElementById('hazard-modal-close-x').addEventListener('click', closeHazardModal);
+            document.getElementById('hazard-modal-cancel').addEventListener('click', closeHazardModal);
+
+            // 오버레이(바깥) 클릭 시 닫기
+            hazardModal.addEventListener('click', (event) => {
+                if (event.target === hazardModal) closeHazardModal();
+            });
+
+            // ESC 키로 닫기
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && hazardModal.classList.contains('open')) {
+                    closeHazardModal();
+                }
+            });
+
+            document.getElementById('hazard-modal-add').addEventListener('click', () => {
+                if (selectedHazards.size === 0) {
+                    alert('선택된 유해위험요인이 없습니다.');
+                    return;
+                }
+
+                // 빈 기본행(1행, 미입력)이면 선택 항목으로 대체
+                const isTableEmpty = tableBody1.rows.length === 1 &&
+                                    tableBody1.rows[0].querySelector('textarea.risk-input').value === '' &&
+                                    tableBody1.rows[0].querySelector('textarea.measure-input').value === '';
+                if (isTableEmpty) {
+                    tableBody1.innerHTML = '';
+                    tableBody2.innerHTML = '';
+                }
+
+                selectedHazards.forEach(({ risk, measure }) => {
+                    addRow(risk, measure);
+                });
+
+                selectedHazards.clear();
+                closeHazardModal();
+            });
             
             // '작업명' 입력란에 이벤트 리스너 추가
             mainWorkTitleInput.addEventListener('input', (e) => populateAllRisksAndMeasures(e.target.value));
