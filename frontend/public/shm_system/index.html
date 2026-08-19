@@ -543,7 +543,11 @@
             <tr>
                 <th>현장명</th>
                 <td>
-                    <div class="input-text auto-expand-input" contenteditable="true"></div>
+                    <select id="site-name-select" class="input-text">
+                        <option value="">불러오는 중...</option>
+                    </select>
+                    <input type="text" id="site-name-new-input" class="input-text"
+                        placeholder="새 현장명을 입력하세요" style="display:none; margin-top:6px;">
                 </td>
                 <th>점검일</th>
                 <td><input type="date" class="input-text" value="2025-10-01"></td>
@@ -730,11 +734,72 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // === 현장명 선택 (기존 저장 목록 드롭다운 + 새 현장 추가) ===
+        const NEW_SITE_VALUE = "__new__";
+        const siteSelect = document.getElementById('site-name-select');
+        const siteNewInput = document.getElementById('site-name-new-input');
+
+        async function loadSiteNameOptions(preselect) {
+            try {
+                const [sysSnap, fieldSnap] = await Promise.all([
+                    getDocs(collection(db, "shm_checks")),
+                    getDocs(collection(db, "field_checks"))
+                ]);
+                const names = new Set();
+                sysSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+                fieldSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+                if (preselect) names.add(preselect);
+
+                const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, 'ko'));
+                siteSelect.innerHTML = '<option value="">현장을 선택하세요</option>' +
+                    sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('') +
+                    `<option value="${NEW_SITE_VALUE}">+ 새 현장 추가...</option>`;
+
+                if (preselect) {
+                    siteSelect.value = preselect;
+                    siteNewInput.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('현장명 목록 조회 실패:', error);
+                siteSelect.innerHTML = '<option value="">현장 목록을 불러오지 못했습니다</option>' +
+                    `<option value="${NEW_SITE_VALUE}">+ 새 현장 추가...</option>`;
+            }
+        }
+
+        siteSelect.addEventListener('change', () => {
+            if (siteSelect.value === NEW_SITE_VALUE) {
+                siteNewInput.style.display = 'block';
+                siteNewInput.value = '';
+                siteNewInput.focus();
+            } else {
+                siteNewInput.style.display = 'none';
+            }
+        });
+
+        window.getSiteName = function () {
+            if (siteSelect.value === NEW_SITE_VALUE) return siteNewInput.value.trim();
+            return siteSelect.value.trim();
+        };
+
+        // 저장된 데이터 불러오기 시 목록에 없는 현장명이면 옵션을 새로 추가하고 선택
+        window.setSiteName = async function (name) {
+            const trimmed = (name || '').trim();
+            if (!trimmed) return;
+            const exists = Array.from(siteSelect.options).some(o => o.value === trimmed);
+            if (!exists) {
+                await loadSiteNameOptions(trimmed);
+            } else {
+                siteSelect.value = trimmed;
+                siteNewInput.style.display = 'none';
+            }
+        };
+
+        loadSiteNameOptions();
+
         // Make functions globally available
         window.saveToServer = async function () {
-            const siteNameEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(2) .input-text');
             const dateEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(4) input');
-            const siteName = siteNameEl ? siteNameEl.textContent.trim() : "";
+            const siteName = window.getSiteName();
             const checkDate = dateEl ? dateEl.value : "";
 
             if (!siteName) {
@@ -882,8 +947,7 @@
             // 1. Restore Header Info
             if (data.headerInfo) {
                 document.getElementById('quarter-input').value = data.headerInfo.quarter || '1분기';
-                const siteNameEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(2) .input-text');
-                if (siteNameEl) siteNameEl.textContent = data.headerInfo.siteName || '';
+                window.setSiteName(data.headerInfo.siteName || '');
 
                 const dateEl = document.querySelector('.header-table tr:nth-child(1) td:nth-child(4) input');
                 if (dateEl) dateEl.value = data.headerInfo.checkDate || '';
@@ -1462,8 +1526,7 @@
                 // 시스템 점검 최종 점수 및 현장명 파악
                 const finalScoreText = document.getElementById('system-converted-score').textContent;
                 const finalScore = parseFloat(finalScoreText) || 0;
-                const siteNameEl = document.querySelector('.header-table .input-text.auto-expand-input');
-                const siteName = siteNameEl ? siteNameEl.textContent.trim() : "현장명 미상";
+                const siteName = (window.getSiteName && window.getSiteName()) || "현장명 미상";
 
                 // 시각적 피드백 (로딩 중)
                 const originalBtnText = autoSummaryBtn.innerHTML;
