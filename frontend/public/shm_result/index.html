@@ -514,7 +514,8 @@
                     siteName: siteName,
                     finalScore: Math.round(finalTotal * 10) / 10,
                     strengths: breakdown.strengths || [],
-                    weaknesses: breakdown.weaknesses || []
+                    weaknesses: breakdown.weaknesses || [],
+                    criticalIssues: breakdown.criticalIssues || []
                 };
 
                 const response = await fetch(apiUrl, {

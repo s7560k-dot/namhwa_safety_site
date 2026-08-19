@@ -294,28 +294,31 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
         final_score = data.get("finalScore", 0)
         strengths = data.get("strengths", [])
         weaknesses = data.get("weaknesses", [])
-        
+        critical_issues = data.get("criticalIssues", [])
+
         api_key = os.environ.get("GOOGLE_API_KEY_SAFETY")
         if not api_key:
              raise ValueError("GOOGLE_API_KEY_SAFETY environment variable is missing")
-             
+
         genai.configure(api_key=api_key)
-        
+
         system_instruction = """
         당신은 20년 경력의 심도 있는 지식을 갖춘 대한민국 최고 건설현장 안전보건 전문 심사위원(책임기술인)입니다.
-        엄격하지만 긍정적이고 따뜻한 카리스마를 가졌습니다.
+        평소에는 현장의 노력과 성과를 진심으로 인정하고 자신감을 북돋아주는 관대하고 따뜻한 멘토이지만,
+        '명확히 미흡으로 확인된 세부 지적사항' 앞에서는 안전사고 예방을 위해 한 치의 타협도 없는 엄격한 전문가로 돌변합니다.
         현장의 안전보건 시스템 점검 결과를 분석하여, 건설현장 책임자들에게 제공될 '총평 및 개선 요구사항 종합 보고서'를 작성하세요.
-        
+
         [작성 규칙]
         1. 출력 형식은 순수 HTML 포맷(<b>, <i>, <br>, <span style="..."> 등)만 사용해야 하며, 마크다운 코드 블록(```html) 등 부수적인 텍스트는 응답에 포함하지 마십시오.
-        2. 첫 문장은 제공된 점수를 바탕으로 현재 현장의 안전보건 활동 적정성 수준(우수/양호/미흡 등)에 대해 한 줄로 강력하게 총평합니다.
-        3. 강점 분야가 있다면 어떻게 현장을 긍정적으로 이끌고 있는지 칭찬해주십시오.
-        4. 약점 분야(사용자 코멘트 포함)가 있다면 사고 예방을 위해 구체적이고 전문적으로 어떻게 개선해야 할지 따끔한 조언을 남기세요.
-        5. 마지막은 구성원들의 안전 의식을 끓어오르게 할 독창적이고 힘찬 형태의 짧은 안전 슬로건으로 마무리하세요.
-        6. 전체 텍스트 양은 A4 용지 4분의 1장이 넘지 않게 간결하고 가독성 좋게, 줄바꿈을 적절히 사용하여 구성하세요.
-        7. 똑같은 점수와 비슷한 내용이 들어오더라도 매번 단어와 슬로건을 다르게 구성하여 중복 느낌을 확실히 피하십시오.
+        2. 첫 문장은 점수를 바탕으로 총평하되, 점수가 다소 낮더라도 질책보다는 그간의 노력과 발전 가능성을 먼저 인정하는 관대하고 격려하는 어조로 작성하세요.
+        3. 강점 분야가 있다면 어떻게 현장을 긍정적으로 이끌고 있는지 구체적으로 칭찬해주십시오.
+        4. '약점섹션'(기준에 다소 못 미치는 수준)은 나무라지 말고, 부드럽고 격려하는 톤으로 개선 방향을 제안하세요.
+        5. 그러나 '명확히 미흡으로 확인된 세부 지적사항'이 있다면 이 부분만큼은 절대 관대하게 넘어가지 말고, 엄격하고 단호한 어조로 왜 위험한지와 무엇을 즉시 개선해야 하는지 명확히 지적하세요. 이 부분은 앞뒤 문단과 톤의 대비가 뚜렷하게 느껴지도록 확실히 구분해서 쓰십시오. 해당 사항이 없다면 이 문단은 생략하세요.
+        6. 마지막은 구성원들의 안전 의식을 끓어오르게 할 독창적이고 힘찬 형태의 짧은 안전 슬로건으로 마무리하세요.
+        7. 전체 텍스트 양은 A4 용지 4분의 1장이 넘지 않게 간결하고 가독성 좋게, 줄바꿈을 적절히 사용하여 구성하세요.
+        8. 똑같은 점수와 비슷한 내용이 들어오더라도 매번 단어와 슬로건을 다르게 구성하여 중복 느낌을 확실히 피하십시오.
         """
-        
+
         model = genai.GenerativeModel(
             model_name='gemini-2.5-flash',
             generation_config=genai.types.GenerationConfig(
@@ -323,12 +326,13 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
             ),
             system_instruction=system_instruction
         )
-        
+
         # 프롬프트 조립
         weaknesses_str = json.dumps(weaknesses, ensure_ascii=False) if weaknesses else "특별한 취약점 코멘트 없음"
         strengths_str = ", ".join(strengths) if strengths else "강점 분야로 꼽을 만한 사항 미흡"
-        
-        prompt = f"현장명: {site_name}\n총점: {final_score}점\n강점섹션: {strengths_str}\n약점섹션 및 세부 지적사항: {weaknesses_str}\n\n위 데이터를 바탕으로 종합 분석 HTML 텍스트를 응답해라. <b>[안전보건 활동 적정성 종합 검토]</b> 라는 제목으로 시작해라."
+        critical_issues_str = json.dumps(critical_issues, ensure_ascii=False) if critical_issues else "명확히 미흡으로 확인된 세부 지적사항 없음"
+
+        prompt = f"현장명: {site_name}\n총점: {final_score}점\n강점섹션: {strengths_str}\n약점섹션(경미한 수준, 격려 톤 유지): {weaknesses_str}\n명확히 미흡으로 확인된 세부 지적사항(엄격한 톤 필요): {critical_issues_str}\n\n위 데이터를 바탕으로 종합 분석 HTML 텍스트를 응답해라. <b>[안전보건 활동 적정성 종합 검토]</b> 라는 제목으로 시작해라."
         
         response = model.generate_content(prompt)
         ai_summary = response.text.strip()
