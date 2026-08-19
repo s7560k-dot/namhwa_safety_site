@@ -124,7 +124,7 @@
             font-family: inherit;
         }
 
-        #site-name-search { width: 160px; }
+        #site-name-search { width: 260px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
         #year-search { width: 80px; }
         #quarter-search { width: 90px; }
 
@@ -251,7 +251,7 @@
 
         <div class="search-bar no-print">
             <label for="site-name-search">현장명</label>
-            <input type="text" id="site-name-search" placeholder="현장명 입력">
+            <select id="site-name-search"><option value="">불러오는 중...</option></select>
             <label for="year-search">년도</label>
             <input type="text" id="year-search" placeholder="YYYY">
             <label for="quarter-search">분기</label>
@@ -330,6 +330,30 @@
             });
             candidates.sort((a, b) => toTimeMs(b) - toTimeMs(a));
             return candidates[0] || null;
+        }
+
+        async function loadSiteNameOptions() {
+            const select = document.getElementById('site-name-search');
+            try {
+                const [sysSnap, fieldSnap] = await Promise.all([
+                    getDocs(collection(db, "shm_checks")),
+                    getDocs(collection(db, "field_checks"))
+                ]);
+                const names = new Set();
+                sysSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+                fieldSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+
+                const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, 'ko'));
+                if (sorted.length === 0) {
+                    select.innerHTML = '<option value="">저장된 현장이 없습니다</option>';
+                    return;
+                }
+                select.innerHTML = '<option value="">현장을 선택하세요</option>' +
+                    sorted.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+            } catch (error) {
+                console.error('현장명 목록 조회 실패:', error);
+                select.innerHTML = '<option value="">현장 목록을 불러오지 못했습니다</option>';
+            }
         }
 
         function escapeHtml(str) {
@@ -496,6 +520,8 @@
         const currentQuarter = Math.ceil(currentMonth / 3);
         document.getElementById('quarter-search').value = `${currentQuarter}분기`;
         document.getElementById('year-search').value = String(new Date().getFullYear());
+
+        loadSiteNameOptions();
     </script>
 
     <!-- 관리자 비밀번호 입력 모달 -->

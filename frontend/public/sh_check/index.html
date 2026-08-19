@@ -626,6 +626,7 @@
             document.getElementById('year').value = today.getFullYear();
             document.getElementById('month').value = String(today.getMonth() + 1).padStart(2, '0');
             document.getElementById('day').value = String(today.getDate()).padStart(2, '0');
+            document.getElementById('quarter-input').value = `${Math.ceil((today.getMonth() + 1) / 3)}분기`;
             generateTable();
             loadAllPhotos();
         });

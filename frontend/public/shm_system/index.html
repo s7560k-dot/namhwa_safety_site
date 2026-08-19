@@ -593,77 +593,42 @@
             </div>
         </div>
 
-        <div class="section-title">종합 결과 (시스템 점검)</div>
-        <table class="results-table">
-            <thead>
-                <tr>
-                    <th style="width: 5%;">구분</th>
-                    <th>항목</th>
-                    <th style="width: 10%;">배점</th>
-                    <th style="width: 15%;">평점 / 건수</th>
-                    <th style="width: 15%;">결과</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td rowspan="9" style="writing-mode: vertical-rl; text-orientation: mixed;">안전보건경영시스템</td>
-                    <td class="text-left">1. 안전보건경영 방침 및 목표관리 절차</td>
-                    <td>5</td>
-                    <td><input type="number" id="comp-score-1" class="input-number score-input" readonly></td>
-                    <td rowspan="7" id="system-score-sum" style="font-weight: bold; font-size: 1.2em;">0</td>
-                </tr>
-                <tr>
-                    <td class="text-left">2. 안전보건관리책임자 등 업무수행 평가 절차</td>
-                    <td>30</td>
-                    <td><input type="number" id="comp-score-2" class="input-number score-input" readonly></td>
-                </tr>
-                <tr>
-                    <td class="text-left">3. 종사자 의견 청취 절차</td>
-                    <td>10</td>
-                    <td><input type="number" id="comp-score-3" class="input-number score-input" readonly></td>
-                </tr>
-                <tr>
-                    <td class="text-left">4. 비상사태 대비·대응 절차</td>
-                    <td>20</td>
-                    <td><input type="number" id="comp-score-4" class="input-number score-input" readonly></td>
-                </tr>
-                <tr>
-                    <td class="text-left">5. 협력사 수준관리 절차</td>
-                    <td>10</td>
-                    <td><input type="number" id="comp-score-5" class="input-number score-input" readonly></td>
-                </tr>
-                <tr>
-                    <td class="text-left">6. 안전보건관계 법령 등 이행관리 절차</td>
-                    <td>20</td>
-                    <td><input type="number" id="comp-score-6" class="input-number score-input" readonly></td>
-                </tr>
-                <tr>
-                    <td class="text-left">7. 시스템 평가 및 개선 절차</td>
-                    <td>5</td>
-                    <td><input type="number" id="comp-score-7" class="input-number score-input" readonly></td>
-                </tr>
-                <tr>
-                    <td class="text-left">중대재해 발생 여부 (1건당 -30점)</td>
-                    <td>-30</td>
-                    <td><input type="number" id="major-accident-count" class="input-number" value="0" min="0"></td>
-                    <td id="major-accident-deduction" style="color: red; font-weight: bold;">0</td>
-                </tr>
-                <tr>
-                    <td class="text-left">산재 발생 여부 (1건당 -5점)</td>
-                    <td>-5</td>
-                    <td><input type="number" id="work-accident-count" class="input-number" value="0" min="0"></td>
-                    <td id="work-accident-deduction" style="color: red; font-weight: bold;">0</td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="4">시스템 점검 최종 점수 (100점 만점, 감점 반영)</th>
-                    <th id="system-converted-score" style="font-size: 1.2em;">0.0</th>
-                </tr>
-            </tfoot>
+        <div class="section-title">감점 항목</div>
+        <table class="header-table">
+            <colgroup>
+                <col style="width: 35%;">
+                <col style="width: 15%;">
+                <col style="width: 35%;">
+                <col style="width: 15%;">
+            </colgroup>
+            <tr>
+                <th>중대재해 발생 (1건당 -30점)</th>
+                <td><input type="number" id="major-accident-count" class="input-number" value="0" min="0"></td>
+                <th>산재 발생 (1건당 -5점)</th>
+                <td><input type="number" id="work-accident-count" class="input-number" value="0" min="0"></td>
+            </tr>
         </table>
+
+        <div
+            style="display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:20px; padding:12px 15px; background-color:#eef1fb; border-radius:8px; margin-bottom:15px; font-weight:bold; color:#1a237e;">
+            <span>감점 전 소계: <span id="system-score-sum">0.0</span>점</span>
+            <span>감점: 중대재해 <span id="major-accident-deduction" style="color:red;">0</span>점 / 산재
+                <span id="work-accident-deduction" style="color:red;">0</span>점</span>
+            <span style="font-size:1.15em;">시스템 점검 최종 점수: <span id="system-converted-score">0.0</span>점 (100점
+                만점)</span>
+        </div>
+
+        <input type="hidden" id="comp-score-1">
+        <input type="hidden" id="comp-score-2">
+        <input type="hidden" id="comp-score-3">
+        <input type="hidden" id="comp-score-4">
+        <input type="hidden" id="comp-score-5">
+        <input type="hidden" id="comp-score-6">
+        <input type="hidden" id="comp-score-7">
+
         <p style="font-size: 0.85em; color: #666; margin-top: -10px;">
-            ※ 현장 점검 점수와 합산된 최종 환산점수·평가등급은 <a href="/shm_result/" target="_blank" style="color:#3949ab; font-weight:bold;">종합결과표</a>에서 확인할 수 있습니다.
+            ※ 세부 항목별 점수는 아래 각 섹션(1~7)의 "항목 소계"에서 확인할 수 있습니다. 현장 점검 점수와 합산된 최종 환산점수·평가등급은
+            <a href="/shm_result/" target="_blank" style="color:#3949ab; font-weight:bold;">종합결과표</a>에서 확인 가능합니다.
         </p>
 
         <div id="evaluation-sections">
