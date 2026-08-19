@@ -258,9 +258,9 @@
             <div class="flex justify-between items-end mb-8 border-b pb-1">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">현장 안전보건 관리 점검표</h1>
-                    <div class="flex items-center mt-2 text-gray-600">
+                    <div class="flex items-center mt-2 text-gray-600 flex-wrap gap-y-2">
                         <p class="text-gray-500 mr-4">안전보건팀</p>
-                        <div class="flex items-center space-x-1 text-sm">
+                        <div class="flex items-center space-x-1 text-sm mr-4">
                             <input type="text" id="year"
                                 class="w-16 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500"
                                 placeholder="YYYY">
@@ -274,6 +274,23 @@
                                 placeholder="DD">
                             <span>일</span>
                         </div>
+                        <div class="flex items-center space-x-1 text-sm mr-4">
+                            <span class="text-gray-500">현장명</span>
+                            <input type="text" id="site-name" placeholder="현장명 입력"
+                                class="w-32 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm">
+                            <span class="text-gray-500">분기</span>
+                            <input type="text" id="quarter-input" value="1분기"
+                                class="w-16 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3 no-print">
+                        <button id="save-server-btn"
+                            class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm">서버에
+                            저장</button>
+                        <button id="load-server-btn"
+                            class="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition text-sm">불러오기</button>
                     </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -372,7 +389,7 @@
                         <div class="flex gap-2">
                             <input type="number" id="bonus-improvement" min="0" max="10" step="0.5" value="0"
                                 onchange="calculateScore()" class="w-20 p-2 border rounded-lg text-center font-bold">
-                            <input type="text" placeholder="개선 노력 상세 내용 (사진 증빙 등)"
+                            <input type="text" id="bonus-improvement-detail" placeholder="개선 노력 상세 내용 (사진 증빙 등)"
                                 class="flex-1 p-2 border rounded-lg text-sm">
                         </div>
                     </div>
@@ -383,7 +400,7 @@
                         <div class="flex gap-2">
                             <input type="number" id="bonus-idea" min="0" max="10" step="0.5" value="0"
                                 onchange="calculateScore()" class="w-20 p-2 border rounded-lg text-center font-bold">
-                            <input type="text" placeholder="혁신적 장비 도입 또는 우수 사례"
+                            <input type="text" id="bonus-idea-detail" placeholder="혁신적 장비 도입 또는 우수 사례"
                                 class="flex-1 p-2 border rounded-lg text-sm">
                         </div>
                     </div>
@@ -964,7 +981,12 @@
             const formulaEl = document.getElementById('score-formula');
             
             totalScoreEl.textContent = finalScore.toFixed(2);
-            
+            totalScoreEl.dataset.baseScore = baseScore.toFixed(2);
+            totalScoreEl.dataset.weightedSum = grandTotalWeightedScore.toFixed(2);
+            totalScoreEl.dataset.maxWeightedSum = grandTotalMaxPossibleWeightedScore.toFixed(2);
+            totalScoreEl.dataset.kFactor = kFactor.toFixed(2);
+            totalScoreEl.dataset.issueCount = grandTotalIssueCount;
+
             // 상세 계산식 텍스트 생성
             if (grandTotalMaxPossibleWeightedScore > 0) {
                 const totalBonus = bonusImprovement + bonusIdea;
@@ -1129,6 +1151,229 @@
             </button>
         </div>
     </div>
+
+    <!-- 저장된 점검표 불러오기 Modal -->
+    <div id="server-load-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl shadow-lg max-w-xl w-full max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h2 class="text-lg font-bold text-gray-900">저장된 현장 점검표 불러오기</h2>
+                <button id="close-load-modal-btn" class="text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div id="load-list-content" class="p-6 overflow-y-auto">
+                <p class="text-center text-gray-500">데이터를 불러오는 중입니다...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white/80 z-[9999] hidden flex-col items-center justify-center no-print">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <p id="loading-text" class="mt-4 font-bold text-gray-700">저장 중...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
+            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
+            projectId: "namhwa-safety-dashboard",
+            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
+            messagingSenderId: "152864778612",
+            appId: "1:152864778612:web:ecc482adce93a1534a2421"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function collectItems() {
+            const items = [];
+            document.querySelectorAll('#checklist-body tr.item-row').forEach(row => {
+                const idx = parseInt(row.dataset.itemIndex, 10);
+                const issueInput = row.querySelector('input[type="number"]');
+                const checkedRadio = row.querySelector('input[type="radio"]:checked');
+                const commentEl = row.querySelector('textarea');
+                items.push({
+                    index: idx,
+                    issueCount: issueInput ? (issueInput.value || '') : '',
+                    score: checkedRadio ? checkedRadio.dataset.score : null,
+                    comment: commentEl ? commentEl.value : ''
+                });
+            });
+            return items;
+        }
+
+        function restoreItems(items) {
+            if (!Array.isArray(items)) return;
+            items.forEach(item => {
+                const row = document.querySelector(`#checklist-body tr[data-item-index="${item.index}"]`);
+                if (!row) return;
+                const issueInput = row.querySelector('input[type="number"]');
+                if (issueInput) issueInput.value = item.issueCount || '';
+                if (item.score !== null && item.score !== undefined) {
+                    const radio = row.querySelector(`input[type="radio"][data-score="${item.score}"]`);
+                    if (radio) radio.checked = true;
+                }
+                const commentEl = row.querySelector('textarea');
+                if (commentEl) commentEl.value = item.comment || '';
+            });
+        }
+
+        window.saveFieldCheckToServer = async function () {
+            const siteName = document.getElementById('site-name').value.trim();
+            const quarter = document.getElementById('quarter-input').value.trim();
+            const year = document.getElementById('year').value.trim();
+
+            if (!siteName) { alert('현장명을 입력해주세요.'); return; }
+            if (!quarter) { alert('분기를 입력해주세요.'); return; }
+            if (!year) { alert('년도를 입력해주세요.'); return; }
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').textContent = '서버에 저장 중입니다...';
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+
+            try {
+                calculateScore();
+                const totalScoreEl = document.getElementById('total-score');
+
+                const reportData = {
+                    headerInfo: {
+                        siteName,
+                        quarter,
+                        year,
+                        month: document.getElementById('month').value.trim(),
+                        day: document.getElementById('day').value.trim()
+                    },
+                    factors: {
+                        s: document.getElementById('factor-s').value,
+                        r: document.getElementById('factor-r').value,
+                        p: document.getElementById('factor-p').value,
+                        k: document.getElementById('k-value').textContent
+                    },
+                    items: collectItems(),
+                    bonus: {
+                        improvement: document.getElementById('bonus-improvement').value,
+                        improvementDetail: document.getElementById('bonus-improvement-detail').value,
+                        idea: document.getElementById('bonus-idea').value,
+                        ideaDetail: document.getElementById('bonus-idea-detail').value
+                    },
+                    result: {
+                        totalScore: totalScoreEl.textContent,
+                        baseScore: totalScoreEl.dataset.baseScore || '0',
+                        weightedSum: totalScoreEl.dataset.weightedSum || '0',
+                        maxWeightedSum: totalScoreEl.dataset.maxWeightedSum || '0',
+                        kFactor: totalScoreEl.dataset.kFactor || '1.00',
+                        issueCount: totalScoreEl.dataset.issueCount || '0'
+                    },
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "field_checks"), reportData);
+
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                alert('현장 점검표가 서버에 성공적으로 저장되었습니다.');
+            } catch (error) {
+                console.error('Error saving field check:', error);
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        };
+
+        window.showFieldLoadModal = async function () {
+            const loadModal = document.getElementById('server-load-modal');
+            const listContent = document.getElementById('load-list-content');
+            loadModal.classList.remove('hidden');
+            loadModal.classList.add('flex');
+            listContent.innerHTML = '<p class="text-center text-gray-500">데이터를 불러오는 중입니다...</p>';
+
+            try {
+                const q = query(collection(db, "field_checks"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    listContent.innerHTML = '<p class="text-center text-gray-500 py-4">저장된 현장 점검표가 없습니다.</p>';
+                    return;
+                }
+
+                const ul = document.createElement('ul');
+                ul.className = 'space-y-2';
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const siteName = data.headerInfo?.siteName || '현장명 미상';
+                    const quarter = data.headerInfo?.quarter || '';
+                    const year = data.headerInfo?.year || '';
+                    const score = data.result?.totalScore || '0';
+                    const dateStr = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : '최근';
+
+                    const li = document.createElement('li');
+                    li.className = 'border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-blue-50 transition-colors';
+                    li.onclick = () => window.loadFieldCheckRow(data);
+                    li.innerHTML = `
+                        <div class="font-bold text-gray-800">${siteName} (${year}년 ${quarter})</div>
+                        <div class="text-sm text-gray-500 flex justify-between mt-1">
+                            <span>총점: ${score}점</span>
+                            <span>저장일시: ${dateStr}</span>
+                        </div>
+                    `;
+                    ul.appendChild(li);
+                });
+
+                listContent.innerHTML = '';
+                listContent.appendChild(ul);
+            } catch (error) {
+                console.error('Error loading field checks:', error);
+                listContent.innerHTML = `<p class="text-center text-red-500 py-4">목록을 불러오는데 실패했습니다: ${error.message}</p>`;
+            }
+        };
+
+        window.loadFieldCheckRow = function (data) {
+            if (!confirm('현재 입력된 내용이 모두 삭제되고 선택한 데이터를 불러옵니다. 계속하시겠습니까?')) return;
+
+            if (data.headerInfo) {
+                document.getElementById('site-name').value = data.headerInfo.siteName || '';
+                document.getElementById('quarter-input').value = data.headerInfo.quarter || '1분기';
+                document.getElementById('year').value = data.headerInfo.year || '';
+                document.getElementById('month').value = data.headerInfo.month || '';
+                document.getElementById('day').value = data.headerInfo.day || '';
+            }
+
+            if (data.factors) {
+                if (data.factors.s) document.getElementById('factor-s').value = data.factors.s;
+                if (data.factors.r) document.getElementById('factor-r').value = data.factors.r;
+                if (data.factors.p) document.getElementById('factor-p').value = data.factors.p;
+                if (typeof window.updateKFactor === 'function') window.updateKFactor();
+            }
+
+            restoreItems(data.items);
+
+            if (data.bonus) {
+                document.getElementById('bonus-improvement').value = data.bonus.improvement || '0';
+                document.getElementById('bonus-improvement-detail').value = data.bonus.improvementDetail || '';
+                document.getElementById('bonus-idea').value = data.bonus.idea || '0';
+                document.getElementById('bonus-idea-detail').value = data.bonus.ideaDetail || '';
+            }
+
+            if (typeof window.calculateScore === 'function') window.calculateScore();
+
+            document.getElementById('server-load-modal').classList.add('hidden');
+            document.getElementById('server-load-modal').classList.remove('flex');
+            alert('데이터를 성공적으로 불러왔습니다.');
+        };
+
+        document.getElementById('save-server-btn').addEventListener('click', window.saveFieldCheckToServer);
+        document.getElementById('load-server-btn').addEventListener('click', window.showFieldLoadModal);
+        document.getElementById('close-load-modal-btn').addEventListener('click', () => {
+            const m = document.getElementById('server-load-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        });
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <script src="/auth-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>현장 안전보건경영시스템 종합결과표</title>
+    <script>
+        const ADMIN_PASSWORD = "1152";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const hasAuth = sessionStorage.getItem("isAdminAuthenticated") === "true";
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+            const pwdInput = document.getElementById('admin-password-input');
+
+            if (hasAuth) {
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (mainContent) mainContent.style.filter = 'blur(5px)';
+                if (modal) modal.style.display = 'flex';
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') submitAdminPassword();
+                    });
+                }
+            }
+        });
+
+        function submitAdminPassword() {
+            const input = document.getElementById('admin-password-input');
+            const error = document.getElementById('password-error');
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+
+            if (input.value === ADMIN_PASSWORD) {
+                sessionStorage.setItem("isAdminAuthenticated", "true");
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (error) error.style.display = 'block';
+                input.value = '';
+                input.focus();
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a237e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        th {
+            background-color: #e8eaf6;
+            font-weight: bold;
+        }
+
+        .text-left { text-align: left; }
+
+        tfoot th, tfoot td {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .header-table td { background-color: #f9f9f9; }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #eef1fb;
+            border-radius: 8px;
+        }
+
+        .search-bar label {
+            font-weight: bold;
+            color: #1a237e;
+            margin-right: 4px;
+        }
+
+        .search-bar input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        #site-name-search { width: 160px; }
+        #year-search { width: 80px; }
+        #quarter-search { width: 90px; }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        .btn-search { background-color: #1a237e; }
+        .btn-print { background-color: #3949ab; }
+
+        .section-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #3949ab;
+            padding-bottom: 8px;
+            color: #1a237e;
+        }
+
+        .status-message {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .status-warn {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffe08a;
+        }
+
+        .status-ok {
+            background-color: #e6f4ea;
+            color: #1e7e34;
+            border: 1px solid #b7e1c1;
+        }
+
+        .results-table th, .results-table tfoot th { background-color: #c5cae9; }
+        .results-table td, .results-table tfoot th { font-size: 1em; }
+
+        #final-grade-display.excellent { color: #0044CC; }
+        #final-grade-display.good { color: #008000; }
+        #final-grade-display.poor { color: #CC0000; }
+
+        #evaluation-phase-badge {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #757575;
+        }
+
+        .phase-early { background-color: #009688 !important; }
+        .phase-middle { background-color: #3f51b5 !important; }
+        .phase-late { background-color: #673ab7 !important; }
+
+        .signature-section {
+            margin-top: 40px;
+            text-align: left;
+            padding: 15px;
+        }
+
+        .signature-section span.sig-label {
+            display: inline-block;
+            width: 90px;
+            text-align: right;
+            margin-right: 5px;
+        }
+
+        .sig-row {
+            display: inline-block;
+            margin: 5px 15px 5px 0;
+            white-space: nowrap;
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 25mm 10mm 10mm 10mm !important;
+            }
+
+            body, html {
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: #fff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                font-size: 11pt !important;
+            }
+
+            .container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .no-print { display: none !important; }
+
+            th, td { padding: 8px 4px !important; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="main-content">
+
+        <h1>현장 안전보건경영시스템 종합결과표</h1>
+
+        <div class="search-bar no-print">
+            <label for="site-name-search">현장명</label>
+            <input type="text" id="site-name-search" placeholder="현장명 입력">
+            <label for="year-search">년도</label>
+            <input type="text" id="year-search" placeholder="YYYY">
+            <label for="quarter-search">분기</label>
+            <input type="text" id="quarter-search" value="1분기" placeholder="예: 1분기">
+            <button id="search-btn" class="btn btn-search">조회</button>
+            <button id="print-btn" class="btn btn-print" style="display:none;">&#128424; 인쇄하기</button>
+        </div>
+
+        <div id="result-area">
+            <p style="text-align:center; color:#888; padding: 40px 0;">현장명과 년도·분기를 입력한 뒤 [조회] 버튼을 눌러주세요.</p>
+        </div>
+
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay"
+        style="display: none; position: fixed; inset: 0; background-color: rgba(255, 255, 255, 0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 15px; font-weight: bold; color: #333;">조회 중...</p>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
+            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
+            projectId: "namhwa-safety-dashboard",
+            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
+            messagingSenderId: "152864778612",
+            appId: "1:152864778612:web:ecc482adce93a1534a2421"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 공정율에 따른 시스템:현장 반영 비율 (기존 shm_system 로직과 동일하게 유지)
+        function getPhaseWeights(progress) {
+            if (progress < 30) {
+                return { maxSystemScore: 70, maxFieldScore: 30, phaseText: "초기 단계 (시스템70:현장30)", phaseClass: "phase-early" };
+            } else if (progress < 80) {
+                return { maxSystemScore: 50, maxFieldScore: 50, phaseText: "본 공사 단계 (시스템50:현장50)", phaseClass: "phase-middle" };
+            }
+            return { maxSystemScore: 60, maxFieldScore: 40, phaseText: "마무리 단계 (시스템60:현장40)", phaseClass: "phase-late" };
+        }
+
+        function toTimeMs(doc) {
+            return doc.createdAt && doc.createdAt.seconds ? doc.createdAt.seconds : 0;
+        }
+
+        // siteName으로만 서버에 조회(색인 불필요)한 뒤, 년도/분기 일치 + 최신순으로 클라이언트에서 필터링
+        async function findLatestSystemCheck(siteName, year, quarter) {
+            const q = query(collection(db, "shm_checks"), where("headerInfo.siteName", "==", siteName));
+            const snap = await getDocs(q);
+            let candidates = [];
+            snap.forEach(d => {
+                const data = d.data();
+                const docYear = (data.headerInfo?.checkDate || '').slice(0, 4);
+                const docQuarter = data.headerInfo?.quarter || '';
+                if (docYear === year && docQuarter === quarter) candidates.push(data);
+            });
+            candidates.sort((a, b) => toTimeMs(b) - toTimeMs(a));
+            return candidates[0] || null;
+        }
+
+        async function findLatestFieldCheck(siteName, year, quarter) {
+            const q = query(collection(db, "field_checks"), where("headerInfo.siteName", "==", siteName));
+            const snap = await getDocs(q);
+            let candidates = [];
+            snap.forEach(d => {
+                const data = d.data();
+                const docYear = data.headerInfo?.year || '';
+                const docQuarter = data.headerInfo?.quarter || '';
+                if (docYear === year && docQuarter === quarter) candidates.push(data);
+            });
+            candidates.sort((a, b) => toTimeMs(b) - toTimeMs(a));
+            return candidates[0] || null;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        function renderMissing(systemDoc, fieldDoc, siteName, year, quarter) {
+            const area = document.getElementById('result-area');
+            let msg = `<div class="status-message status-warn">`;
+            msg += `${escapeHtml(siteName)} / ${escapeHtml(year)}년 ${escapeHtml(quarter)} 종합결과를 계산할 수 없습니다.<br><br>`;
+            msg += `- 시스템 점검표 저장 데이터: ${systemDoc ? '있음 ✅' : '없음 ❌ (시스템점검표에서 저장 필요)'}<br>`;
+            msg += `- 현장 점검표 저장 데이터: ${fieldDoc ? '있음 ✅' : '없음 ❌ (현장점검표에서 저장 필요)'}<br><br>`;
+            msg += `두 점검 결과가 모두 저장되어야 종합결과표가 자동으로 계산됩니다.`;
+            msg += `</div>`;
+
+            if (systemDoc) {
+                const raw = parseFloat(systemDoc.finalScores?.systemConverted) || 0;
+                msg += `<div class="status-message status-ok">참고: 시스템 점검 점수 (100점 만점) = ${raw.toFixed(1)}점</div>`;
+            }
+            if (fieldDoc) {
+                const raw = parseFloat(fieldDoc.result?.totalScore) || 0;
+                msg += `<div class="status-message status-ok">참고: 현장 점검 점수 (100점 만점 기준) = ${raw.toFixed(1)}점</div>`;
+            }
+
+            area.innerHTML = msg;
+            document.getElementById('print-btn').style.display = 'none';
+        }
+
+        function renderResult(systemDoc, fieldDoc, siteName, year, quarter) {
+            const progress = parseFloat(systemDoc.headerInfo?.progress) || 0;
+            const weights = getPhaseWeights(progress);
+
+            const systemRaw = Math.max(0, parseFloat(systemDoc.finalScores?.systemConverted) || 0);
+            const systemConverted = (systemRaw / 100) * weights.maxSystemScore;
+
+            const fieldRaw = Math.min(100, Math.max(0, parseFloat(fieldDoc.result?.totalScore) || 0));
+            const fieldConverted = (fieldRaw / 100) * weights.maxFieldScore;
+
+            const finalTotal = Math.max(0, systemConverted + fieldConverted);
+
+            let grade = '미흡', gradeClass = 'poor';
+            if (finalTotal >= 90) { grade = '우수'; gradeClass = 'excellent'; }
+            else if (finalTotal >= 60) { grade = '보통'; gradeClass = 'good'; }
+
+            const manager = systemDoc.headerInfo?.evaluators?.manager || '';
+            const safetyManager = systemDoc.headerInfo?.evaluators?.safetyManager || '';
+            const supervisors = (systemDoc.headerInfo?.evaluators?.supervisors || []).join(', ');
+            const department = systemDoc.headerInfo?.department || '';
+            const checkDate = systemDoc.headerInfo?.checkDate || '';
+
+            const inspectors = (systemDoc.signatures?.inspectors || []);
+            const evaluators = (systemDoc.signatures?.evaluators || []);
+            const siteRep = systemDoc.signatures?.siteRep || '';
+
+            const area = document.getElementById('result-area');
+            area.innerHTML = `
+                <table class="header-table">
+                    <colgroup>
+                        <col style="width: 15%;"><col style="width: 35%;"><col style="width: 15%;"><col style="width: 35%;">
+                    </colgroup>
+                    <tr>
+                        <th>현장명</th><td class="text-left">${escapeHtml(siteName)}</td>
+                        <th>점검일(시스템/현장)</th><td class="text-left">${escapeHtml(checkDate)}</td>
+                    </tr>
+                    <tr>
+                        <th>공정율</th>
+                        <td class="text-left">${progress.toFixed(1)}% <span id="evaluation-phase-badge" class="${weights.phaseClass}">${weights.phaseText}</span></td>
+                        <th>작성부서</th><td class="text-left">${escapeHtml(department)}</td>
+                    </tr>
+                    <tr>
+                        <th>현장소장</th><td class="text-left">${escapeHtml(manager)}</td>
+                        <th>안전관리자</th><td class="text-left">${escapeHtml(safetyManager)}</td>
+                    </tr>
+                    <tr>
+                        <th>관리감독자</th><td class="text-left" colspan="3">${escapeHtml(supervisors)}</td>
+                    </tr>
+                </table>
+
+                <div class="section-title">종합 결과</div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>구분</th><th>배점</th><th>점수(100점 기준)</th><th>환산점수</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>안전보건경영시스템 점검</td>
+                            <td>${weights.maxSystemScore}점 만점</td>
+                            <td>${systemRaw.toFixed(1)}</td>
+                            <td style="font-weight:bold;">${systemConverted.toFixed(1)}</td>
+                        </tr>
+                        <tr>
+                            <td>현장 안전관리 점검</td>
+                            <td>${weights.maxFieldScore}점 만점</td>
+                            <td>${fieldRaw.toFixed(1)}</td>
+                            <td style="font-weight:bold;">${fieldConverted.toFixed(1)}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr><th colspan="3">총점</th><th id="final-total-score" style="font-size:1.2em;">${finalTotal.toFixed(1)}</th></tr>
+                        <tr><th colspan="3">평가등급</th><th id="final-grade-display" class="${gradeClass}" style="font-size:1.2em;">${grade}</th></tr>
+                    </tfoot>
+                </table>
+
+                <div class="signature-section">
+                    <div style="margin-bottom: 10px; font-weight: bold;">■ 평가 서명란</div>
+                    <div>
+                        ${inspectors.length ? inspectors.map(n => `<span class="sig-row">${escapeHtml(n)} (서명)</span>`).join('') : '<span class="sig-row" style="color:#999;">수검 참여자 정보 없음</span>'}
+                    </div>
+                    <div style="border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 10px;">
+                        <span class="sig-row"><span class="sig-label" style="font-weight:bold;">수검 현장 대표:</span>${escapeHtml(siteRep)} (서명)</span>
+                        <div style="margin-top: 10px;">
+                            ${evaluators.length ? evaluators.map(n => `<span class="sig-row">${escapeHtml(n)} (서명)</span>`).join('') : '<span class="sig-row" style="color:#999;">점검자 정보 없음</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('print-btn').style.display = 'inline-block';
+        }
+
+        async function runSearch() {
+            const siteName = document.getElementById('site-name-search').value.trim();
+            const year = document.getElementById('year-search').value.trim();
+            const quarter = document.getElementById('quarter-search').value.trim();
+
+            if (!siteName || !year || !quarter) {
+                alert('현장명, 년도, 분기를 모두 입력해주세요.');
+                return;
+            }
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('print-btn').style.display = 'none';
+
+            try {
+                const [systemDoc, fieldDoc] = await Promise.all([
+                    findLatestSystemCheck(siteName, year, quarter),
+                    findLatestFieldCheck(siteName, year, quarter)
+                ]);
+
+                if (systemDoc && fieldDoc) {
+                    renderResult(systemDoc, fieldDoc, siteName, year, quarter);
+                } else {
+                    renderMissing(systemDoc, fieldDoc, siteName, year, quarter);
+                }
+            } catch (error) {
+                console.error('종합결과 조회 실패:', error);
+                document.getElementById('result-area').innerHTML =
+                    `<div class="status-message status-warn">조회 중 오류가 발생했습니다: ${escapeHtml(error.message)}</div>`;
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        document.getElementById('search-btn').addEventListener('click', runSearch);
+        document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+        // 현재 날짜 기준 분기 자동 설정
+        const currentMonth = new Date().getMonth() + 1;
+        const currentQuarter = Math.ceil(currentMonth / 3);
+        document.getElementById('quarter-search').value = `${currentQuarter}분기`;
+        document.getElementById('year-search').value = String(new Date().getFullYear());
+    </script>
+
+    <!-- 관리자 비밀번호 입력 모달 -->
+    <div id="password-modal" style="position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background-color: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); text-align: center; width: 100%; max-width: 400px; border: 1px solid #f1f5f9; box-sizing: border-box; font-family: sans-serif;">
+            <div style="width: 64px; height: 64px; background-color: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #2563eb;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 32px; height: 32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">관리자 인증</h2>
+            <p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">페이지에 접근하려면 관리자 비밀번호를 입력해 주세요.</p>
+            <div style="margin-bottom: 24px;">
+                <input type="password" id="admin-password-input"
+                    style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; text-align: center; font-family: monospace; font-size: 24px; letter-spacing: 0.25em; box-sizing: border-box;"
+                    placeholder="••••" autofocus>
+                <p id="password-error" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none; font-weight: 600;">비밀번호가 일치하지 않습니다.</p>
+            </div>
+            <button onclick="submitAdminPassword()"
+                style="width: 100%; background-color: #2563eb; color: #ffffff; font-weight: 700; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px;">
+                인증하기
+            </button>
+        </div>
+    </div>
+</body>
+</html>

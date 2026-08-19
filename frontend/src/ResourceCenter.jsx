@@ -446,10 +446,11 @@ const ResourceCenter = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
                                 { title: "SHM SYSTEM", sub: "Web System", icon: <Shield />, link: "/shm_system/index.html" },
+                                { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
+                                { title: "SHM RESULT", sub: "종합결과표", icon: <LayoutDashboard />, link: "/shm_result/index.html" },
                                 { title: "PRE CHECK", sub: "Checklist", icon: <CheckSquare />, link: "/pre_check/index.html" },
                                 { title: "DAILY ARCH", sub: "Architecture", icon: <ClipboardCheck />, link: "/daily_arch/index.html" },
                                 { title: "DAILY CE", sub: "Civil Eng.", icon: <ClipboardCheck />, link: "/daily_ce/index.html" },
-                                { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
                                 { title: "AHA", sub: "Risk Assessment", icon: <FileText />, link: "/AHA/index.html" },
                                 { title: "PTW", sub: "Permit to Work", icon: <Lock />, link: "/PTW/index.html" },
                                 { title: "WSHCC", sub: "Council", icon: <BookOpen />, link: "/WSHCC/index.html" },

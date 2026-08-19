@@ -8,7 +8,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>현장 안전보건경영시스템 점검 결과표</title>
+    <title>현장 안전보건경영시스템 점검표</title>
     <script>
         // 1. 계획: DOM 로드 완료 후 세션스토리지를 조회하여 인증 여부 판별
         // 2. 검증: 미인증 시 메인 화면을 blur 처리하고 관리자 비밀번호 입력 모달 노출
@@ -530,7 +530,7 @@
         <h1 style="text-align: center;">
             (<input type="text" id="quarter-input" value="1분기"
                 style="width: 2.5em; text-align: center; border: none; background-color: transparent; font-size: inherit; font-family: inherit; font-weight: inherit; color: inherit; padding: 0; margin: 0; outline: none; box-shadow: none; vertical-align: baseline; appearance: none;">)
-            현장 안전보건경영시스템 점검 결과표
+            현장 안전보건경영시스템 점검표
         </h1>
 
         <table class="header-table">
@@ -593,7 +593,7 @@
             </div>
         </div>
 
-        <div class="section-title">종합 결과</div>
+        <div class="section-title">종합 결과 (시스템 점검)</div>
         <table class="results-table">
             <thead>
                 <tr>
@@ -654,39 +654,17 @@
                     <td><input type="number" id="work-accident-count" class="input-number" value="0" min="0"></td>
                     <td id="work-accident-deduction" style="color: red; font-weight: bold;">0</td>
                 </tr>
-                <tr>
-                    <td rowspan="1">현장<br>안전관리</td>
-                    <td class="text-left">현장 안전관리 평가 점수 <span style="font-size: 0.8em; color: #666; font-weight: normal; margin-left: 5px;">(100점 만점 기준 입력 시 자동 환산)</span></td>
-                    <!-- Field Score Base Display: Updated dynamically -->
-                    <td><span id="field-base-score-display">40</span></td>
-                    <td style="position: relative;">
-                        <input type="number" id="field-score-input" class="input-number" value="40" step="0.1" max="100" min="0">
-                        <div id="field-calc-preview" style="position: absolute; bottom: -18px; left: 0; width: 100%; font-size: 10px; color: #3949ab; font-weight: bold; text-align: center; display: none;"></div>
-                    </td>
-                    <td id="field-score-display" style="font-weight: bold; font-size: 1.2em;">40.0</td>
-                </tr>
             </tbody>
             <tfoot>
                 <tr>
-                    <!-- Dynamic System Max Score -->
-                    <th colspan="4">환산점수 (안전보건경영시스템: <span id="sys-max-display">60</span>점 만점)</th>
-                    <th id="system-converted-score" style="font-size: 1.1em;">0.0</th>
-                </tr>
-                <tr>
-                    <!-- Dynamic Field Max Score -->
-                    <th colspan="4">환산점수 (현장 안전관리: <span id="field-max-display">40</span>점 만점)</th>
-                    <th id="field-converted-score" style="font-size: 1.1em;">40.0</th>
-                </tr>
-                <tr>
-                    <th colspan="4">총점</th>
-                    <th id="final-total-score" style="font-size: 1.2em;">0.0</th>
-                </tr>
-                <tr>
-                    <th colspan="4">평가등급</th>
-                    <th id="final-grade-display" style="font-size: 1.2em; font-weight: bold;">-</th>
+                    <th colspan="4">시스템 점검 최종 점수 (100점 만점, 감점 반영)</th>
+                    <th id="system-converted-score" style="font-size: 1.2em;">0.0</th>
                 </tr>
             </tfoot>
         </table>
+        <p style="font-size: 0.85em; color: #666; margin-top: -10px;">
+            ※ 현장 점검 점수와 합산된 최종 환산점수·평가등급은 <a href="/shm_result/" target="_blank" style="color:#3949ab; font-weight:bold;">종합결과표</a>에서 확인할 수 있습니다.
+        </p>
 
         <div id="evaluation-sections">
             <!-- Sections 1-7 will be generated here -->
@@ -844,22 +822,18 @@
                     }
                 });
 
-                // Collect Deductions & Field Score
+                // Collect Deductions
                 const deductions = {
                     majorAccident: document.getElementById('major-accident-count').value,
-                    workAccident: document.getElementById('work-accident-count').value,
-                    fieldScore: document.getElementById('field-score-input').value
+                    workAccident: document.getElementById('work-accident-count').value
                 };
 
                 // Collect Summary
                 const majorSummary = document.getElementById('major-summary-output').innerHTML;
 
-                // Collect Final Scores
+                // Collect Final Scores (system-only; combined total/grade now live in 종합결과표)
                 const finalScores = {
-                    systemConverted: document.getElementById('system-converted-score').textContent,
-                    fieldConverted: document.getElementById('field-converted-score').textContent,
-                    totalScore: document.getElementById('final-total-score').textContent,
-                    finalGrade: document.getElementById('final-grade-display').textContent
+                    systemConverted: document.getElementById('system-converted-score').textContent
                 };
 
                 const reportData = {
@@ -1029,11 +1003,10 @@
                 });
             }
 
-            // 4. Restore Deductions & Field Score
+            // 4. Restore Deductions
             if (data.deductions) {
                 document.getElementById('major-accident-count').value = data.deductions.majorAccident || '0';
                 document.getElementById('work-accident-count').value = data.deductions.workAccident || '0';
-                document.getElementById('field-score-input').value = data.deductions.fieldScore || '40';
             }
 
             // 5. Restore Summary
@@ -1210,7 +1183,6 @@
 
             const majorAccidentInput = document.getElementById('major-accident-count');
             const workAccidentInput = document.getElementById('work-accident-count');
-            const fieldScoreInput = document.getElementById('field-score-input');
 
             const modal = document.getElementById('regulation-modal');
             const modalContent = document.getElementById('modal-content');
@@ -1335,81 +1307,28 @@
             function updateComprehensiveResults() {
                 const progress = parseFloat(document.querySelector('.progress-input').value) || 0;
 
-                // --- Dynamic Max Score Setting based on Progress ---
-                let maxSystemScore = 60;
-                let maxFieldScore = 40;
-                let phaseText = "마무리 단계 (시스템60:현장40)";
+                // --- 평가 단계 뱃지 (참고용 표시. 실제 시스템:현장 가중치 합산은 종합결과표에서 진행) ---
+                let phaseText = "마무리 단계 (종합결과표 반영비율 시스템60:현장40)";
                 let phaseClass = "phase-late";
-                let weights = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 };
-
                 if (progress < 30) {
-                    maxSystemScore = 70;
-                    maxFieldScore = 30;
-                    phaseText = "초기 단계 (시스템70:현장30)";
+                    phaseText = "초기 단계 (종합결과표 반영비율 시스템70:현장30)";
                     phaseClass = "phase-early";
-                    weights = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 };
                 } else if (progress < 80) {
-                    maxSystemScore = 50;
-                    maxFieldScore = 50;
-                    phaseText = "본 공사 단계 (시스템50:현장50)";
+                    phaseText = "본 공사 단계 (종합결과표 반영비율 시스템50:현장50)";
                     phaseClass = "phase-middle";
-                    weights = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1 };
                 }
-
-                // Update UI for Max Scores
-                document.getElementById('sys-max-display').textContent = maxSystemScore;
-                document.getElementById('field-max-display').textContent = maxFieldScore;
-                document.getElementById('field-base-score-display').textContent = maxFieldScore;
-
-                // Update Field Input attributes
-                // 100점 만점 기준으로 입력받기 위해 최대 입력 한도를 항상 100으로 고정합니다. (이전의 maxFieldScore 한계값 오작동 해결)
-                const fInput = document.getElementById('field-score-input');
-                fInput.max = 100;
-                if (parseFloat(fInput.value) > 100) fInput.value = 100;
-
-                // Update Badge
                 phaseBadge.textContent = phaseText;
                 phaseBadge.className = phaseClass;
 
+                // --- 시스템 점검 점수 (100점 만점, comp-score-1~7 합계) ---
+                let systemSimpleSum = 0;
+                for (let i = 1; i <= 7; i++) {
+                    const input = document.getElementById(`comp-score-${i}`);
+                    if (input) systemSimpleSum += parseFloat(input.value) || 0;
+                }
+                document.getElementById('system-score-sum').textContent = systemSimpleSum.toFixed(1);
 
-                // --- Calculate System Score ---
-                let weightedObtainedSum = 0;
-                let weightedPossibleSum = 0;
-
-                const baseScores = { 1: 5, 2: 30, 3: 10, 4: 20, 5: 10, 6: 20, 7: 5 };
-                const tables = document.querySelectorAll('.main-table');
-                tables.forEach((table, index) => {
-                    const sectionIndex = index + 1;
-                    const weight = weights[sectionIndex] || 1.0;
-                    const maxAllowed = baseScores[sectionIndex];
-
-                    let sectionObtained = 0;
-                    let sectionPossible = 0;
-
-                    table.querySelectorAll('.eval-select').forEach(select => {
-                        if (select.value !== 'na') {
-                            const maxPoint = parseFloat(select.dataset.basePoints) || 0;
-                            const val = parseFloat(select.value) || 0;
-                            sectionPossible += maxPoint;
-                            sectionObtained += val;
-                        }
-                    });
-
-                    // Cap logic: 공식 배점을 넘지 않도록 제한 (현장별 일관된 환산을 위해 기준 분모는 항상 maxAllowed 사용)
-                    sectionPossible = maxAllowed;
-                    sectionObtained = Math.min(sectionObtained, maxAllowed);
-
-                    weightedObtainedSum += sectionObtained * weight;
-                    weightedPossibleSum += sectionPossible * weight;
-                });
-
-                weightedPossibleSum = Math.max(1, weightedPossibleSum);
-
-                // Convert to dynamic maxSystemScore
-                let systemBaseConvertedScore = (weightedObtainedSum / weightedPossibleSum) * maxSystemScore;
-
-                // 2. Deductions Calculation (Fixed Logic)
-                // Ensure non-negative count input
+                // --- 중대재해/산재 감점 ---
                 const majorAccidents = Math.max(0, parseInt(majorAccidentInput.value) || 0);
                 const majorDeduction = majorAccidents * -30;
                 document.getElementById('major-accident-deduction').textContent = majorDeduction;
@@ -1418,66 +1337,11 @@
                 const workDeduction = workAccidents * -5;
                 document.getElementById('work-accident-deduction').textContent = workDeduction;
 
-                // 감점(페널티)을 공정율 단계(maxSystemScore)에 맞춰 비례 축소 (옵션 A)
-                const scaleFactor = maxSystemScore / 100;
-                const scaledMajorDeduction = majorDeduction * scaleFactor;
-                const scaledWorkDeduction = workDeduction * scaleFactor;
+                // --- 시스템 점검 최종 점수 (감점 반영, 100점 만점) ---
+                let systemFinalScore = systemSimpleSum + majorDeduction + workDeduction;
+                systemFinalScore = Math.max(0, systemFinalScore);
 
-                // 3. Apply Deductions to System Score
-                let systemFinalConvertedScore = systemBaseConvertedScore + scaledMajorDeduction + scaledWorkDeduction;
-                systemFinalConvertedScore = Math.max(0, systemFinalConvertedScore);
-
-                document.getElementById('system-converted-score').textContent = systemFinalConvertedScore.toFixed(1);
-
-                let systemSimpleSum = 0;
-                for (let i = 1; i <= 7; i++) {
-                    const input = document.getElementById(`comp-score-${i}`);
-                    if (input) systemSimpleSum += parseFloat(input.value) || 0;
-                }
-                document.getElementById('system-score-sum').textContent = systemSimpleSum.toFixed(1);
-
-
-                // --- Field Score ---
-                // 1. 계획: 입력된 현장 안전관리 점수를 100점 만점 스케일로 간주하여 무조건 공정 단계별 최대 배점 비중(maxFieldScore)으로 자동 환산합니다.
-                // 2. 검증: 입력값이 maxFieldScore보다 낮을 때도 환산이 정상 동작하게 보장하여 일관성 있는 객관적 총점을 구합니다.
-                // 3. 구현: 기존 조건문 분기를 제거하고 항상 비중식으로 환산하여 디스플레이 및 프리뷰를 처리합니다.
-                let fieldScore = parseFloat(fieldScoreInput.value) || 0;
-                const previewEl = document.getElementById('field-calc-preview');
-                
-                const originalInput = fieldScore;
-                fieldScore = (fieldScore / 100) * maxFieldScore;
-                if (previewEl) {
-                    previewEl.textContent = `(${originalInput.toFixed(1)}점 → ${fieldScore.toFixed(1)}점 환산)`;
-                    previewEl.style.display = 'block';
-                }
-
-                const clampedFieldScore = Math.min(maxFieldScore, Math.max(0, fieldScore));
-                document.getElementById('field-score-display').textContent = clampedFieldScore.toFixed(1);
-                document.getElementById('field-converted-score').textContent = clampedFieldScore.toFixed(1);
-
-
-                // --- Final Total ---
-                // Add final system score (which already includes deductions) to field score
-                let finalTotalScore = systemFinalConvertedScore + clampedFieldScore;
-                finalTotalScore = Math.max(0, finalTotalScore);
-                document.getElementById('final-total-score').textContent = finalTotalScore.toFixed(1);
-
-
-                // --- Grade ---
-                const finalGradeEl = document.getElementById('final-grade-display');
-                let grade = '-';
-                let gradeClass = '';
-
-                if (systemSimpleSum > 0 || majorDeduction < 0 || workDeduction < 0 || fieldScore < maxFieldScore) {
-                    if (finalTotalScore >= 90) { grade = '우수'; gradeClass = 'excellent'; }
-                    else if (finalTotalScore >= 60) { grade = '보통'; gradeClass = 'good'; }
-                    else { grade = '미흡'; gradeClass = 'poor'; }
-                } else {
-                    grade = '-';
-                }
-
-                finalGradeEl.textContent = grade;
-                finalGradeEl.className = gradeClass;
+                document.getElementById('system-converted-score').textContent = systemFinalScore.toFixed(1);
             }
 
             function updateAllScores() {
@@ -1525,7 +1389,6 @@
 
             majorAccidentInput.addEventListener('input', updateComprehensiveResults);
             workAccidentInput.addEventListener('input', updateComprehensiveResults);
-            fieldScoreInput.addEventListener('input', updateComprehensiveResults);
 
             function updateSupervisorButtonState() {
                 addSupervisorBtn.disabled = supervisorList.querySelectorAll('.supervisor-entry').length >= maxSupervisors;
@@ -1631,8 +1494,8 @@
                     }
                 });
 
-                // 총점 및 현장명 파악
-                const finalScoreText = document.getElementById('final-total-score').textContent;
+                // 시스템 점검 최종 점수 및 현장명 파악
+                const finalScoreText = document.getElementById('system-converted-score').textContent;
                 const finalScore = parseFloat(finalScoreText) || 0;
                 const siteNameEl = document.querySelector('.header-table .input-text.auto-expand-input');
                 const siteName = siteNameEl ? siteNameEl.textContent.trim() : "현장명 미상";
