@@ -584,15 +584,11 @@
                 </table>
             </div>
             <div>
-                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-title">
                     <span>주요 공정/ 개선 요구 사항</span>
-                    <button type="button" id="auto-summary-btn"
-                        style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #3949ab; color: white; border: none; border-radius: 4px; transition: background-color 0.3s; font-weight: bold;">
-                        &#9881; 개선사항 자동 종합
-                    </button>
                 </div>
                 <div class="major-process-input" id="major-summary-output" contenteditable="true"
-                    placeholder="현장의 주요 공정 및 개선 요구 사항을 입력하세요. 내용이 길어지면 자동으로 칸이 늘어납니다.&#10;우측 상단의 [개선사항 자동 종합] 버튼을 누르면 항목별 강/약점이 자동으로 요약됩니다.">
+                    placeholder="현장의 주요 공정 및 개선 요구 사항을 입력하세요. 내용이 길어지면 자동으로 칸이 늘어납니다.&#10;AI 자동 종합 검토는 종합결과표에서 시스템+현장 점검 결과를 합산해 생성할 수 있습니다.">
                 </div>
             </div>
         </div>
@@ -860,6 +856,7 @@
 
                 // Collect Summary
                 const majorSummary = document.getElementById('major-summary-output').innerHTML;
+                const sectionBreakdown = window.computeSectionBreakdown ? window.computeSectionBreakdown() : { strengths: [], weaknesses: [] };
 
                 // Collect Final Scores (system-only; combined total/grade now live in 종합결과표)
                 const finalScores = {
@@ -872,6 +869,7 @@
                     evaluationItems,
                     deductions,
                     majorSummary,
+                    sectionBreakdown,
                     finalScores,
                     createdAt: serverTimestamp()
                 };
@@ -1468,19 +1466,14 @@
                 window.print();
             });
 
-            // === 종합 요약 (AI 백엔드 연동) 로직 추가 ===
-            const autoSummaryBtn = document.getElementById('auto-summary-btn');
-            const summaryOutput = document.getElementById('major-summary-output');
-
-            autoSummaryBtn.addEventListener('click', async function () {
+            // === 섹션별 강점/약점 breakdown 계산 (저장 시 함께 저장하여 종합결과표의 AI 자동 종합에서 활용) ===
+            window.computeSectionBreakdown = function () {
                 let strengths = [];
                 let weaknesses = [];
 
-                // 각 카테고리(섹션 1~7) 테이블 단위로 순회
                 const tables = document.querySelectorAll('.main-table');
                 tables.forEach((table, index) => {
                     const sectionIndex = index + 1;
-                    // 카테고리 제목 추출
                     const titleEl = table.previousElementSibling;
                     let categoryName = titleEl ? titleEl.textContent : `섹션 ${sectionIndex}`;
                     categoryName = categoryName.split('(')[0].trim();
@@ -1515,7 +1508,6 @@
                         if (categoryRatio >= 0.85) {
                             strengths.push(categoryName);
                         } else {
-                            // 약점에 해당하는 카테고리 및 코멘트
                             weaknesses.push({
                                 category: categoryName,
                                 comments: categoryComments.length > 0 ? categoryComments : ["해당 분야에 대한 전반적인 개선 계획 수립 요망"]
@@ -1524,94 +1516,8 @@
                     }
                 });
 
-                // 시스템 점검 최종 점수 및 현장명 파악
-                const finalScoreText = document.getElementById('system-converted-score').textContent;
-                const finalScore = parseFloat(finalScoreText) || 0;
-                const siteName = (window.getSiteName && window.getSiteName()) || "현장명 미상";
-
-                // 시각적 피드백 (로딩 중)
-                const originalBtnText = autoSummaryBtn.innerHTML;
-                autoSummaryBtn.style.backgroundColor = '#f57c00';
-                autoSummaryBtn.innerHTML = '<span style="display:inline-block; width:12px; height:12px; border:2px solid #fff; border-radius:50%; border-top-color:transparent; animation:spin 1s linear infinite; vertical-align:middle; margin-right:5px;"></span> AI 분석 중...';
-                autoSummaryBtn.disabled = true;
-
-                try {
-                    // 로컬 환경과 프로덕션 환경 동적 분기
-                    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                    const baseUrl = isLocal
-                        ? 'http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1'
-                        : 'https://us-central1-namhwa-safety-dashboard.cloudfunctions.net';
-                    const apiUrl = `${baseUrl}/generate_shm_summary`;
-
-                    const payload = {
-                        siteName: siteName,
-                        finalScore: finalScore,
-                        strengths: strengths,
-                        weaknesses: weaknesses
-                    };
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        let errorDetail = "";
-                        try {
-                            const errorJson = await response.json();
-                            errorDetail = errorJson.detail || "";
-                        } catch (e) { }
-                        throw new Error(`서버 응답 오류 (상태 코드: ${response.status}) ${errorDetail ? '\n상세: ' + errorDetail : ''}`);
-                    }
-
-                    const result = await response.json();
-
-                    if (result.success && result.summary) {
-                        // 기존 내용을 보존할 공간 분리선
-                        const currentContent = summaryOutput.innerHTML.trim();
-                        let updatedHTML = result.summary;
-
-                        if (currentContent && currentContent !== "<br>" && !currentContent.includes("[안전보건 활동 적정성 종합 검토]")) {
-                            updatedHTML += `<br><br>--- (상세 주요 공정 현황) ---<br>${currentContent}`;
-                        }
-
-                        summaryOutput.innerHTML = updatedHTML;
-
-                        // 완료 표시
-                        autoSummaryBtn.style.backgroundColor = '#4caf50';
-                        autoSummaryBtn.textContent = "✓ 분석 완료";
-                    } else {
-                        throw new Error(result.detail || "결과 값이 없습니다.");
-                    }
-                } catch (error) {
-                    console.error("AI 요약 실패:", error);
-                    alert(`AI 요약을 생성하는 중에 오류가 발생했습니다.\n상세: ${error.message}`);
-                    autoSummaryBtn.style.backgroundColor = '#d32f2f';
-                    autoSummaryBtn.textContent = "✗ 분석 실패";
-                } finally {
-                    // 3초 후 버튼 원상복구
-                    setTimeout(() => {
-                        autoSummaryBtn.style.backgroundColor = '#3949ab';
-                        autoSummaryBtn.innerHTML = originalBtnText;
-                        autoSummaryBtn.disabled = false;
-                    }, 3000);
-                }
-            });
-
-            // 애니메이션용 CSS (문서에 없으면 동적 주입)
-            if (!document.getElementById('spin-anim-style')) {
-                const style = document.createElement('style');
-                style.id = 'spin-anim-style';
-                style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
-                document.head.appendChild(style);
-            }
-
-            autoSummaryBtn.addEventListener('mouseenter', () => { if (!autoSummaryBtn.disabled && autoSummaryBtn.textContent !== "✓ 분석 완료") autoSummaryBtn.style.backgroundColor = '#283593'; });
-            autoSummaryBtn.addEventListener('mouseleave', () => { if (!autoSummaryBtn.disabled && autoSummaryBtn.textContent !== "✓ 분석 완료") autoSummaryBtn.style.backgroundColor = '#3949ab'; });
-            // ==========================================
-
-            // ==========================================
+                return { strengths, weaknesses };
+            };
 
             updateSupervisorButtonState();
             updateAllScores();

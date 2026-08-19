@@ -276,7 +276,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
@@ -310,6 +310,7 @@
             let candidates = [];
             snap.forEach(d => {
                 const data = d.data();
+                data._docId = d.id;
                 const docYear = (data.headerInfo?.checkDate || '').slice(0, 4);
                 const docQuarter = data.headerInfo?.quarter || '';
                 if (docYear === year && docQuarter === quarter) candidates.push(data);
@@ -462,8 +463,14 @@
                     </tfoot>
                 </table>
 
-                <div class="section-title">주요 공정/ 개선 요구 사항</div>
-                <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fafafa; min-height: 40px; white-space: pre-wrap; line-height: 1.6;">${majorSummary || '<span style="color:#999;">작성된 내용이 없습니다.</span>'}</div>
+                <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>주요 공정/ 개선 요구 사항</span>
+                    <button type="button" id="ai-summary-btn"
+                        style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #3949ab; color: white; border: none; border-radius: 4px; font-weight: bold;">
+                        &#9881; AI 개선사항 자동 종합 (시스템+현장 합산)
+                    </button>
+                </div>
+                <div id="major-summary-display" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fafafa; min-height: 40px; white-space: pre-wrap; line-height: 1.6;">${majorSummary || '<span style="color:#999;">작성된 내용이 없습니다.</span>'}</div>
 
                 <div class="signature-section">
                     <div style="margin-bottom: 10px; font-weight: bold;">■ 평가 서명란</div>
@@ -480,6 +487,77 @@
             `;
 
             document.getElementById('print-btn').style.display = 'inline-block';
+
+            document.getElementById('ai-summary-btn').addEventListener('click', () => {
+                generateAiSummary(systemDoc, finalTotal, siteName);
+            });
+        }
+
+        async function generateAiSummary(systemDoc, finalTotal, siteName) {
+            const btn = document.getElementById('ai-summary-btn');
+            const display = document.getElementById('major-summary-display');
+            const originalBtnText = btn.innerHTML;
+            btn.disabled = true;
+            btn.style.backgroundColor = '#f57c00';
+            btn.innerHTML = '<span style="display:inline-block; width:12px; height:12px; border:2px solid #fff; border-radius:50%; border-top-color:transparent; animation:spin 1s linear infinite; vertical-align:middle; margin-right:5px;"></span> AI 분석 중...';
+
+            try {
+                const breakdown = systemDoc.sectionBreakdown || { strengths: [], weaknesses: [] };
+
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const baseUrl = isLocal
+                    ? 'http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1'
+                    : 'https://us-central1-namhwa-safety-dashboard.cloudfunctions.net';
+                const apiUrl = `${baseUrl}/generate_shm_summary`;
+
+                const payload = {
+                    siteName: siteName,
+                    finalScore: Math.round(finalTotal * 10) / 10,
+                    strengths: breakdown.strengths || [],
+                    weaknesses: breakdown.weaknesses || []
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let errorDetail = "";
+                    try {
+                        const errorJson = await response.json();
+                        errorDetail = errorJson.detail || "";
+                    } catch (e) { }
+                    throw new Error(`서버 응답 오류 (상태 코드: ${response.status}) ${errorDetail ? '\n상세: ' + errorDetail : ''}`);
+                }
+
+                const result = await response.json();
+                if (!result.success || !result.summary) {
+                    throw new Error(result.detail || "결과 값이 없습니다.");
+                }
+
+                display.innerHTML = result.summary;
+
+                // 생성된 종합 검토 내용을 시스템점검표 저장 데이터에도 반영 (다음 조회 시 재사용)
+                if (systemDoc._docId) {
+                    await updateDoc(doc(db, "shm_checks", systemDoc._docId), { majorSummary: result.summary });
+                }
+
+                btn.style.backgroundColor = '#4caf50';
+                btn.textContent = "✓ 분석 완료";
+            } catch (error) {
+                console.error("AI 요약 실패:", error);
+                alert(`AI 요약을 생성하는 중에 오류가 발생했습니다.\n상세: ${error.message}`);
+                btn.style.backgroundColor = '#d32f2f';
+                btn.textContent = "✗ 분석 실패";
+            } finally {
+                setTimeout(() => {
+                    btn.style.backgroundColor = '#3949ab';
+                    btn.innerHTML = originalBtnText;
+                    btn.disabled = false;
+                }, 3000);
+            }
         }
 
         async function runSearch() {
