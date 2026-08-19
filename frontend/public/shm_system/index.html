@@ -1530,6 +1530,14 @@
                 return { strengths, weaknesses, criticalIssues };
             };
 
+            // 노션 등 외부에서 복사한 서식(테두리/배경 등)이 그대로 붙여넣어지는 것을 방지 — 항상 순수 텍스트로만 붙여넣기
+            document.addEventListener('paste', function (e) {
+                if (!e.target.isContentEditable) return;
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+
             updateSupervisorButtonState();
             updateAllScores();
 
