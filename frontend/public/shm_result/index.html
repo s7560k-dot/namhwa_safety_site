@@ -473,25 +473,23 @@
                     </tfoot>
                 </table>
 
-                <div class="no-print">
-                    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>주요 공정/ 개선 요구 사항</span>
-                        <div style="display:flex; gap:8px;">
-                            <button type="button" id="ai-summary-btn"
-                                style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #3949ab; color: white; border: none; border-radius: 4px; font-weight: bold;">
-                                &#9881; AI 개선사항 자동 종합 (시스템+현장 합산)
-                            </button>
-                            <button type="button" id="save-summary-btn"
-                                style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #2e7d32; color: white; border: none; border-radius: 4px; font-weight: bold;">
-                                &#128190; 내용 저장
-                            </button>
-                        </div>
+                <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>주요 공정/ 개선 요구 사항</span>
+                    <div class="no-print" style="display:flex; gap:8px;">
+                        <button type="button" id="ai-summary-btn"
+                            style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #3949ab; color: white; border: none; border-radius: 4px; font-weight: bold;">
+                            &#9881; AI 개선사항 자동 종합 (시스템+현장 합산)
+                        </button>
+                        <button type="button" id="save-summary-btn"
+                            style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #2e7d32; color: white; border: none; border-radius: 4px; font-weight: bold;">
+                            &#128190; 내용 저장
+                        </button>
                     </div>
-                    <div id="major-summary-display" contenteditable="true"
-                        data-placeholder="작성된 내용이 없습니다. 위 [AI 개선사항 자동 종합] 버튼으로 생성하거나 이 영역을 직접 클릭해 입력할 수 있습니다."
-                        style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; min-height: 40px; white-space: pre-wrap; line-height: 1.6; cursor: text;">${majorSummary}</div>
-                    <p style="font-size: 0.8em; color: #888; margin-top: 4px; margin-bottom: 0;">※ 이 영역은 인쇄물에는 포함되지 않습니다. 직접 클릭해 내용을 수정한 뒤 [내용 저장]을 눌러 반영하세요.</p>
                 </div>
+                <div id="major-summary-display" contenteditable="true"
+                    data-placeholder="작성된 내용이 없습니다. 위 [AI 개선사항 자동 종합] 버튼으로 생성하거나 이 영역을 직접 클릭해 입력할 수 있습니다."
+                    style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; min-height: 40px; white-space: pre-wrap; line-height: 1.6; cursor: text;">${majorSummary}</div>
+                <p class="no-print" style="font-size: 0.8em; color: #888; margin-top: 4px; margin-bottom: 0;">※ 이 영역을 직접 클릭해 내용을 수정한 뒤 [내용 저장]을 눌러 반영하세요. (버튼과 이 안내문은 인쇄물에는 포함되지 않습니다)</p>
 
                 <div class="signature-section">
                     <div style="margin-bottom: 10px; font-weight: bold;">■ 평가 서명란</div>
