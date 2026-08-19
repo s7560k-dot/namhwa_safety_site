@@ -471,7 +471,7 @@
                         ${inspectors.length ? inspectors.map(n => `<span class="sig-row">${escapeHtml(n)} (서명)</span>`).join('') : '<span class="sig-row" style="color:#999;">수검 참여자 정보 없음</span>'}
                     </div>
                     <div style="border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 10px;">
-                        <span class="sig-row"><span class="sig-label" style="font-weight:bold;">수검 현장 대표:</span>${escapeHtml(siteRep)} (서명)</span>
+                        <span class="sig-row"><strong>수검 현장 대표:</strong> ${escapeHtml(siteRep)} (서명)</span>
                         <div style="margin-top: 10px;">
                             ${evaluators.length ? evaluators.map(n => `<span class="sig-row">${escapeHtml(n)} (서명)</span>`).join('') : '<span class="sig-row" style="color:#999;">점검자 정보 없음</span>'}
                         </div>

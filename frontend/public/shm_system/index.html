@@ -569,11 +569,11 @@
                 <table class="header-table">
                     <tr>
                         <th>현장소장</th>
-                        <td><input type="text" class="input-text" placeholder="현장소장 성명을 입력하세요"></td>
+                        <td><input type="text" class="input-text" placeholder="현장소장 성명을 입력하세요" autocomplete="off"></td>
                     </tr>
                     <tr>
                         <th>안전관리자</th>
-                        <td><input type="text" class="input-text" placeholder="안전관리자 성명을 입력하세요"></td>
+                        <td><input type="text" class="input-text" placeholder="안전관리자 성명을 입력하세요" autocomplete="off"></td>
                     </tr>
                     <tr>
                         <th>관리감독자 <button type="button" id="add-supervisor-btn"
@@ -649,7 +649,7 @@
             <div id="inspector-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 15px;">
                 <div class="inspector-row" style="white-space: nowrap;">
                     <span style="display:inline-block; width:90px; text-align:right; margin-right:5px;">수검 참여자 1:</span>
-                    <input type="text" style="width: 180px;" class="input-text" placeholder="소속 및 성명"> (서명)
+                    <input type="text" style="width: 180px;" class="input-text" placeholder="소속 및 성명" autocomplete="off"> (서명)
                     <button type="button" class="add-inspector-btn"
                         style="background-color: #4caf50; color: white; border: none; padding: 2px 8px; border-radius: 4px; margin-left: 5px; cursor: pointer; font-weight: bold;">+</button>
                 </div>
@@ -660,14 +660,14 @@
                     <span
                         style="display:inline-block; width:90px; text-align:right; margin-right:5px; font-weight: bold;">수검
                         현장 대표:</span>
-                    <input type="text" style="width: 150px;" class="input-text"> (서명)
+                    <input type="text" style="width: 150px;" class="input-text" autocomplete="off"> (서명)
                 </div>
 
                 <div id="evaluator-list" style="display: flex; flex-wrap: wrap; gap: 15px;">
                     <div class="evaluator-row" style="white-space: nowrap;">
                         <span style="display:inline-block; width:80px; text-align:right; margin-right:5px;">점검자
                             1:</span>
-                        <input type="text" style="width: 150px;" class="input-text" placeholder="소속 및 성명"> (서명)
+                        <input type="text" style="width: 150px;" class="input-text" placeholder="소속 및 성명" autocomplete="off"> (서명)
                         <button type="button" class="add-evaluator-btn"
                             style="background-color: #4caf50; color: white; border: none; padding: 2px 8px; border-radius: 4px; margin-left: 5px; cursor: pointer; font-weight: bold;">+</button>
                     </div>
@@ -825,7 +825,7 @@
                     progress: document.querySelector('.progress-input').value,
                     department: document.querySelector('.header-table tr:nth-child(2) td:nth-child(4) input').value,
                     evaluators: {
-                        manager: document.querySelector('.header-table tr:nth-child(1) td:last-child input') ? document.querySelector('.header-table tr:nth-child(1) td:last-child input').value : document.querySelectorAll('.header-table td input[placeholder*="현장소장"]')[0]?.value || '',
+                        manager: document.querySelectorAll('.header-table td input[placeholder*="현장소장"]')[0]?.value || '',
                         safetyManager: document.querySelectorAll('.header-table td input[placeholder*="안전관리자"]')[0]?.value || '',
                         supervisors: Array.from(document.querySelectorAll('#supervisor-list .input-text')).map(input => input.value).filter(val => val !== '')
                     }
@@ -1249,7 +1249,7 @@
                     newRow.style.whiteSpace = 'nowrap';
                     newRow.innerHTML = `
                         <span style="display:inline-block; width:90px; text-align:right; margin-right:5px;">수검 참여자 ${inspectorCount}:</span>
-                        <input type="text" style="width: 180px;" class="input-text" placeholder="소속 및 성명"> (서명)
+                        <input type="text" style="width: 180px;" class="input-text" placeholder="소속 및 성명" autocomplete="off"> (서명)
                         <button type="button" class="remove-inspector-btn" style="background-color: #f44336; color: white; border: none; padding: 2px 10px; border-radius: 4px; margin-left: 5px; cursor: pointer; font-weight: bold;">-</button>
                     `;
                     inspectorList.appendChild(newRow);
@@ -1289,7 +1289,7 @@
                     newRow.style.whiteSpace = 'nowrap';
                     newRow.innerHTML = `
                         <span style="display:inline-block; width:80px; text-align:right; margin-right:5px;">점검자 ${evaluatorCount}:</span>
-                        <input type="text" style="width: 150px;" class="input-text" placeholder="소속 및 성명"> (서명)
+                        <input type="text" style="width: 150px;" class="input-text" placeholder="소속 및 성명" autocomplete="off"> (서명)
                         <button type="button" class="remove-evaluator-btn" style="background-color: #f44336; color: white; border: none; padding: 2px 10px; border-radius: 4px; margin-left: 5px; cursor: pointer; font-weight: bold;">-</button>
                     `;
                     evaluatorList.appendChild(newRow);
@@ -1433,6 +1433,7 @@
                     input.type = 'text';
                     input.className = 'input-text';
                     input.placeholder = '관리감독자 성명을 입력하세요';
+                    input.autocomplete = 'off';
                     input.style.flexGrow = '1';
 
                     const removeBtn = document.createElement('button');
