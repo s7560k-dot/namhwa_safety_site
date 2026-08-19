@@ -193,6 +193,16 @@
         .phase-middle { background-color: #3f51b5 !important; }
         .phase-late { background-color: #673ab7 !important; }
 
+        #major-summary-display:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+        }
+
+        #major-summary-display:focus {
+            outline: 2px solid #3949ab;
+            outline-offset: -1px;
+        }
+
         .signature-section {
             margin-top: 40px;
             text-align: left;
@@ -463,14 +473,25 @@
                     </tfoot>
                 </table>
 
-                <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
-                    <span>주요 공정/ 개선 요구 사항</span>
-                    <button type="button" id="ai-summary-btn"
-                        style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #3949ab; color: white; border: none; border-radius: 4px; font-weight: bold;">
-                        &#9881; AI 개선사항 자동 종합 (시스템+현장 합산)
-                    </button>
+                <div class="no-print">
+                    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>주요 공정/ 개선 요구 사항</span>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" id="ai-summary-btn"
+                                style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #3949ab; color: white; border: none; border-radius: 4px; font-weight: bold;">
+                                &#9881; AI 개선사항 자동 종합 (시스템+현장 합산)
+                            </button>
+                            <button type="button" id="save-summary-btn"
+                                style="padding: 4px 10px; font-size: 0.8em; cursor: pointer; background-color: #2e7d32; color: white; border: none; border-radius: 4px; font-weight: bold;">
+                                &#128190; 내용 저장
+                            </button>
+                        </div>
+                    </div>
+                    <div id="major-summary-display" contenteditable="true"
+                        data-placeholder="작성된 내용이 없습니다. 위 [AI 개선사항 자동 종합] 버튼으로 생성하거나 이 영역을 직접 클릭해 입력할 수 있습니다."
+                        style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff; min-height: 40px; white-space: pre-wrap; line-height: 1.6; cursor: text;">${majorSummary}</div>
+                    <p style="font-size: 0.8em; color: #888; margin-top: 4px; margin-bottom: 0;">※ 이 영역은 인쇄물에는 포함되지 않습니다. 직접 클릭해 내용을 수정한 뒤 [내용 저장]을 눌러 반영하세요.</p>
                 </div>
-                <div id="major-summary-display" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fafafa; min-height: 40px; white-space: pre-wrap; line-height: 1.6;">${majorSummary || '<span style="color:#999;">작성된 내용이 없습니다.</span>'}</div>
 
                 <div class="signature-section">
                     <div style="margin-bottom: 10px; font-weight: bold;">■ 평가 서명란</div>
@@ -491,6 +512,45 @@
             document.getElementById('ai-summary-btn').addEventListener('click', () => {
                 generateAiSummary(systemDoc, finalTotal, siteName);
             });
+
+            document.getElementById('save-summary-btn').addEventListener('click', () => {
+                saveMajorSummaryEdit(systemDoc);
+            });
+
+            // 전체 삭제 시 브라우저가 남기는 빈 <br>을 정리해 placeholder(:empty)가 정상 표시되게 함
+            document.getElementById('major-summary-display').addEventListener('input', function () {
+                if (this.textContent.trim() === '') this.innerHTML = '';
+            });
+        }
+
+        async function saveMajorSummaryEdit(systemDoc) {
+            const btn = document.getElementById('save-summary-btn');
+            const display = document.getElementById('major-summary-display');
+
+            if (!systemDoc._docId) {
+                alert('저장 대상 시스템점검표 문서를 찾을 수 없습니다.');
+                return;
+            }
+
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = '저장 중...';
+
+            try {
+                const editedHtml = display.innerHTML.trim();
+                await updateDoc(doc(db, "shm_checks", systemDoc._docId), { majorSummary: editedHtml });
+                systemDoc.majorSummary = editedHtml;
+                btn.textContent = '✓ 저장됨';
+            } catch (error) {
+                console.error('저장 실패:', error);
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+                btn.textContent = '✗ 저장 실패';
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
         }
 
         async function generateAiSummary(systemDoc, finalTotal, siteName) {
