@@ -510,7 +510,7 @@
             document.getElementById('print-btn').style.display = 'inline-block';
 
             document.getElementById('ai-summary-btn').addEventListener('click', () => {
-                generateAiSummary(systemDoc, finalTotal, siteName);
+                generateAiSummary(systemDoc, finalTotal, siteName, grade);
             });
 
             document.getElementById('save-summary-btn').addEventListener('click', () => {
@@ -553,7 +553,7 @@
             }
         }
 
-        async function generateAiSummary(systemDoc, finalTotal, siteName) {
+        async function generateAiSummary(systemDoc, finalTotal, siteName, grade) {
             const btn = document.getElementById('ai-summary-btn');
             const display = document.getElementById('major-summary-display');
             const originalBtnText = btn.innerHTML;
@@ -573,6 +573,7 @@
                 const payload = {
                     siteName: siteName,
                     finalScore: Math.round(finalTotal * 10) / 10,
+                    grade: grade, // '우수'/'보통'/'미흡' — 현장 전체 등급에 따라 AI 톤 모드 결정
                     strengths: breakdown.strengths || [],
                     weaknesses: breakdown.weaknesses || [],
                     criticalIssues: breakdown.criticalIssues || []
