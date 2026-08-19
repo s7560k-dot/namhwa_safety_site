@@ -353,10 +353,22 @@
 
         @media print {
 
-            /* 1. 최상위 규격: 가로 A4, 여백 강제 지정 (다중 페이지 지원) */
+            /* ── 인쇄 규격 상수 ──────────────────────────────────────────
+               종합결과표(/shm_result/index.html)의 @media print 와 동일 기준.
+               두 문서의 출력물이 한 묶음으로 편철되므로 값 변경 시 반드시 동시 수정할 것. */
+            :root {
+                --print-page-margin: 25mm 10mm 10mm 10mm;
+                /* 세로(210mm) 전환에 따라 기존 11pt → 축소. 표 셀 줄바꿈 방지 목적 */
+                --print-base-font: 9.5pt;
+                /* 가로(297mm) 기준으로 설계된 표를 세로 폭에 수용하기 위한 배율. 기존 0.85 */
+                --print-zoom: 0.72;
+            }
+
+            /* 1. 최상위 규격: 세로 A4, 여백 강제 지정 (다중 페이지 지원)
+               변경: landscape → portrait. 종합결과표와 인쇄 방향을 일치시켜 편철 시 방향 혼재 제거 */
             @page {
-                size: A4 landscape;
-                margin: 25mm 10mm 10mm 10mm !important;
+                size: A4 portrait;
+                margin: var(--print-page-margin) !important;
             }
 
             /* 2. body 자체의 강제 height/width 제약 해제 (2페이지 이상 먹통 원인 제거) */
@@ -367,8 +379,8 @@
                 background-color: #fff !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                font-size: 11pt !important;
-                zoom: 0.85 !important;
+                font-size: var(--print-base-font) !important;
+                zoom: var(--print-zoom) !important;
             }
 
             /* 3. 컨테이너 핏 (패딩 제거 및 무한 확장 방지) */
@@ -431,9 +443,17 @@
                 width: 98%;
             }
 
-            .signature-section input {
-                border: none;
-                border-bottom: 1px solid #333;
+            /* [삭제] .signature-section input 밑줄 스타일
+               사유: 아래 규칙으로 서명란 자체가 인쇄에서 제외되어 더 이상 적용될 여지가 없음.
+               서명란을 다시 인쇄 대상으로 되돌릴 경우 이 스타일도 함께 복원할 것. */
+
+            /* 평가 서명란 인쇄 제외
+               사유: 서명 데이터(signatures.inspectors / siteRep / evaluators)는 Firestore에 저장되어
+               종합결과표(/shm_result/) 페이지에서 렌더링·출력됨. 점검표에서도 출력하면 동일 서명란이
+               2회 인쇄되므로 화면 입력 기능은 유지한 채 인쇄에서만 숨김 처리. */
+            .signature-section,
+            #dynamic-signature-area {
+                display: none !important;
             }
 
             /* 테이블 내 객체들이 페이지 전환 시 잘리지 않도록 강제 방어 */
