@@ -409,6 +409,7 @@
             const inspectors = (systemDoc.signatures?.inspectors || []);
             const evaluators = (systemDoc.signatures?.evaluators || []);
             const siteRep = systemDoc.signatures?.siteRep || '';
+            const majorSummary = (systemDoc.majorSummary || '').trim();
 
             const area = document.getElementById('result-area');
             area.innerHTML = `
@@ -460,6 +461,9 @@
                         <tr><th colspan="3">평가등급</th><th id="final-grade-display" class="${gradeClass}" style="font-size:1.2em;">${grade}</th></tr>
                     </tfoot>
                 </table>
+
+                <div class="section-title">주요 공정/ 개선 요구 사항</div>
+                <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fafafa; min-height: 40px; white-space: pre-wrap; line-height: 1.6;">${majorSummary || '<span style="color:#999;">작성된 내용이 없습니다.</span>'}</div>
 
                 <div class="signature-section">
                     <div style="margin-bottom: 10px; font-weight: bold;">■ 평가 서명란</div>
