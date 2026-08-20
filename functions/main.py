@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import ezdxf
 import tempfile
 import traceback
@@ -21,6 +22,21 @@ def set_cors_headers(resp: https_fn.Response):
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
+
+# Gemini가 지시를 무시하고 이모지(예: 📶 신호 아이콘)를 끼워 넣는 경우를 대비한 서버측 안전망
+_EMOJI_PATTERN = re.compile(
+    "["
+    "\U0001F300-\U0001FAFF"  # 그림 문자, 기호, 확장 이모지 전반
+    "\U00002600-\U000027BF"  # 기타 기호·딩뱃 (☀~➿)
+    "\U0001F1E6-\U0001F1FF"  # 국기 지역표시 문자
+    "\U00002190-\U000021FF"  # 화살표
+    "\U0000FE0F"             # variation selector (이모지 렌더링 강제)
+    "]+",
+    flags=re.UNICODE,
+)
+
+def strip_emoji(text: str) -> str:
+    return _EMOJI_PATTERN.sub("", text)
 
 @https_fn.on_request(max_instances=10, timeout_sec=120, memory=1024)
 def analyze_floorplan_3d(req: https_fn.Request) -> https_fn.Response:
@@ -322,6 +338,7 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
             6. 마지막은 구성원들의 안전 의식을 끓어오르게 할 독창적이고 힘찬 형태의 짧은 안전 슬로건으로 마무리하세요.
             7. 전체 텍스트 양은 A4 용지 4분의 1장이 넘지 않게 간결하고 가독성 좋게, 줄바꿈을 적절히 사용하여 구성하세요.
             8. 똑같은 점수와 비슷한 내용이 들어오더라도 매번 단어와 슬로건을 다르게 구성하여 중복 느낌을 확실히 피하십시오.
+            9. 이모지(예: 📶, ⚠️, ✅ 등) 및 markdown 글머리 기호(-, *, • 등)는 절대 사용하지 마십시오. 목록이 필요하면 <br>로 줄바꿈된 문장으로만 구성하십시오.
             """
         else:
             system_instruction = """
@@ -340,6 +357,7 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
             6. 마지막은 구성원들의 안전 의식을 끓어오르게 할 독창적이고 힘찬 형태의 짧은 안전 슬로건으로 마무리하세요.
             7. 전체 텍스트 양은 A4 용지 4분의 1장이 넘지 않게 간결하고 가독성 좋게, 줄바꿈을 적절히 사용하여 구성하세요.
             8. 똑같은 점수와 비슷한 내용이 들어오더라도 매번 단어와 슬로건을 다르게 구성하여 중복 느낌을 확실히 피하십시오.
+            9. 이모지(예: 📶, ⚠️, ✅ 등) 및 markdown 글머리 기호(-, *, • 등)는 절대 사용하지 마십시오. 목록이 필요하면 <br>로 줄바꿈된 문장으로만 구성하십시오.
             """
 
         model = genai.GenerativeModel(
@@ -360,9 +378,10 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
         response = model.generate_content(prompt)
         ai_summary = response.text.strip()
         
-        # 앞뒤 마크다운 트림
+        # 앞뒤 마크다운 트림 + 이모지 안전망 (프롬프트 지시를 무시하고 삽입되는 경우 대비)
         ai_summary = ai_summary.replace("```html", "").replace("```", "").strip()
-        
+        ai_summary = strip_emoji(ai_summary).strip()
+
         resp = https_fn.Response(json.dumps({"success": True, "summary": ai_summary}), content_type="application/json")
         return set_cors_headers(resp)
         

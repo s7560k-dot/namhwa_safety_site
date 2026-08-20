@@ -268,6 +268,7 @@
             <input type="text" id="quarter-search" value="1분기" placeholder="예: 1분기">
             <button id="search-btn" class="btn btn-search">조회</button>
             <button id="print-btn" class="btn btn-print" style="display:none;">&#128424; 인쇄하기</button>
+            <button id="corrective-btn" class="btn btn-print" style="display:none; background-color:#c62828;">&#128221; 시정예방조치 요구서 출력</button>
         </div>
 
         <div id="result-area">
@@ -393,6 +394,7 @@
 
             area.innerHTML = msg;
             document.getElementById('print-btn').style.display = 'none';
+            document.getElementById('corrective-btn').style.display = 'none';
         }
 
         function renderResult(systemDoc, fieldDoc, siteName, year, quarter) {
@@ -506,6 +508,13 @@
             `;
 
             document.getElementById('print-btn').style.display = 'inline-block';
+
+            const correctiveBtn = document.getElementById('corrective-btn');
+            correctiveBtn.style.display = 'inline-block';
+            correctiveBtn.onclick = () => {
+                const params = new URLSearchParams({ site: siteName, year, quarter });
+                window.open('/shm_corrective/?' + params.toString(), '_blank');
+            };
 
             document.getElementById('ai-summary-btn').addEventListener('click', () => {
                 generateAiSummary(systemDoc, finalTotal, siteName, grade);
@@ -633,6 +642,7 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             loadingOverlay.style.display = 'flex';
             document.getElementById('print-btn').style.display = 'none';
+            document.getElementById('corrective-btn').style.display = 'none';
 
             try {
                 const [systemDoc, fieldDoc] = await Promise.all([

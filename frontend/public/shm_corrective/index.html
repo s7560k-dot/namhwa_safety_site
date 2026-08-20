@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <script src="/auth-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>안전보건 시정/예방지시서</title>
+    <script>
+        const ADMIN_PASSWORD = "1152";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const hasAuth = sessionStorage.getItem("isAdminAuthenticated") === "true";
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+            const pwdInput = document.getElementById('admin-password-input');
+
+            if (hasAuth) {
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (mainContent) mainContent.style.filter = 'blur(5px)';
+                if (modal) modal.style.display = 'flex';
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') submitAdminPassword();
+                    });
+                }
+            }
+        });
+
+        function submitAdminPassword() {
+            const input = document.getElementById('admin-password-input');
+            const error = document.getElementById('password-error');
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+
+            if (input.value === ADMIN_PASSWORD) {
+                sessionStorage.setItem("isAdminAuthenticated", "true");
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (error) error.style.display = 'block';
+                input.value = '';
+                input.focus();
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            letter-spacing: 0.1em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #333;
+            padding: 10px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .text-left { text-align: left; }
+
+        .input-text, .input-date {
+            width: 92%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #eef1fb;
+            border-radius: 8px;
+        }
+
+        .search-bar label { font-weight: bold; color: #1a237e; margin-right: 4px; }
+        .search-bar select, .search-bar input {
+            padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit;
+        }
+        #site-name-search { width: 240px; }
+        #year-search { width: 80px; }
+        #quarter-search { width: 90px; }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+        .btn-search { background-color: #1a237e; }
+        .btn-print { background-color: #3949ab; }
+
+        .status-message {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffe08a;
+        }
+
+        .doc-title-row td {
+            font-weight: bold;
+            background-color: #fafafa;
+        }
+
+        .intro-text {
+            margin: 18px 0;
+            line-height: 1.7;
+        }
+
+        .section-label {
+            background-color: #e8eaf6;
+            font-weight: bold;
+            padding: 8px 10px;
+            border: 1px solid #333;
+            border-bottom: none;
+        }
+
+        #deficiency-list {
+            border: 1px solid #333;
+            padding: 14px 16px;
+            min-height: 60px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            background-color: #fff;
+        }
+
+        #deficiency-list:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+        }
+
+        #criteria-list {
+            border: 1px solid #333;
+            border-top: none;
+            padding: 12px 16px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            background-color: #fff;
+        }
+
+        .approval-table td { height: 46px; }
+        .approval-table .name-cell { height: 30px; }
+
+        .note-cell {
+            text-align: left;
+            vertical-align: top;
+            font-size: 0.85em;
+            padding: 10px;
+            line-height: 1.8;
+        }
+
+        .footer-logo {
+            text-align: center;
+            padding: 14px 0 4px;
+        }
+        .footer-logo img { height: 26px; }
+
+        @media print {
+            :root {
+                --print-page-margin: 25mm 10mm 10mm 10mm;
+            }
+
+            @page {
+                size: A4 portrait;
+                margin: var(--print-page-margin) !important;
+            }
+
+            body, html {
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: #fff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                font-size: 10.5pt !important;
+            }
+
+            .container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .no-print { display: none !important; }
+
+            th, td { padding: 6px !important; }
+
+            table, tr, td, th { page-break-inside: avoid !important; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="main-content">
+
+        <div class="search-bar no-print">
+            <label for="site-name-search">현장명</label>
+            <select id="site-name-search"><option value="">불러오는 중...</option></select>
+            <label for="year-search">년도</label>
+            <input type="text" id="year-search" placeholder="YYYY">
+            <label for="quarter-search">분기</label>
+            <input type="text" id="quarter-search" value="1분기" placeholder="예: 1분기">
+            <button id="search-btn" class="btn btn-search">조회</button>
+            <button id="print-btn" class="btn btn-print" style="display:none;">&#128424; 인쇄하기</button>
+        </div>
+
+        <div id="result-area">
+            <p style="text-align:center; color:#888; padding: 40px 0;">현장명과 년도·분기를 입력한 뒤 [조회] 버튼을 눌러주세요.<br>시스템점검표·현장점검표에서 '미흡' 또는 '지적'으로 확인된 항목을 모아 시정/예방지시서 초안을 생성합니다.</p>
+        </div>
+
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay"
+        style="display: none; position: fixed; inset: 0; background-color: rgba(255, 255, 255, 0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 15px; font-weight: bold; color: #333;">조회 중...</p>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
+            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
+            projectId: "namhwa-safety-dashboard",
+            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
+            messagingSenderId: "152864778612",
+            appId: "1:152864778612:web:ecc482adce93a1534a2421"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 시스템점검표(/shm_system/)의 sectionsData를 그대로 반영 (평가기준·배점·미흡 판정 기준을 위해 필요).
+        // regulation(관련 법규 텍스트)은 이 문서에서 쓰지 않으므로 제외.
+        // ⚠ 시스템점검표에서 문항을 추가/삭제/순서 변경하면 이 배열도 반드시 함께 갱신할 것 (index로 매칭됨).
+        const SECTIONS_DATA = [{"title":"1. 안전보건경영 방침 및 목표관리 절차 (배점: 5)","isPerformance":false,"rows":[{"criteria":"방침 및 목표의 적정 수립 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"법규 및 기타 요구사항의 반영 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"방침/목표 수립시 전구성원 참여","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"안전보건 목표의 구체성 및 측정 가능성","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"년, 월간 안전보건활동 계획 수립 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"방침/목표에 대한 경영자 검토 및 승인","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"안전보건계획 전구성원 공유 및 게시","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"목표(과제) 성과 측정 실시 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"목표 미달성시 개선대책 수립 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]}]},{"title":"2. 안전보건관리책임자 등 업무수행 평가 절차 (배점: 30)","isPerformance":true,"rows":[{"criteria":"위험성평가 체계 구축 및 실행 총괄","points":2.5,"options":[{"v":2.5,"t":"우수"},{"v":1.5,"t":"보통"},{"v":0.7,"t":"미흡"}]},{"criteria":"도급·용역·위탁 시 산재예방 조치","points":2.5,"options":[{"v":2.5,"t":"우수"},{"v":1.5,"t":"보통"},{"v":0.7,"t":"미흡"}]},{"criteria":"산재 예방계획 수립 및 이행 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가 실시 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"안전보건 협의체 회의 주관 및 결과 관리","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"도급시 산업재해 예방조치(협의체 운영 등) 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업환경의 점검 및 개선 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"법령요지, 안전보건관리규정 게시 등","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"안전조치(기계기구,설비,폭발,전기,굴착,하역,해체,중량물취급, 추락, 낙하, 천재지변 등)","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"산업재해 발생 위험시 작업중지 및 근로자 대피 등 안전보건에 관한 필요한 조치","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업복·보호구 착용 교육지도 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가 참여 및 개선조치 실행확인","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업 시작 전 안전점검 실시 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"소속 근로자 의견 청취 및 개선 요구","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업장 정리정돈 및 통로 확보에 대한 확인, 감독 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가에 관한 보좌 및 지도, 조언","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"사업장 순회점검에 따른 지도 및 조치 건의","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"작업환경측정 및 개선 지도·조언","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"건강진단 실시 준비 및 결과에 따른 사후관리 지도","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"현장 안전교육계획의 수립 및 안전교육 실시에 관한 보좌 및 지도, 조언","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"산업재해 발생 원인조사, 분석 및 재발 방지를 위한 기술적 지도, 조언","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"법 또는 법에 따른 명령으로 정한 안전에 관한 사항의 이행에 관한 보좌 및 지도, 조언","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]}]},{"title":"3. 종사자 의견 청취 절차 (배점: 10)","isPerformance":false,"rows":[{"criteria":"종사자 의견청취 절차 계획 수립 및 이행 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"청취 의견 기록 관리 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":1,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"청취 의견 협의체 안건 상정 및 협의, 의결 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"청취 의견에 대한 개선안 이행 및 공유 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"시행 또는 개선안 공유 및 게시 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":1,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"아차사고 발굴 및 개선활동","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"작업중지권에 대한 근로자의 권리 안내 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]}]},{"title":"4. 비상사태 대비·대응 절차 (배점: 20)","isPerformance":false,"rows":[{"criteria":"비상 연락 체계의 구성 및 교육 실시 여부","points":7,"options":[{"v":7,"t":"우수"},{"v":5,"t":"보통"},{"v":2,"t":"미흡"}]},{"criteria":"시나리오별 모의 훈련 실시 여부","points":7,"options":[{"v":7,"t":"우수"},{"v":5,"t":"보통"},{"v":2,"t":"미흡"}]},{"criteria":"비상시 대응 계획 수립 및 작성 여부","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"비상대응 장비/자재 확보 및 관리 상태","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]}]},{"title":"5. 협력사 수준관리 절차 (배점: 10)","isPerformance":false,"rows":[{"criteria":"안전보건에 관한 정보 제공 및 공유 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"정기 협력사 안전보건 점검 및 평가 실시","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가 관련 교육 및 자료 제공 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"협력사 산업안전보건관리비 집행 내역 확인 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"최초 위험성평가 자료 협력사 배포 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"근로자 교육 실시 장소 제공, 자료 제공 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"안전보건을 위한 공사 기간 검토 여부(공기단축, 원가절감 요구)","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]}]},{"title":"6. 안전보건관계 법령 등 이행관리 절차 (배점: 20)","isPerformance":false,"rows":[{"criteria":"안전보건관리책임자 등 지정 및 교육 이수 여부","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"보호구 지급 및 관리, 장비 반입 시 점검 등","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"유해위험작업 작업계획서 작성 및 이행 여부","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"위험성평가 실시 및 결과의 기록·보존","points":4,"options":[{"v":4,"t":"우수"},{"v":2.5,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"물질안전보건자료(MSDS) 게시 및 교육","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"산업안전보건위원회 설치 및 운영","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"안전보건교육 실시 및 기록 관리","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"안전보건 표지의 설치 및 부착 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"산업재해 발생 보고 의무 이행","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"재발방지대책 수립 및 공유, 교육 실시 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"공사안전보건대장 작성 및 준수 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]}]},{"title":"7. 시스템 평가 및 개선 절차 (배점: 5)","isPerformance":false,"rows":[{"criteria":"주/월간 업무보고 자료 제출 및 기한 준수 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"안전보건팀 권고사항 회람 또는 교육 실시 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"성과측정 결과 환류 및 개선방안 검토 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"월간 계획 제출시 성과측정 결과에 대한 환류활동 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]}]}];
+
+        // 현장점검표(/sh_check/)의 checklistData를 그대로 반영 (index로 매칭됨).
+        // ⚠ 현장점검표에서 문항을 추가/삭제/순서 변경하면 이 배열도 반드시 함께 갱신할 것.
+        const CHECKLIST_DATA = [{"category":"추락","subcategory":"개구부","count":2,"weight":5,"items":["개구부 덮개 설치(재질, 고정, 경고표지 등) 및 유지 관리여부","대형개구부(발코니, 자재반출구, 계단실, E/V입구, 흙막이 단부 등) 안전난간 설치여부"]},{"category":"추락","subcategory":"강관 비계/시스템비계","count":2,"weight":5,"items":["비계 설치상태(침하, 좌굴(수직도), 작업발판, 승강로 등) 이상여부","비계 안전시설(안전난간대, 낙하물방지망, 수직보호망 등) 설치상태 이상여부"]},{"category":"추락","subcategory":"이동식 틀비계","count":3,"weight":3,"items":["이동식틀비계 설치상태(규격품, 작업발판, 브레싱 등) 이상여부","이동식틀비계 안전시설(안전난간대, 아웃트리거, 바퀴구름방지장치 등) 이상여부","틀비계 실명제 등 실시여부"]},{"category":"추락","subcategory":"말비계","count":2,"weight":3,"items":["비규격품(목재) 사용여부 및 관리여부","발판 폭 40㎝ 이상 확보 및 구조적 안전여부"]},{"category":"추락","subcategory":"달대비계","count":3,"weight":5,"items":["로프 설치상태(주/보조로프 사용 및 로프손상, 2점지지, 풀림방지 등) 실시여부","로프 안전조치(주로프 16mm, 보조로프 14mm, 벽체 접촉부 마모예방조치 등) 실시여부","추락예방조치(작업자 수직구명로프(코브라), 바닥여장길이 1m이상) 실시 여부"]},{"category":"추락","subcategory":"사다리","count":2,"weight":3,"items":["사다리 사용상태(상부고정/여장길이 확보/설치각도/목재사다리)이상여부","사다리 전도예방조치(아웃트리거 설치, 미끄럼방지판 등) 사용여부"]},{"category":"추락","subcategory":"작업발판","count":2,"weight":3,"items":["비규격(목재, 단관파이프, 각파이프, 유로폼 등) 작업발판 사용여부","작업발판 설치기준(하부고정, 밀실여부, 폭) 준수 여부"]},{"category":"추락","subcategory":"갱폼","count":5,"weight":5,"items":["추락 예방조치(안전난간/작업발판 누락, 작업발판 이격거리, 압송관 개구부 보호 등) 여부","낙하 예방조치(앵커볼트 설치간격, 인양고리 상태 및 변형 유무, 정리정돈 등) 여부","전도 예방조치(작업발판 정리정돈 등) 실시 여부","승강시설(근로자 이동통로 확보 등) 및 적정여부","기타 갱폼 설치기준 준수여부"]},{"category":"추락","subcategory":"교량 및 철골","count":3,"weight":5,"items":["추락예방조치(개인보호구, 안전난간대 시설, 추락방지망 등 ) 실시여부","승강시 안전시설(안전블럭, 코브라 등)설치 및 사용여부","자재 정리정돈 상태(철골 적재, 철골상부 자재 적재 유무 등) 이상여부"]},{"category":"추락","subcategory":"추락방지망","count":3,"weight":5,"items":["추락방지망 설치상태(망재질, 망연결, 밀실도 등) 이상여부","추락방지망 설치장소(E/V개구부, 대형개구부, 손상등) 누락여부","추락방지망 관리(폐기물, 폐자재 등) 적정여부"]},{"category":"충돌 및 협착","subcategory":"유해위험 기계기구","count":2,"weight":3,"items":["방호장치(둥근톱, 고속절단기, 그라인더 등) 설치 및 사용여부","철근가공기 풋스위치 덮개 사용여부"]},{"category":"충돌 및 협착","subcategory":"건설기계","count":5,"weight":5,"items":["협착 예방조치(후진경보등, 경보음, 후방감시카메라, 신호수 등) 실시 및 작동여부","건설기계 방호장치(권과방지장치, 과상승방지장치, 리미트스위치 등) 부착 및 작동여부","장비전도 방지장치(아웃트리거, 고임목 등) 적정여부","인양 중 낙하 예방조치(퀵커플러 안전핀, 후크해지장치, 유도로프 등) 실시여부","장비실명제 카드 부착여부"]},{"category":"충돌 및 협착","subcategory":"타워크레인","count":2,"weight":5,"items":["자체점검(1회/6개월) 실시 여부","크레인 하부 방호울 및 시건장치 설치여부"]},{"category":"붕괴 및 도괴","subcategory":"굴착/터파기","count":2,"weight":3,"items":["굴착 법면 토사붕괴(굴착구배, 굴착단부 토사적치 등) 예방여부","굴착부 통행시설 확보여부"]},{"category":"붕괴 및 도괴","subcategory":"흙막이 공사","count":4,"weight":5,"items":["가시설 시공시 설계도서 준수 여부","가시설 설치시기 및 과굴착에 의한 붕괴 사고 위험여부","흙막이 벽체(토류판, 쉬트파일 등) 변위 및 부재 변형 여부","띠장 설치상태(스티프너, 브레싱, 볼트너트 연결, 띠장 연결부 보강 등) 이상여부"]},{"category":"붕괴 및 도괴","subcategory":"터널작업","count":5,"weight":3,"items":["차징카 안전조치(협착, 낙반 등) 실시 여부","작업대차 안전조치(작업발판, 승강로, 안전난간 등) 적정여부","터널 내 통행로 확보여부","비상사태(외부와의 통신체계, 비상조명, 소음방지대책 등) 예방조치 실시여부","작업환경(조도75Lux, 환기시설 등) 적정여부"]},{"category":"붕괴 및 도괴","subcategory":"거푸집동바리/시스템동바리","count":6,"weight":5,"items":["거푸집동바리 설치 계획 및 조립도 등 작성 및 비치여부","거푸집동바리 설치기준 준수(설치간격, 2본연결 설치시 4개이상 볼트체결 등) 여부","가설자재(재사용 검정품, 파이프서포트, 연결핀, 클램프 등) 적정 사용여부","붕괴 예방조치(밑받침, 수평연결재, 동바리 고정, 수직도, 고정목, u헤드고정 등) 실시여부","수평연결재 적정(전용철물 사용, 누락여부 등) 설치여부","거푸집동바리 설치, 해체시 정리정돈 실시여부"]},{"category":"감전","subcategory":"분전반/수전설비","count":4,"weight":5,"items":["접지시설(외함접지, 접지봉 매립, 접지극 손상, 적정 접지선 사용 등) 적정여부","누전차단기(정격감도전류 30mmA이하, 동작시간 0.03초이내)설치/ 경유 및 작동 여부","접근/접촉 방지조치(아크릴판, 시건장치, 안전표지 등) 실시여부","고압가공선로 감전예방(방호관, 접근한계거리 준수, 절연보호구 등)을 위한 접근방지 조치"]},{"category":"감전","subcategory":"이동식 발전기","count":3,"weight":3,"items":["접지시설(외함접지, 접지봉 매립, 접지극 손상, 적정 접지선 사용 등) 실시 여부","누전차단기(정격감도전류 30mmA이하, 동작시간 0.03초이내)설치/ 경유 및 작동 여부","회전체 접근방지조치 실시여부"]},{"category":"감전","subcategory":"작업전선","count":3,"weight":3,"items":["접지상태(3P전선, 접지선 연결, 피복손상여부, 접지극 손상) 이상 여부","반입전 점검실시 및 유해위험기계기구 스티커 부착여부","누전차단기 내장형 릴선 사용 및 정상 작동 여부"]},{"category":"감전","subcategory":"교류아크 용접기","count":3,"weight":3,"items":["자동전격방지기 설치 및 정상작동(회로 결선의 적절성) 여부","감전예방(외함접지, 접지봉 매립, 피복손상, 충전부 절연조치 등) 조치 여부","화재예방(불티비산방지포, 소화기, 주변 가연성 물질 차단 등) 조치 여부"]},{"category":"감전","subcategory":"이동식 투광등","count":2,"weight":1,"items":["누전차단(외함접지, 손잡이 절연조치, 거치대 활용 등) 조치 여부","감전예방(전등 보호갓, 투광등 보호덮개) 실시여부"]},{"category":"감전","subcategory":"양수기","count":2,"weight":1,"items":["접지상태(3P전선, 접지선 연결, 피복손상여부, 접지극 손상) 이상여부","회전체(엔진양수기) 접근방지조치 실시여부"]},{"category":"감전","subcategory":"기타","count":2,"weight":1,"items":["유해위험기계기구 점검필증 부착여부","기타 유해위험기계기구 감전(접지, 누전차단기 등) 예방조치 실시여부"]},{"category":"낙하 및 전도","subcategory":"방호선반","count":2,"weight":3,"items":["방호선반(설치자재, 안전표지판 등)설치상태 이상여부","방호선반 설치 위치선정(건물 주출입구, 통행 용이 장소 등) 적정여부"]},{"category":"낙하 및 전도","subcategory":"낙하물 방지망","count":2,"weight":3,"items":["낙하물방지망 설치상태(매10m마다, 내민길이, 자재선정 등) 적정여부","낙하물방지망 관리(폐기물, 폐자재, 손상 등) 적정여부"]},{"category":"낙하 및 전도","subcategory":"가설통로","count":4,"weight":3,"items":["전도 예방조치(정리정돈, 미끄럼방지조치 등) 실시 여부","통로 조도(75Lux 이상) 확보 여부","통로 발판재의 적정 사용여부","1m이상의 가설계단 안전난간 설치여부"]},{"category":"낙하 및 전도","subcategory":"터널작업","count":2,"weight":3,"items":["암석의 부석정리 및 상부 천공시 하부 근로자 출입금지 조치의 적정 여부","버럭 운반차량 적재기준 설정 및 운반시 덮개 설치 적정 여부"]},{"category":"낙하 및 전도","subcategory":"기타","count":3,"weight":1,"items":["낙하위험장소 하부 출입통제(접근금지시설, 신호수, 위험표지, 위험테이프 등)조치 여부","상하 동시작업 실시 여부","줄걸이 용구(와이어로프, 슬링밸트, 샤클, 하카클램프, 해지장치 등) 적정여부"]},{"category":"기타","subcategory":"화재폭발","count":5,"weight":5,"items":["아세틸렌 및 LPG 역화방지기 부착 및 압력게이지/ 호스 파손여부","압력용기(LPG, 산소통 등)전용 운반구 사용여부","위험물질/인화물질 보관시설(안전표지, 시건장치 등) 설치 및 관리여부","화기 사용 주변 가연성물질 격리 여부 및 소화시설 비치여부","기타 화재폭발 위험 안전 조치사항"]},{"category":"기타","subcategory":"밀폐작업","count":4,"weight":5,"items":["밀폐공간 환기시설 설치 및 운용 여부","밀폐공간 및 유해가스 발생구간 작업전 유해가스농도 및 산소농도 측정여부","작업장내 호흡용 보호구, 안전대, 안전로프 등 보호장구 비치여부","관리책임자 선임 및 지휘감독, 감시인 배치 여부"]},{"category":"기타","subcategory":"교통안전 시설","count":2,"weight":1,"items":["교통안전시설물(안내표지판, PE드럼, 윙카, 갈매기표시, 휀스 등) 적정 설치 여부","기타 교통안전시설물 설치상태"]},{"category":"기타","subcategory":"MSDS","count":1,"weight":1,"items":["MSDS 표지 현장게시 및 부착여부"]},{"category":"기타","subcategory":"보건관리","count":1,"weight":1,"items":["현장내 휴게시설, 화장실 및 세면장 비치 및 청결상태"]},{"category":"기타","subcategory":"개인보호구","count":1,"weight":3,"items":["작업상황에 맞는 개인보호구 지급 및 착용여부"]},{"category":"기타","subcategory":"안전의식","count":1,"weight":1,"items":["작업상황에 맞는 안전표지판 및 안전현수막 설치여부"]},{"category":"기타","subcategory":"음주","count":1,"weight":3,"items":["현장내 근로자 음주 및  음주흔적(소주병, 막걸리병 등)"]}];
+
+        function flattenSystemRows() {
+            const flat = [];
+            SECTIONS_DATA.forEach(section => {
+                section.rows.forEach(row => flat.push(row));
+            });
+            return flat;
+        }
+
+        function flattenFieldItems() {
+            const flat = [];
+            CHECKLIST_DATA.forEach(sc => {
+                for (let i = 0; i < sc.count; i++) {
+                    flat.push({ category: sc.category, subcategory: sc.subcategory, criteria: sc.items[i] });
+                }
+            });
+            return flat;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        // contenteditable로 저장된 코멘트(innerHTML)를 사람이 읽는 일반 텍스트로 변환
+        function htmlToPlainText(html) {
+            if (!html) return '';
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            tmp.querySelectorAll('br, div, p').forEach(el => el.replaceWith(' ' + (el.textContent || '')));
+            return tmp.textContent.replace(/\s+/g, ' ').trim();
+        }
+
+        function toTimeMs(doc) {
+            return doc.createdAt && doc.createdAt.seconds ? doc.createdAt.seconds : 0;
+        }
+
+        async function findLatestSystemCheck(siteName, year, quarter) {
+            const q = query(collection(db, "shm_checks"), where("headerInfo.siteName", "==", siteName));
+            const snap = await getDocs(q);
+            let candidates = [];
+            snap.forEach(d => {
+                const data = d.data();
+                const docYear = (data.headerInfo?.checkDate || '').slice(0, 4);
+                const docQuarter = data.headerInfo?.quarter || '';
+                if (docYear === year && docQuarter === quarter) candidates.push(data);
+            });
+            candidates.sort((a, b) => toTimeMs(b) - toTimeMs(a));
+            return candidates[0] || null;
+        }
+
+        async function findLatestFieldCheck(siteName, year, quarter) {
+            const q = query(collection(db, "field_checks"), where("headerInfo.siteName", "==", siteName));
+            const snap = await getDocs(q);
+            let candidates = [];
+            snap.forEach(d => {
+                const data = d.data();
+                const docYear = data.headerInfo?.year || '';
+                const docQuarter = data.headerInfo?.quarter || '';
+                if (docYear === year && docQuarter === quarter) candidates.push(data);
+            });
+            candidates.sort((a, b) => toTimeMs(b) - toTimeMs(a));
+            return candidates[0] || null;
+        }
+
+        function buildDeficiencyLines(systemDoc, fieldDoc) {
+            const lines = [];
+
+            if (systemDoc && Array.isArray(systemDoc.evaluationItems)) {
+                const flatSys = flattenSystemRows();
+                systemDoc.evaluationItems.forEach(item => {
+                    const rowDef = flatSys[item.index];
+                    if (!rowDef) return;
+                    const worst = rowDef.options.find(o => o.t === '미흡');
+                    if (!worst) return;
+                    if (parseFloat(item.selectedValue) !== worst.v) return;
+                    const comment = htmlToPlainText(item.comment);
+                    let line = `[시스템점검] ${rowDef.criteria}`;
+                    if (comment) line += ` - ${comment}`;
+                    lines.push(line);
+                });
+            }
+
+            if (fieldDoc && Array.isArray(fieldDoc.items)) {
+                const flatField = flattenFieldItems();
+                fieldDoc.items.forEach(item => {
+                    const cnt = parseInt(item.issueCount, 10);
+                    if (!cnt || cnt <= 0) return;
+                    const rowDef = flatField[item.index];
+                    if (!rowDef) return;
+                    const comment = (item.comment || '').trim();
+                    let line = `[현장점검/${rowDef.category}·${rowDef.subcategory}] ${rowDef.criteria} (지적 ${cnt}건)`;
+                    if (comment) line += ` - ${comment}`;
+                    lines.push(line);
+                });
+            }
+
+            return lines;
+        }
+
+        function todayStr() {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}. ${pad(d.getMonth() + 1)}. ${pad(d.getDate())}.`;
+        }
+
+        function renderResult(systemDoc, fieldDoc, siteName, year, quarter) {
+            const area = document.getElementById('result-area');
+
+            if (!systemDoc && !fieldDoc) {
+                area.innerHTML = `<div class="status-message">${escapeHtml(siteName)} / ${escapeHtml(year)}년 ${escapeHtml(quarter)}에 저장된 시스템점검표·현장점검표 데이터가 없습니다.<br>먼저 시스템점검표 또는 현장점검표를 저장해 주세요.</div>`;
+                document.getElementById('print-btn').style.display = 'none';
+                return;
+            }
+
+            const deficiencyLines = buildDeficiencyLines(systemDoc, fieldDoc);
+            const deficiencyHtml = deficiencyLines.length
+                ? deficiencyLines.map((line, i) => `${i + 1}. ${escapeHtml(line)}`).join('<br><br>')
+                : '';
+
+            const manager = systemDoc?.headerInfo?.evaluators?.manager || '';
+            const department = systemDoc?.headerInfo?.department || fieldDoc?.headerInfo ? '안전보건팀' : '안전보건팀';
+
+            const defaultCriteria = [
+                '안전보건경영시스템',
+                '4. NC-OHSMS-P610_위험성평가 절차서',
+                '7. NC-OHSMS-P710 안전보건 교육훈련 절차서',
+                '17. NC-OHSMS-P1010_사건, 부적합 및 시정조치 절차서',
+                '22. NC-OHSMS-P1600_현장 안전보건 업무수행 절차서'
+            ].join('<br>');
+
+            area.innerHTML = `
+                <h1>안전보건 시정/예방지시서</h1>
+
+                <table>
+                    <colgroup>
+                        <col style="width: 18%;"><col style="width: 32%;"><col style="width: 18%;"><col style="width: 32%;">
+                    </colgroup>
+                    <tr>
+                        <th>일련번호</th>
+                        <td><input type="text" id="doc-no" class="input-text" placeholder="예: 20260601"></td>
+                        <th>현장명</th>
+                        <td class="text-left" style="padding-left: 14px;">${escapeHtml(siteName)}</td>
+                    </tr>
+                    <tr>
+                        <th>발행일자</th>
+                        <td><input type="text" id="issue-date" class="input-text" value="${todayStr()}"></td>
+                        <th>조치요청일자</th>
+                        <td><input type="text" id="due-date" class="input-text" placeholder="예: 2026. 06. 08."></td>
+                    </tr>
+                    <tr>
+                        <th>작성자</th>
+                        <td><input type="text" id="writer" class="input-text" value="${escapeHtml(department)} "></td>
+                        <th>담당자</th>
+                        <td><input type="text" id="manager-name" class="input-text"></td>
+                    </tr>
+                    <tr>
+                        <th>현장 소장</th>
+                        <td colspan="3" class="text-left" style="padding-left: 14px;">${escapeHtml(manager)} (서명)</td>
+                    </tr>
+                </table>
+
+                <div class="intro-text">
+                    시정/예방조치활동 운영지침에 의거 <b>${escapeHtml(year)}년 ${escapeHtml(quarter)}</b> 안전점검 결과 아래의 지적된 부적합사항에 대하여
+                    시정/예방조치 후 기한 내 회신 바랍니다.
+                </div>
+
+                <div class="section-label">부적합사항</div>
+                <div id="deficiency-list" contenteditable="true" data-placeholder="확인된 부적합사항이 없습니다. 필요시 이 영역을 직접 클릭해 입력할 수 있습니다.">${deficiencyHtml}</div>
+
+                <div class="section-label" style="margin-top: 18px;">조치기준</div>
+                <div id="criteria-list" contenteditable="true">${defaultCriteria}</div>
+
+                <table class="approval-table" style="margin-top: 18px;">
+                    <colgroup>
+                        <col style="width: 34%;"><col style="width: 16.5%;"><col style="width: 16.5%;"><col style="width: 16.5%;"><col style="width: 16.5%;">
+                    </colgroup>
+                    <tr>
+                        <td class="note-cell" rowspan="3">
+                            * 기한 내 미보고시 작업중지<br>
+                            * 첨부 : <input type="text" class="input-text no-print-border" id="attachment-note" style="width:60%; display:inline-block;" placeholder="예: 점검사진 대지">
+                        </td>
+                        <th>작성</th>
+                        <th>검토</th>
+                        <th>조정</th>
+                        <th>승인</th>
+                    </tr>
+                    <tr>
+                        <td class="name-cell"><input type="text" class="input-text"></td>
+                        <td class="name-cell"><input type="text" class="input-text"></td>
+                        <td class="name-cell"><input type="text" class="input-text"></td>
+                        <td class="name-cell"><input type="text" class="input-text"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" class="input-text" placeholder="날짜"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜"></td>
+                    </tr>
+                </table>
+
+                <div class="footer-logo">
+                    <img src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true" alt="회사 로고" onerror="this.style.display='none'">
+                </div>
+            `;
+
+            document.getElementById('print-btn').style.display = 'inline-block';
+        }
+
+        async function runSearch() {
+            const siteName = document.getElementById('site-name-search').value.trim();
+            const year = document.getElementById('year-search').value.trim();
+            const quarter = document.getElementById('quarter-search').value.trim();
+
+            if (!siteName || !year || !quarter) {
+                alert('현장명, 년도, 분기를 모두 입력해주세요.');
+                return;
+            }
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('print-btn').style.display = 'none';
+
+            try {
+                const [systemDoc, fieldDoc] = await Promise.all([
+                    findLatestSystemCheck(siteName, year, quarter),
+                    findLatestFieldCheck(siteName, year, quarter)
+                ]);
+                renderResult(systemDoc, fieldDoc, siteName, year, quarter);
+            } catch (error) {
+                console.error('시정예방조치 요구서 조회 실패:', error);
+                document.getElementById('result-area').innerHTML =
+                    `<div class="status-message">조회 중 오류가 발생했습니다: ${escapeHtml(error.message)}</div>`;
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        async function loadSiteNameOptions(preselect) {
+            const select = document.getElementById('site-name-search');
+            try {
+                const [sysSnap, fieldSnap] = await Promise.all([
+                    getDocs(collection(db, "shm_checks")),
+                    getDocs(collection(db, "field_checks"))
+                ]);
+                const names = new Set();
+                sysSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+                fieldSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+
+                const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, 'ko'));
+                select.innerHTML = '<option value="">현장을 선택하세요</option>' +
+                    sorted.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+                if (preselect && sorted.includes(preselect)) select.value = preselect;
+            } catch (error) {
+                console.error('현장명 목록 조회 실패:', error);
+                select.innerHTML = '<option value="">현장 목록을 불러오지 못했습니다</option>';
+            }
+        }
+
+        document.getElementById('search-btn').addEventListener('click', runSearch);
+        document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+        // 종합결과표(/shm_result/)에서 "시정예방조치 요구서 출력" 버튼으로 넘어온 경우
+        // URL 쿼리(site/year/quarter)를 그대로 받아 자동 조회
+        (async function initFromQuery() {
+            const params = new URLSearchParams(location.search);
+            const site = params.get('site') || '';
+            const year = params.get('year') || '';
+            const quarter = params.get('quarter') || '';
+
+            await loadSiteNameOptions(site);
+
+            if (year) document.getElementById('year-search').value = year;
+            if (quarter) document.getElementById('quarter-search').value = quarter;
+            else {
+                const currentMonth = new Date().getMonth() + 1;
+                document.getElementById('quarter-search').value = `${Math.ceil(currentMonth / 3)}분기`;
+            }
+            if (!year) document.getElementById('year-search').value = String(new Date().getFullYear());
+
+            if (site && year) {
+                runSearch();
+            }
+        })();
+    </script>
+
+    <!-- 관리자 비밀번호 입력 모달 -->
+    <div id="password-modal" style="display:none; position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background-color: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); text-align: center; width: 100%; max-width: 400px; border: 1px solid #f1f5f9; box-sizing: border-box; font-family: sans-serif;">
+            <div style="width: 64px; height: 64px; background-color: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #2563eb;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 32px; height: 32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">관리자 인증</h2>
+            <p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0; line-height: 1.5;">페이지에 접근하려면 관리자 비밀번호를 입력해 주세요.</p>
+            <div style="margin-bottom: 24px;">
+                <input type="password" id="admin-password-input"
+                    style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; text-align: center; font-family: monospace; font-size: 24px; letter-spacing: 0.25em; box-sizing: border-box;"
+                    placeholder="••••" autofocus>
+                <p id="password-error" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none; font-weight: 600;">비밀번호가 일치하지 않습니다.</p>
+            </div>
+            <button onclick="submitAdminPassword()"
+                style="width: 100%; background-color: #2563eb; color: #ffffff; font-weight: 700; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px;">
+                인증하기
+            </button>
+        </div>
+    </div>
+</body>
+</html>
