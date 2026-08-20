@@ -792,8 +792,9 @@
         function savePhoto() {
             if (imageDataUrl && currentItemIndex !== null) {
                 try {
-                    // Save photo data
+                    // Save photo data (새 사진이므로 이전 업로드 캐시는 무효화)
                     localStorage.setItem('photo_' + currentItemIndex, imageDataUrl);
+                    localStorage.removeItem('photo_url_' + currentItemIndex);
 
                     // Find corresponding checklist item info
                     const row = document.querySelector(`tr[data-item-index="${currentItemIndex}"]`);
@@ -824,6 +825,7 @@
             localStorage.removeItem('photo_' + index);
             localStorage.removeItem('photo_info_' + index);
             localStorage.removeItem('photo_comment_' + index);
+            localStorage.removeItem('photo_url_' + index);
             loadSinglePhoto(index); // Re-render the container (it will be empty)
         }
 
@@ -875,6 +877,7 @@
                     localStorage.removeItem('photo_' + i);
                     localStorage.removeItem('photo_info_' + i);
                     localStorage.removeItem('photo_comment_' + i);
+                    localStorage.removeItem('photo_url_' + i);
                 }
                 loadAllPhotos(); // Refresh UI
             }
@@ -1182,6 +1185,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
@@ -1193,6 +1197,31 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // 사진은 화면 편집 중에는 localStorage(photo_<index>)에 base64로 즉시 보관하지만,
+        // 그 상태로는 다른 기기·세션(종합결과표, 시정예방조치 요구서 등)에서 접근할 수 없다.
+        // 서버 저장 시 Firebase Storage에 업로드해 URL을 Firestore 문서에 함께 저장한다.
+        // (storage.rules가 "sites/**" 경로만 허용하므로 그 하위에 업로드)
+        async function uploadPhotoIfNeeded(index) {
+            const cachedUrl = localStorage.getItem('photo_url_' + index);
+            if (cachedUrl) return cachedUrl;
+
+            const dataUrl = localStorage.getItem('photo_' + index);
+            if (!dataUrl) return null;
+
+            // 이미 이전 저장에서 복원된 원격 URL이면 재업로드하지 않고 그대로 사용
+            if (!dataUrl.startsWith('data:')) {
+                localStorage.setItem('photo_url_' + index, dataUrl);
+                return dataUrl;
+            }
+
+            const storageRef = ref(storage, `sites/field_check_photos/${Date.now()}_${index}.jpg`);
+            await uploadString(storageRef, dataUrl, 'data_url');
+            const url = await getDownloadURL(storageRef);
+            localStorage.setItem('photo_url_' + index, url);
+            return url;
+        }
 
         // === 현장명 선택 (기존 저장 목록 드롭다운 + 새 현장 추가) ===
         const NEW_SITE_VALUE = "__new__";
@@ -1255,20 +1284,25 @@
 
         loadSiteNameOptions();
 
-        function collectItems() {
+        async function collectItems() {
             const items = [];
-            document.querySelectorAll('#checklist-body tr.item-row').forEach(row => {
+            const rows = document.querySelectorAll('#checklist-body tr.item-row');
+            for (const row of rows) {
                 const idx = parseInt(row.dataset.itemIndex, 10);
                 const issueInput = row.querySelector('input[type="number"]');
                 const checkedRadio = row.querySelector('input[type="radio"]:checked');
                 const commentEl = row.querySelector('textarea');
+                const photoUrl = await uploadPhotoIfNeeded(idx);
+                const photoInfoRaw = localStorage.getItem('photo_info_' + idx);
                 items.push({
                     index: idx,
                     issueCount: issueInput ? (issueInput.value || '') : '',
                     score: checkedRadio ? checkedRadio.dataset.score : null,
-                    comment: commentEl ? commentEl.value : ''
+                    comment: commentEl ? commentEl.value : '',
+                    photoUrl: photoUrl || null,
+                    photoInfo: photoInfoRaw ? JSON.parse(photoInfoRaw) : null
                 });
-            });
+            }
             return items;
         }
 
@@ -1285,6 +1319,13 @@
                 }
                 const commentEl = row.querySelector('textarea');
                 if (commentEl) commentEl.value = item.comment || '';
+
+                if (item.photoUrl) {
+                    localStorage.setItem('photo_' + item.index, item.photoUrl);
+                    localStorage.setItem('photo_url_' + item.index, item.photoUrl);
+                    if (item.photoInfo) localStorage.setItem('photo_info_' + item.index, JSON.stringify(item.photoInfo));
+                    loadSinglePhoto(item.index);
+                }
             });
         }
 
@@ -1320,7 +1361,7 @@
                         p: document.getElementById('factor-p').value,
                         k: document.getElementById('k-value').textContent
                     },
-                    items: collectItems(),
+                    items: await collectItems(),
                     bonus: {
                         improvement: document.getElementById('bonus-improvement').value,
                         improvementDetail: document.getElementById('bonus-improvement-detail').value,

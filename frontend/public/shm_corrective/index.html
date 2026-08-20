@@ -204,6 +204,33 @@
         }
         .footer-logo img { height: 26px; }
 
+        .photo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 4px;
+        }
+        .photo-card {
+            border: 1px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .photo-card img {
+            display: block;
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #f2f2f2;
+        }
+        .photo-caption {
+            padding: 8px 10px;
+            font-size: 0.85em;
+            line-height: 1.5;
+            border-top: 1px solid #333;
+        }
+
         @media print {
             :root {
                 --print-page-margin: 25mm 10mm 10mm 10mm;
@@ -359,6 +386,11 @@
             return candidates[0] || null;
         }
 
+        // 현장점검표의 평점 척도(상/상중/중/중하/하)에는 "미흡" 라벨이 없어, 부정적 평점인
+        // 중하(-0.1)·하(-0.3)를 미흡으로 간주한다. 또한 실제 현장에서 사진으로 확인된 항목만
+        // 지적사항으로 인정한다(사진 미첨부시 근거 부족으로 제외).
+        const FIELD_POOR_SCORES = ['-0.1', '-0.3'];
+
         function buildDeficiencyLines(systemDoc, fieldDoc) {
             const lines = [];
 
@@ -371,23 +403,25 @@
                     if (!worst) return;
                     if (parseFloat(item.selectedValue) !== worst.v) return;
                     const comment = htmlToPlainText(item.comment);
-                    let line = `[시스템점검] ${rowDef.criteria}`;
-                    if (comment) line += ` - ${comment}`;
-                    lines.push(line);
+                    let text = `[시스템점검] ${rowDef.criteria}`;
+                    if (comment) text += ` - ${comment}`;
+                    lines.push({ text, photoUrl: null });
                 });
             }
 
             if (fieldDoc && Array.isArray(fieldDoc.items)) {
                 const flatField = flattenFieldItems();
                 fieldDoc.items.forEach(item => {
-                    const cnt = parseInt(item.issueCount, 10);
-                    if (!cnt || cnt <= 0) return;
+                    if (!FIELD_POOR_SCORES.includes(item.score)) return;
+                    if (!item.photoUrl) return;
                     const rowDef = flatField[item.index];
                     if (!rowDef) return;
                     const comment = (item.comment || '').trim();
-                    let line = `[현장점검/${rowDef.category}·${rowDef.subcategory}] ${rowDef.criteria} (지적 ${cnt}건)`;
-                    if (comment) line += ` - ${comment}`;
-                    lines.push(line);
+                    const cnt = parseInt(item.issueCount, 10);
+                    let text = `[현장점검/${rowDef.category}·${rowDef.subcategory}] ${rowDef.criteria}`;
+                    if (cnt > 0) text += ` (지적 ${cnt}건)`;
+                    if (comment) text += ` - ${comment}`;
+                    lines.push({ text, photoUrl: item.photoUrl });
                 });
             }
 
@@ -411,11 +445,26 @@
 
             const deficiencyLines = buildDeficiencyLines(systemDoc, fieldDoc);
             const deficiencyHtml = deficiencyLines.length
-                ? deficiencyLines.map((line, i) => `${i + 1}. ${escapeHtml(line)}`).join('<br><br>')
+                ? deficiencyLines.map((line, i) => `${i + 1}. ${escapeHtml(line.text)}`).join('<br><br>')
                 : '';
 
+            const photoItems = deficiencyLines
+                .map((line, i) => ({ num: i + 1, ...line }))
+                .filter(line => line.photoUrl);
+            const photoSectionHtml = photoItems.length ? `
+                <div class="section-label" style="margin-top: 18px; page-break-before: always;">점검 사진 대지</div>
+                <div class="photo-grid">
+                    ${photoItems.map(p => `
+                        <div class="photo-card">
+                            <img src="${p.photoUrl}" alt="점검 사진 ${p.num}">
+                            <div class="photo-caption">${p.num}. ${escapeHtml(p.text)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
+
             const manager = systemDoc?.headerInfo?.evaluators?.manager || '';
-            const department = systemDoc?.headerInfo?.department || fieldDoc?.headerInfo ? '안전보건팀' : '안전보건팀';
+            const department = systemDoc?.headerInfo?.department || '안전보건팀';
 
             const defaultCriteria = [
                 '안전보건경영시스템',
@@ -498,6 +547,8 @@
                 <div class="footer-logo">
                     <img src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true" alt="회사 로고" onerror="this.style.display='none'">
                 </div>
+
+                ${photoSectionHtml}
             `;
 
             document.getElementById('print-btn').style.display = 'inline-block';
