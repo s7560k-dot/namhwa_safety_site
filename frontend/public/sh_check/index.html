@@ -633,8 +633,21 @@
             document.getElementById('day').value = String(today.getDate()).padStart(2, '0');
             document.getElementById('quarter-input').value = `${Math.ceil((today.getMonth() + 1) / 3)}분기`;
             generateTable();
+
+            // 평가자 의견 textarea가 고정 2행 높이라 긴 코멘트가 잘려 보이던 문제 수정:
+            // 입력에 따라 내용 전체가 보이도록 자동으로 높이를 늘림
+            // (loadAllPhotos()보다 먼저 등록해, 사진 로딩 중 오류가 나더라도 리스너는 항상 붙도록 함)
+            document.getElementById('checklist-body').addEventListener('input', (e) => {
+                if (e.target.tagName === 'TEXTAREA') autoGrowTextarea(e.target);
+            });
+
             loadAllPhotos();
         });
+
+        function autoGrowTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
 
         const scoreIdKeys = { '0.5': 's0_5', '0.3': 's0_3', '0.0': 's0_0', '-0.1': 'm0_1', '-0.3': 'm0_3' };
 
@@ -670,7 +683,7 @@
                             htmlBody += `<td class="border border-gray-300 p-1 text-center ${isNA ? 'bg-gray-50' : ''}"><input type="radio" name="rating-${itemIndex}" data-score="${score}" onchange="calculateScore()" class="real-radio form-radio h-4 w-4 text-blue-600 cursor-pointer mx-auto"><span class="print-radio-mark hidden"></span></td>`;
                         });
 
-                        htmlBody += `<td class="border border-gray-300"><textarea rows="2" class="w-full p-1 border-0 rounded-md focus:ring-2 focus:ring-blue-500 outline-none resize-y"></textarea></td>`;
+                        htmlBody += `<td class="border border-gray-300"><textarea rows="2" class="w-full p-1 border-0 rounded-md focus:ring-2 focus:ring-blue-500 outline-none resize-y overflow-hidden"></textarea></td>`;
                         htmlBody += `<td class="border border-gray-300 p-2 align-top">
                             <button onclick="openPhotoModal(${itemIndex})" class="bg-gray-200 text-gray-700 text-xs py-1 px-2 rounded hover:bg-gray-300 no-print">사진 추가</button>
                             <div id="photo-container-${itemIndex}" class="mt-2"></div>
@@ -1318,7 +1331,10 @@
                     if (radio) radio.checked = true;
                 }
                 const commentEl = row.querySelector('textarea');
-                if (commentEl) commentEl.value = item.comment || '';
+                if (commentEl) {
+                    commentEl.value = item.comment || '';
+                    autoGrowTextarea(commentEl);
+                }
 
                 if (item.photoUrl) {
                     localStorage.setItem('photo_' + item.index, item.photoUrl);

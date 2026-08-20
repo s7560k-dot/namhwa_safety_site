@@ -483,21 +483,21 @@
                     </colgroup>
                     <tr>
                         <th>일련번호</th>
-                        <td><input type="text" id="doc-no" class="input-text" placeholder="예: 20260601"></td>
+                        <td><input type="text" id="doc-no" class="input-text" placeholder="예: 20260601" autocomplete="off"></td>
                         <th>현장명</th>
                         <td class="text-left" style="padding-left: 14px;">${escapeHtml(siteName)}</td>
                     </tr>
                     <tr>
                         <th>발행일자</th>
-                        <td><input type="text" id="issue-date" class="input-text" value="${todayStr()}"></td>
+                        <td><input type="text" id="issue-date" class="input-text" value="${todayStr()}" autocomplete="off"></td>
                         <th>조치요청일자</th>
-                        <td><input type="text" id="due-date" class="input-text" placeholder="예: 2026. 06. 08."></td>
+                        <td><input type="text" id="due-date" class="input-text" placeholder="예: 2026. 06. 08." autocomplete="off"></td>
                     </tr>
                     <tr>
                         <th>작성자</th>
-                        <td><input type="text" id="writer" class="input-text" value="${escapeHtml(department)} "></td>
+                        <td><input type="text" id="writer" class="input-text" value="${escapeHtml(department)} " autocomplete="off"></td>
                         <th>담당자</th>
-                        <td><input type="text" id="manager-name" class="input-text"></td>
+                        <td><input type="text" id="manager-name" class="input-text" autocomplete="off"></td>
                     </tr>
                     <tr>
                         <th>현장 소장</th>
@@ -523,7 +523,7 @@
                     <tr>
                         <td class="note-cell" rowspan="3">
                             * 기한 내 미보고시 작업중지<br>
-                            * 첨부 : <input type="text" class="input-text no-print-border" id="attachment-note" style="width:60%; display:inline-block;" placeholder="예: 점검사진 대지">
+                            * 첨부 : <input type="text" class="input-text no-print-border" id="attachment-note" style="width:60%; display:inline-block;" placeholder="예: 점검사진 대지" autocomplete="off">
                         </td>
                         <th>작성</th>
                         <th>검토</th>
@@ -531,16 +531,16 @@
                         <th>승인</th>
                     </tr>
                     <tr>
-                        <td class="name-cell"><input type="text" class="input-text"></td>
-                        <td class="name-cell"><input type="text" class="input-text"></td>
-                        <td class="name-cell"><input type="text" class="input-text"></td>
-                        <td class="name-cell"><input type="text" class="input-text"></td>
+                        <td class="name-cell"><input type="text" class="input-text" autocomplete="off"></td>
+                        <td class="name-cell"><input type="text" class="input-text" autocomplete="off"></td>
+                        <td class="name-cell"><input type="text" class="input-text" autocomplete="off"></td>
+                        <td class="name-cell"><input type="text" class="input-text" autocomplete="off"></td>
                     </tr>
                     <tr>
-                        <td><input type="text" class="input-text" placeholder="날짜"></td>
-                        <td><input type="text" class="input-text" placeholder="날짜"></td>
-                        <td><input type="text" class="input-text" placeholder="날짜"></td>
-                        <td><input type="text" class="input-text" placeholder="날짜"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜" autocomplete="off"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜" autocomplete="off"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜" autocomplete="off"></td>
+                        <td><input type="text" class="input-text" placeholder="날짜" autocomplete="off"></td>
                     </tr>
                 </table>
 
