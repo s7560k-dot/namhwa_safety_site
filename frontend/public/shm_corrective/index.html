@@ -264,6 +264,17 @@
             th, td { padding: 6px !important; }
 
             table, tr, td, th { page-break-inside: avoid !important; }
+
+            /* 일련번호/발행일자/조치요청일자/작성자/담당자 및 결재란 서명·날짜 입력칸의
+               테두리·배경 박스가 인쇄물에 보이지 않도록 처리 (입력된 텍스트만 표시) */
+            .input-text, .input-date {
+                border: none !important;
+                background-color: transparent !important;
+                border-radius: 0 !important;
+                padding: 2px !important;
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
         }
     </style>
 </head>
