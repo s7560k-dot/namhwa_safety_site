@@ -413,7 +413,7 @@
             const finalTotal = Math.max(0, systemConverted + fieldConverted);
 
             let grade = '미흡', gradeClass = 'poor';
-            if (finalTotal >= 90) { grade = '우수'; gradeClass = 'excellent'; }
+            if (finalTotal >= 90) { grade = '양호'; gradeClass = 'excellent'; }
             else if (finalTotal >= 60) { grade = '보통'; gradeClass = 'good'; }
 
             const manager = systemDoc.headerInfo?.evaluators?.manager || '';
@@ -583,7 +583,7 @@
                 const payload = {
                     siteName: siteName,
                     finalScore: Math.round(finalTotal * 10) / 10,
-                    grade: grade, // '우수'/'보통'/'미흡' — 현장 전체 등급에 따라 AI 톤 모드 결정
+                    grade: grade, // '양호'/'보통'/'미흡' — 현장 전체 등급에 따라 AI 톤 모드 결정
                     progress: parseFloat(systemDoc.headerInfo?.progress) || 0, // 공정율 100%(완공)이면 노고 치하 톤으로 전환
                     strengths: breakdown.strengths || [],
                     weaknesses: breakdown.weaknesses || [],

@@ -188,7 +188,7 @@
             font-weight: bold;
             font-size: 0.85em;
         }
-        .grade-badge.우수 { background-color: #2e7d32; }
+        .grade-badge.양호 { background-color: #2e7d32; }
         .grade-badge.보통 { background-color: #f57f17; }
         .grade-badge.미흡 { background-color: #c62828; }
 
@@ -345,9 +345,11 @@
                     results.push({
                         siteName,
                         score: parseFloat(sysDoc.finalScores.totalScore) || 0,
-                        grade: sysDoc.finalScores.finalGrade || '-',
+                        grade: (sysDoc.finalScores.finalGrade || '-').replace('우수', '양호'),
                         majorAccident, workAccident,
                         schema: 'old',
+                        fieldRaw: parseFloat(sysDoc.deductions?.fieldScore) || null,
+                        fieldItems: null,
                         sectionBreakdown: null
                     });
                     continue;
@@ -361,15 +363,16 @@
                 const fieldDoc = fieldBySite[siteName];
                 let fieldConverted = 0;
                 let hasField = false;
+                let fieldRawScore = null;
                 if (fieldDoc) {
                     hasField = true;
-                    const fieldRaw = Math.min(100, Math.max(0, parseFloat(fieldDoc.result?.totalScore) || 0));
-                    fieldConverted = (fieldRaw / 100) * weights.maxFieldScore;
+                    fieldRawScore = Math.min(100, Math.max(0, parseFloat(fieldDoc.result?.totalScore) || 0));
+                    fieldConverted = (fieldRawScore / 100) * weights.maxFieldScore;
                 }
 
                 const finalTotal = Math.max(0, systemConverted + fieldConverted);
                 let grade = '미흡';
-                if (finalTotal >= 90) grade = '우수';
+                if (finalTotal >= 90) grade = '양호';
                 else if (finalTotal >= 60) grade = '보통';
 
                 results.push({
@@ -379,6 +382,8 @@
                     majorAccident, workAccident,
                     schema: 'new',
                     hasField,
+                    fieldRaw: fieldRawScore,
+                    fieldItems: fieldDoc ? (fieldDoc.items || null) : null,
                     sectionBreakdown: sysDoc.sectionBreakdown || null
                 });
             }
@@ -388,26 +393,92 @@
         function computeCompanyStats(results) {
             if (results.length === 0) return null;
             const avgScore = results.reduce((s, r) => s + r.score, 0) / results.length;
-            const gradeCounts = { 우수: 0, 보통: 0, 미흡: 0 };
+            const gradeCounts = { 양호: 0, 보통: 0, 미흡: 0 };
             results.forEach(r => { if (gradeCounts[r.grade] !== undefined) gradeCounts[r.grade]++; });
             const totalMajor = results.reduce((s, r) => s + r.majorAccident, 0);
             const totalWork = results.reduce((s, r) => s + r.workAccident, 0);
             return { avgScore, gradeCounts, totalMajor, totalWork, siteCount: results.length };
         }
 
-        function computeCategoryWeakness(results) {
+        // 카테고리별 전사 평균 달성률(%) — 항목별 획득/배점(categoryScores)이 있는 현장은 정확한 평균 %,
+        // 없는(과거) 현장은 강점/약점 이진 분류를 대략적인 %로 환산(강점=100, 약점=50)해 참고치로 사용.
+        function computeCategoryAchievement(results) {
             const withBreakdown = results.filter(r => r.sectionBreakdown);
-            const counts = CATEGORY_NAMES.map(name => {
-                let weak = 0, strong = 0, total = 0;
+            const rows = CATEGORY_NAMES.map(name => {
+                let sum = 0, n = 0, approx = false;
                 withBreakdown.forEach(r => {
+                    const cs = (r.sectionBreakdown.categoryScores || []).find(c => c.category === name);
+                    if (cs && cs.possible > 0) {
+                        sum += (cs.obtained / cs.possible) * 100;
+                        n++;
+                        return;
+                    }
                     const isWeak = (r.sectionBreakdown.weaknesses || []).some(w => w.category === name);
                     const isStrong = (r.sectionBreakdown.strengths || []).some(s => s === name);
-                    if (isWeak) { weak++; total++; }
-                    else if (isStrong) { strong++; total++; }
+                    if (isWeak) { sum += 50; n++; approx = true; }
+                    else if (isStrong) { sum += 100; n++; approx = true; }
                 });
-                return { name, weak, strong, total };
+                return { name, pct: n > 0 ? sum / n : null, sampleSize: n, approx };
             });
-            return { counts, sampleSize: withBreakdown.length };
+            return { rows, sampleSize: withBreakdown.length };
+        }
+
+        function achievementFor(categoryAchievement, name) {
+            const row = categoryAchievement.rows.find(r => r.name === name);
+            return row && row.pct !== null ? row.pct : null;
+        }
+
+        // P=방침목표(1) D=책임자업무(2)+법령이행(6) C=현장 확인점검(현장점검표 점수) A=나머지(3,4,5,7)
+        function computePDCA(categoryAchievement, results) {
+            const p = achievementFor(categoryAchievement, CATEGORY_NAMES[0]);
+            const d2 = achievementFor(categoryAchievement, CATEGORY_NAMES[1]);
+            const d6 = achievementFor(categoryAchievement, CATEGORY_NAMES[5]);
+            const dVals = [d2, d6].filter(v => v !== null);
+            const d = dVals.length ? dVals.reduce((a, b) => a + b, 0) / dVals.length : null;
+
+            const fieldScores = results.map(r => r.fieldRaw).filter(v => v !== null && v !== undefined);
+            const c = fieldScores.length ? fieldScores.reduce((a, b) => a + b, 0) / fieldScores.length : null;
+
+            const aNames = [CATEGORY_NAMES[2], CATEGORY_NAMES[3], CATEGORY_NAMES[4], CATEGORY_NAMES[6]];
+            const aVals = aNames.map(n => achievementFor(categoryAchievement, n)).filter(v => v !== null);
+            const a = aVals.length ? aVals.reduce((x, y) => x + y, 0) / aVals.length : null;
+
+            const to10 = v => v === null ? null : Math.round((v / 10) * 10) / 10;
+            return {
+                plan: to10(p), do: to10(d), check: to10(c), action: to10(a)
+            };
+        }
+
+        // sh_check(현장점검표) 101개 항목의 사고유형(대분류) 매핑 — sh_check의 checklistData와 동일한 순서/개수로
+        // index(0~100)를 사고유형에 대응시킨다.
+        const HAZARD_GROUPS = [
+            ['추락', 27], ['충돌 및 협착', 9], ['붕괴 및 도괴', 17],
+            ['감전', 19], ['낙하 및 전도', 13], ['기타', 16]
+        ];
+        function buildHazardIndexMap() {
+            const map = [];
+            HAZARD_GROUPS.forEach(([name, count]) => { for (let i = 0; i < count; i++) map.push(name); });
+            return map;
+        }
+        const HAZARD_INDEX_MAP = buildHazardIndexMap();
+
+        function computeHazardBreakdown(results) {
+            const totals = {};
+            HAZARD_GROUPS.forEach(([name]) => { totals[name] = 0; });
+            let sampleSize = 0;
+            results.forEach(r => {
+                if (!r.fieldItems) return;
+                sampleSize++;
+                r.fieldItems.forEach(item => {
+                    const category = HAZARD_INDEX_MAP[item.index];
+                    if (!category) return;
+                    const count = parseInt(item.issueCount, 10) || 0;
+                    totals[category] += count;
+                });
+            });
+            const rows = HAZARD_GROUPS.map(([name]) => ({ name, count: totals[name] }))
+                .sort((a, b) => b.count - a.count);
+            return { rows, sampleSize };
         }
 
         window.__reportState = {};
@@ -465,17 +536,20 @@
 
         async function renderReport(year, quarter, results) {
             const stats = computeCompanyStats(results);
-            const category = computeCategoryWeakness(results);
+            const categoryAchievement = computeCategoryAchievement(results);
+            const pdca = computePDCA(categoryAchievement, results);
+            const hazard = computeHazardBreakdown(results);
             const trend = await fetchTrend(year);
 
             const sorted = results.slice().sort((a, b) => a.score - b.score);
+            const siteList = sorted.slice().reverse().map(r => `${r.siteName}(${escapeHtml(r.grade)})`).join(', ');
 
             const area = document.getElementById('result-area');
             area.innerHTML = `
                 <div class="section-title">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
                 <div class="kpi-grid">
                     <div class="kpi-card"><div class="value">${stats.avgScore.toFixed(1)}</div><div class="label">전사 평균점수</div></div>
-                    <div class="kpi-card grade-good"><div class="value">${stats.gradeCounts.우수}</div><div class="label">우수 현장</div></div>
+                    <div class="kpi-card grade-good"><div class="value">${stats.gradeCounts.양호}</div><div class="label">양호 현장</div></div>
                     <div class="kpi-card grade-mid"><div class="value">${stats.gradeCounts.보통}</div><div class="label">보통 현장</div></div>
                     <div class="kpi-card grade-poor"><div class="value">${stats.gradeCounts.미흡}</div><div class="label">미흡 현장</div></div>
                     <div class="kpi-card grade-poor"><div class="value">${stats.totalMajor}</div><div class="label">중대재해(건)</div></div>
@@ -484,10 +558,19 @@
 
                 <div class="section-title">현장별 종합점수</div>
                 <div class="chart-box tall"><canvas id="site-chart"></canvas></div>
+                <p class="note">${escapeHtml(siteList)}</p>
 
-                <div class="section-title">전사 카테고리별 취약도 (시스템점검 기준)</div>
+                <div class="section-title">PDCA 관리사이클 이행 수준 (10점 만점)</div>
+                <div class="chart-box"><canvas id="pdca-chart"></canvas></div>
+                <p class="note">※ P=방침목표, D=관리책임자 업무수행+법령이행, C=현장 확인점검(현장점검표), A=나머지 절차(의견청취·비상대응·협력사관리·평가개선)</p>
+
+                <div class="section-title">전사 카테고리별 달성률 (시스템점검 기준)</div>
                 <div class="chart-box"><canvas id="category-chart"></canvas></div>
-                <p class="note">※ 세부 항목 데이터가 있는 현장(${category.sampleSize}개)만 반영됩니다. 구버전(1·2분기 등) 데이터는 총점만 있어 이 차트에는 포함되지 않습니다.</p>
+                <p class="note">※ 세부 항목 데이터가 있는 현장(${categoryAchievement.sampleSize}개) 기준입니다. 구버전(총점만 있는) 데이터는 강점/약점 이진 분류를 참고치로 환산해 포함했습니다.</p>
+
+                <div class="section-title">사고유형별 지적건수 (현장점검 기준)</div>
+                <div class="chart-box"><canvas id="hazard-chart"></canvas></div>
+                <p class="note">※ 현장점검표 데이터가 있는 현장(${hazard.sampleSize}개) 기준입니다.</p>
 
                 <div class="section-title">분기별 전사 평균점수 추이 (${escapeHtml(year)}년)</div>
                 <div class="chart-box"><canvas id="trend-chart"></canvas></div>
@@ -519,7 +602,9 @@
             `;
 
             destroyChart('site');
+            destroyChart('pdca');
             destroyChart('category');
+            destroyChart('hazard');
             destroyChart('trend');
 
             window.charts.site = new Chart(document.getElementById('site-chart'), {
@@ -529,7 +614,7 @@
                     datasets: [{
                         label: '종합점수',
                         data: sorted.map(r => r.score),
-                        backgroundColor: sorted.map(r => r.grade === '우수' ? '#2e7d32' : r.grade === '보통' ? '#f57f17' : '#c62828')
+                        backgroundColor: sorted.map(r => r.grade === '양호' ? '#2e7d32' : r.grade === '보통' ? '#f57f17' : '#c62828')
                     }]
                 },
                 options: {
@@ -540,19 +625,56 @@
                 }
             });
 
+            window.charts.pdca = new Chart(document.getElementById('pdca-chart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Plan(방침목표)', 'Do(책임자업무·법령이행)', 'Check(현장확인점검)', 'Action(기타절차)'],
+                    datasets: [{
+                        label: '이행수준',
+                        data: [pdca.plan, pdca.do, pdca.check, pdca.action].map(v => v === null ? 0 : v),
+                        borderColor: '#1a237e',
+                        backgroundColor: 'rgba(26,35,126,0.2)',
+                        pointBackgroundColor: '#1a237e'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
             window.charts.category = new Chart(document.getElementById('category-chart'), {
                 type: 'bar',
                 data: {
-                    labels: category.counts.map(c => c.name.replace(/^\d+\.\s*/, '')),
+                    labels: categoryAchievement.rows.map(c => c.name.replace(/^\d+\.\s*/, '')),
                     datasets: [{
-                        label: '약점으로 지목된 현장 비율(%)',
-                        data: category.counts.map(c => c.total > 0 ? Math.round(c.weak / c.total * 100) : 0),
+                        label: '평균 달성률(%)',
+                        data: categoryAchievement.rows.map(c => c.pct !== null ? Math.round(c.pct) : 0),
                         backgroundColor: '#3949ab'
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: { y: { min: 0, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            window.charts.hazard = new Chart(document.getElementById('hazard-chart'), {
+                type: 'bar',
+                data: {
+                    labels: hazard.rows.map(h => h.name),
+                    datasets: [{
+                        label: '지적건수',
+                        data: hazard.rows.map(h => h.count),
+                        backgroundColor: '#c62828'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { min: 0 } },
                     plugins: { legend: { display: false } }
                 }
             });
@@ -576,13 +698,13 @@
                 }
             });
 
-            document.getElementById('ai-exec-btn').addEventListener('click', () => generateExecSummary(year, quarter, stats, category, results));
+            document.getElementById('ai-exec-btn').addEventListener('click', () => generateExecSummary(year, quarter, stats, categoryAchievement, pdca, hazard, results));
             document.getElementById('exec-summary-display').addEventListener('input', function () {
                 if (this.textContent.trim() === '') this.innerHTML = '';
             });
         }
 
-        async function generateExecSummary(year, quarter, stats, category, results) {
+        async function generateExecSummary(year, quarter, stats, categoryAchievement, pdca, hazard, results) {
             const btn = document.getElementById('ai-exec-btn');
             const display = document.getElementById('exec-summary-display');
             const original = btn.innerHTML;
@@ -595,7 +717,7 @@
                     : 'https://us-central1-namhwa-safety-dashboard.cloudfunctions.net';
                 const apiUrl = `${baseUrl}/generate_shm_summary`;
 
-                const weakCategories = category.counts.filter(c => c.total > 0 && (c.weak / c.total) >= 0.5).map(c => c.name);
+                const weakCategories = categoryAchievement.rows.filter(c => c.pct !== null && c.pct < 70).map(c => c.name);
                 const sorted = results.slice().sort((a, b) => a.score - b.score);
 
                 const payload = {
@@ -608,7 +730,11 @@
                     workAccidentTotal: stats.totalWork,
                     weakCategories,
                     worstSites: sorted.slice(0, 3).map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade })),
-                    bestSites: sorted.slice(-3).reverse().map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade }))
+                    bestSites: sorted.slice(-3).reverse().map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade })),
+                    pdca: {
+                        plan: pdca.plan, do: pdca.do, check: pdca.check, action: pdca.action
+                    },
+                    topHazards: hazard.rows.slice(0, 3).map(h => ({ name: h.name, count: h.count }))
                 };
 
                 const response = await fetch(apiUrl, {

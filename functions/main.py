@@ -331,6 +331,8 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
             weak_categories = data.get("weakCategories", [])
             worst_sites = data.get("worstSites", [])
             best_sites = data.get("bestSites", [])
+            pdca = data.get("pdca", {})
+            top_hazards = data.get("topHazards", [])
 
             exec_instruction = """
             당신은 대한민국 대형 건설사의 안전보건 담당 임원입니다. 대표이사에게 보고할 분기 전사 안전보건 종합 총평을 작성하세요.
@@ -339,11 +341,13 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
             1. 출력 형식은 순수 HTML 포맷(<b>, <br>, <span style="..."> 등)만 사용해야 하며, 마크다운 코드 블록이나 부수적인 텍스트는 응답에 포함하지 마십시오.
             2. 이건 현장 담당자용 지적 문서가 아니라 대표이사 보고용입니다. 개별 항목을 나열하지 말고, 회사 전체 수준·리스크·경영 시사점 중심으로 간결하고 격조 있게 작성하십시오.
             3. 첫 문장은 이번 분기 전사 평균점수와 전반적 수준을 한 문장으로 요약하십시오.
-            4. 우수 현장과 미흡 현장의 격차, 여러 현장에서 반복적으로 나타나는 공통 취약 분야(전사 차원의 구조적 리스크)를 짚어 경영진이 어떤 의사결정을 내려야 하는지 시사하십시오.
-            5. 중대재해 또는 산재 발생 건수가 1건이라도 있다면, 반드시 별도 문단으로 심각하게 다루십시오. 없다면 그 사실도 긍정적으로 짧게 언급하십시오.
-            6. 마지막은 다음 분기를 위한 구체적이고 간결한 경영 제언 한두 줄로 마무리하십시오. 구호나 슬로건, 감탄사는 넣지 말고 임원 보고서의 격식 있는 톤을 끝까지 유지하십시오.
-            7. 전체 분량은 A4 반 페이지를 넘지 않게 간결하게 작성하십시오.
-            8. 이모지 및 markdown 글머리 기호(-, *, • 등)는 절대 사용하지 마십시오.
+            4. 양호 현장과 미흡 현장의 격차, 여러 현장에서 반복적으로 나타나는 공통 취약 분야(전사 차원의 구조적 리스크)를 짚어 경영진이 어떤 의사결정을 내려야 하는지 시사하십시오.
+            5. PDCA(Plan-Do-Check-Action) 관리사이클 이행 수준 중 가장 낮은 항목이 있다면, 그것이 회사 관리시스템의 어느 단계에서 취약한지 한 문장으로 짚어주십시오.
+            6. 사고유형별 지적건수 중 상위 항목이 있다면, 현장 안전관리 중점 관리가 필요한 위험 유형으로 짧게 언급하십시오.
+            7. 중대재해 또는 산재 발생 건수가 1건이라도 있다면, 반드시 별도 문단으로 심각하게 다루십시오. 없다면 그 사실도 긍정적으로 짧게 언급하십시오.
+            8. 마지막은 다음 분기를 위한 구체적이고 간결한 경영 제언 한두 줄로 마무리하십시오. 구호나 슬로건, 감탄사는 넣지 말고 임원 보고서의 격식 있는 톤을 끝까지 유지하십시오.
+            9. 전체 분량은 A4 반 페이지를 넘지 않게 간결하게 작성하십시오.
+            10. 이모지 및 markdown 글머리 기호(-, *, • 등)는 절대 사용하지 마십시오.
             """
 
             model = genai.GenerativeModel(
@@ -356,10 +360,12 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
                 f"보고 기간: {period}\n"
                 f"점검 현장 수: {site_count}개\n"
                 f"전사 평균 종합점수: {avg_score}점\n"
-                f"등급 분포: 우수 {grade_counts.get('우수', 0)}개 / 보통 {grade_counts.get('보통', 0)}개 / 미흡 {grade_counts.get('미흡', 0)}개\n"
+                f"등급 분포: 양호 {grade_counts.get('양호', 0)}개 / 보통 {grade_counts.get('보통', 0)}개 / 미흡 {grade_counts.get('미흡', 0)}개\n"
                 f"중대재해 발생: {major_total}건\n"
                 f"산재 발생: {work_total}건\n"
                 f"전사 공통 취약 카테고리: {', '.join(weak_categories) if weak_categories else '뚜렷한 공통 취약 분야 없음'}\n"
+                f"PDCA 이행 수준(10점 만점, Plan/Do/Check/Action): {json.dumps(pdca, ensure_ascii=False)}\n"
+                f"사고유형별 지적건수 상위 항목: {json.dumps(top_hazards, ensure_ascii=False) if top_hazards else '데이터 없음'}\n"
                 f"점수 최하위 현장: {json.dumps(worst_sites, ensure_ascii=False)}\n"
                 f"점수 최상위 현장: {json.dumps(best_sites, ensure_ascii=False)}\n\n"
                 f"위 데이터를 바탕으로 대표이사 보고용 종합 총평 HTML을 작성해라. "

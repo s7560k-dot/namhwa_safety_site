@@ -1544,6 +1544,7 @@
                 let strengths = [];
                 let weaknesses = [];
                 let criticalIssues = []; // '미흡'으로 명확히 평가된 세부 항목 (AI가 엄격하게 다뤄야 할 항목)
+                let categoryScores = []; // 카테고리별 획득/배점 (전사 보고서의 정확한 달성률 계산용)
 
                 const tables = document.querySelectorAll('.main-table');
                 tables.forEach((table, index) => {
@@ -1598,9 +1599,11 @@
                             });
                         }
                     }
+
+                    categoryScores.push({ category: categoryName, obtained: sectionObtained, possible: sectionPossible });
                 });
 
-                return { strengths, weaknesses, criticalIssues };
+                return { strengths, weaknesses, criticalIssues, categoryScores };
             };
 
             // 노션 등 외부에서 복사한 서식(테두리/배경 등)이 그대로 붙여넣어지는 것을 방지 — 항상 순수 텍스트로만 붙여넣기
