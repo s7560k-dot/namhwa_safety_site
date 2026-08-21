@@ -320,6 +320,60 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
 
         genai.configure(api_key=api_key)
 
+        # 전사 분기 보고서(shm_report)의 경영진 총평 — 현장 단위 점검과는 완전히 다른 톤/구조라 별도 분기 처리
+        if data.get("executive"):
+            period = data.get("period", "")
+            site_count = data.get("siteCount", 0)
+            avg_score = data.get("avgScore", 0)
+            grade_counts = data.get("gradeCounts", {})
+            major_total = data.get("majorAccidentTotal", 0)
+            work_total = data.get("workAccidentTotal", 0)
+            weak_categories = data.get("weakCategories", [])
+            worst_sites = data.get("worstSites", [])
+            best_sites = data.get("bestSites", [])
+
+            exec_instruction = """
+            당신은 대한민국 대형 건설사의 안전보건 담당 임원입니다. 대표이사에게 보고할 분기 전사 안전보건 종합 총평을 작성하세요.
+
+            [작성 규칙]
+            1. 출력 형식은 순수 HTML 포맷(<b>, <br>, <span style="..."> 등)만 사용해야 하며, 마크다운 코드 블록이나 부수적인 텍스트는 응답에 포함하지 마십시오.
+            2. 이건 현장 담당자용 지적 문서가 아니라 대표이사 보고용입니다. 개별 항목을 나열하지 말고, 회사 전체 수준·리스크·경영 시사점 중심으로 간결하고 격조 있게 작성하십시오.
+            3. 첫 문장은 이번 분기 전사 평균점수와 전반적 수준을 한 문장으로 요약하십시오.
+            4. 우수 현장과 미흡 현장의 격차, 여러 현장에서 반복적으로 나타나는 공통 취약 분야(전사 차원의 구조적 리스크)를 짚어 경영진이 어떤 의사결정을 내려야 하는지 시사하십시오.
+            5. 중대재해 또는 산재 발생 건수가 1건이라도 있다면, 반드시 별도 문단으로 심각하게 다루십시오. 없다면 그 사실도 긍정적으로 짧게 언급하십시오.
+            6. 마지막은 다음 분기를 위한 구체적이고 간결한 경영 제언 한두 줄로 마무리하십시오. 구호나 슬로건, 감탄사는 넣지 말고 임원 보고서의 격식 있는 톤을 끝까지 유지하십시오.
+            7. 전체 분량은 A4 반 페이지를 넘지 않게 간결하게 작성하십시오.
+            8. 이모지 및 markdown 글머리 기호(-, *, • 등)는 절대 사용하지 마십시오.
+            """
+
+            model = genai.GenerativeModel(
+                model_name='gemini-2.5-flash',
+                generation_config=genai.types.GenerationConfig(temperature=0.7),
+                system_instruction=exec_instruction
+            )
+
+            prompt = (
+                f"보고 기간: {period}\n"
+                f"점검 현장 수: {site_count}개\n"
+                f"전사 평균 종합점수: {avg_score}점\n"
+                f"등급 분포: 우수 {grade_counts.get('우수', 0)}개 / 보통 {grade_counts.get('보통', 0)}개 / 미흡 {grade_counts.get('미흡', 0)}개\n"
+                f"중대재해 발생: {major_total}건\n"
+                f"산재 발생: {work_total}건\n"
+                f"전사 공통 취약 카테고리: {', '.join(weak_categories) if weak_categories else '뚜렷한 공통 취약 분야 없음'}\n"
+                f"점수 최하위 현장: {json.dumps(worst_sites, ensure_ascii=False)}\n"
+                f"점수 최상위 현장: {json.dumps(best_sites, ensure_ascii=False)}\n\n"
+                f"위 데이터를 바탕으로 대표이사 보고용 종합 총평 HTML을 작성해라. "
+                f"<b>[{period} 전사 안전보건 종합 보고]</b> 라는 제목으로 시작해라."
+            )
+
+            response = model.generate_content(prompt)
+            ai_summary = response.text.strip()
+            ai_summary = ai_summary.replace("```html", "").replace("```", "").strip()
+            ai_summary = strip_emoji(ai_summary).strip()
+
+            resp = https_fn.Response(json.dumps({"success": True, "summary": ai_summary}), content_type="application/json")
+            return set_cors_headers(resp)
+
         # AI 페르소나 선택 우선순위:
         # 1) 공정율 100%(준공/완료 현장): 등급과 무관하게 노고 치하 + 격려 톤 (공사가 끝난 현장에
         #    "당장 개선하라"는 지시형 어조는 맞지 않으므로 최우선으로 적용)

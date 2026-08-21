@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <script src="/auth-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>전사 안전보건 분기 보고서</title>
+    <script>
+        const ADMIN_PASSWORD = "1152";
+        document.addEventListener('DOMContentLoaded', () => {
+            const hasAuth = sessionStorage.getItem("isAdminAuthenticated") === "true";
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+            const pwdInput = document.getElementById('admin-password-input');
+            if (hasAuth) {
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (mainContent) mainContent.style.filter = 'blur(5px)';
+                if (modal) modal.style.display = 'flex';
+                if (pwdInput) {
+                    pwdInput.focus();
+                    pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitAdminPassword(); });
+                }
+            }
+        });
+        function submitAdminPassword() {
+            const input = document.getElementById('admin-password-input');
+            const error = document.getElementById('password-error');
+            const modal = document.getElementById('password-modal');
+            const mainContent = document.getElementById('main-content');
+            if (input.value === ADMIN_PASSWORD) {
+                sessionStorage.setItem("isAdminAuthenticated", "true");
+                if (modal) modal.style.display = 'none';
+                if (mainContent) mainContent.style.filter = 'none';
+            } else {
+                if (error) error.style.display = 'block';
+                input.value = '';
+                input.focus();
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 25px;
+            font-size: 0.9em;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #eef1fb;
+            border-radius: 8px;
+        }
+
+        .search-bar label { font-weight: bold; color: #1a237e; margin-right: 4px; }
+        .search-bar select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+        }
+        .btn-search { background-color: #1a237e; }
+        .btn-print { background-color: #3949ab; }
+        .btn-ai { background-color: #2e7d32; }
+
+        .status-message {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffe08a;
+        }
+
+        .section-title {
+            font-size: 1.25em;
+            font-weight: bold;
+            margin-top: 34px;
+            margin-bottom: 14px;
+            border-bottom: 3px solid #3949ab;
+            padding-bottom: 8px;
+            color: #1a237e;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+        .kpi-card {
+            background-color: #eef1fb;
+            border-radius: 10px;
+            padding: 16px 10px;
+            text-align: center;
+        }
+        .kpi-card .value { font-size: 1.7em; font-weight: bold; color: #1a237e; }
+        .kpi-card.grade-good .value { color: #2e7d32; }
+        .kpi-card.grade-mid .value { color: #f57f17; }
+        .kpi-card.grade-poor .value { color: #c62828; }
+        .kpi-card .label { font-size: 0.8em; color: #666; margin-top: 4px; }
+
+        .chart-box {
+            position: relative;
+            height: 340px;
+            margin-bottom: 10px;
+        }
+        .chart-box.tall { height: 420px; }
+
+        .note {
+            font-size: 0.82em;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        #exec-summary-display {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+            min-height: 40px;
+            white-space: pre-wrap;
+            line-height: 1.7;
+            cursor: text;
+        }
+        #exec-summary-display:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+        }
+        #exec-summary-display:focus { outline: 2px solid #3949ab; outline-offset: -1px; }
+
+        table.site-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table.site-table th, table.site-table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: center;
+        }
+        table.site-table th { background-color: #e8eaf6; }
+        table.site-table td.text-left { text-align: left; }
+        .grade-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        .grade-badge.우수 { background-color: #2e7d32; }
+        .grade-badge.보통 { background-color: #f57f17; }
+        .grade-badge.미흡 { background-color: #c62828; }
+
+        .no-print { }
+
+        @media print {
+            @page { size: A4 landscape; margin: 15mm 10mm 10mm 10mm !important; }
+            body, html {
+                margin: 0 !important; padding: 0 !important; background-color: #fff !important;
+                -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+                font-size: 10.5pt !important;
+            }
+            .container { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 auto !important; width: 100% !important; max-width: 100% !important; }
+            .no-print { display: none !important; }
+            .section-title { page-break-after: avoid; }
+            .chart-box { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" id="main-content">
+        <h1>전사 안전보건 분기 보고서</h1>
+        <div class="subtitle">현장별 점검 결과를 종합해 회사 전체 안전보건 수준을 한눈에 확인합니다.</div>
+
+        <div class="search-bar no-print">
+            <label for="year-search">년도</label>
+            <select id="year-search"></select>
+            <label for="quarter-search">분기</label>
+            <select id="quarter-search">
+                <option value="1분기">1분기</option>
+                <option value="2분기">2분기</option>
+                <option value="3분기">3분기</option>
+                <option value="4분기">4분기</option>
+            </select>
+            <button id="search-btn" class="btn btn-search">조회</button>
+            <button id="print-btn" class="btn btn-print" style="display:none;">&#128424; 인쇄하기</button>
+        </div>
+
+        <div id="result-area">
+            <p style="text-align:center; color:#888; padding: 40px 0;">년도와 분기를 선택한 뒤 [조회]를 눌러주세요.</p>
+        </div>
+    </div>
+
+    <div id="loading-overlay"
+        style="display: none; position: fixed; inset: 0; background-color: rgba(255,255,255,0.8); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 15px; font-weight: bold; color: #333;">집계 중...</p>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+    <!-- 관리자 비밀번호 입력 모달 -->
+    <div id="password-modal" style="position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;">
+        <div style="background-color: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; border: 1px solid #f1f5f9; box-sizing: border-box; font-family: sans-serif;">
+            <div style="width: 64px; height: 64px; background-color: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #2563eb;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 32px; height: 32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">관리자 인증</h2>
+            <p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;">페이지에 접근하려면 관리자 비밀번호를 입력해 주세요.</p>
+            <div style="margin-bottom: 24px;">
+                <input type="password" id="admin-password-input"
+                    style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; text-align: center; font-family: monospace; font-size: 24px; letter-spacing: 0.25em; box-sizing: border-box;"
+                    placeholder="••••" autofocus autocomplete="new-password">
+                <p id="password-error" style="color: #ef4444; font-size: 12px; margin-top: 8px; display: none; font-weight: 600;">비밀번호가 일치하지 않습니다.</p>
+            </div>
+            <button onclick="submitAdminPassword()"
+                style="width: 100%; background-color: #2563eb; color: #ffffff; font-weight: 700; padding: 14px 24px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px;">
+                인증하기
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
+            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
+            projectId: "namhwa-safety-dashboard",
+            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
+            messagingSenderId: "152864778612",
+            appId: "1:152864778612:web:ecc482adce93a1534a2421"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const CATEGORY_NAMES = [
+            "1. 안전보건경영 방침 및 목표관리 절차",
+            "2. 안전보건관리책임자 등 업무수행 평가 절차",
+            "3. 종사자 의견 청취 절차",
+            "4. 비상사태 대비·대응 절차",
+            "5. 협력사 수준관리 절차",
+            "6. 안전보건관계 법령 등 이행관리 절차",
+            "7. 시스템 평가 및 개선 절차"
+        ];
+
+        function getPhaseWeights(progress) {
+            if (progress >= 100) return { maxSystemScore: 100, maxFieldScore: 0 };
+            if (progress < 30) return { maxSystemScore: 70, maxFieldScore: 30 };
+            if (progress < 80) return { maxSystemScore: 50, maxFieldScore: 50 };
+            return { maxSystemScore: 60, maxFieldScore: 40 };
+        }
+
+        function toTimeMs(d) { return d.createdAt && d.createdAt.seconds ? d.createdAt.seconds : 0; }
+
+        // 해당 분기(연도 일치)의 시스템점검 중 현장별 최신 문서만 남긴다.
+        async function fetchLatestSystemChecksByQuarter(year, quarter) {
+            const snap = await getDocs(query(collection(db, "shm_checks"), where("headerInfo.quarter", "==", quarter)));
+            const bySite = {};
+            snap.forEach(d => {
+                const data = d.data();
+                data._docId = d.id;
+                const docYear = (data.headerInfo?.checkDate || '').slice(0, 4);
+                if (docYear !== year) return;
+                const name = data.headerInfo?.siteName;
+                if (!name) return;
+                if (!bySite[name] || toTimeMs(data) > toTimeMs(bySite[name])) bySite[name] = data;
+            });
+            return bySite; // { siteName: doc }
+        }
+
+        async function fetchLatestFieldChecksByQuarter(year, quarter) {
+            const snap = await getDocs(query(collection(db, "field_checks"), where("headerInfo.quarter", "==", quarter)));
+            const bySite = {};
+            snap.forEach(d => {
+                const data = d.data();
+                const docYear = data.headerInfo?.year || '';
+                if (docYear !== year) return;
+                const name = data.headerInfo?.siteName;
+                if (!name) return;
+                if (!bySite[name] || toTimeMs(data) > toTimeMs(bySite[name])) bySite[name] = data;
+            });
+            return bySite;
+        }
+
+        // 현장별 결과 배열 생성: 구버전(통합 저장) / 신버전(시스템+현장 분리) 모두 처리
+        async function computeSiteResults(year, quarter) {
+            const [sysBySite, fieldBySite] = await Promise.all([
+                fetchLatestSystemChecksByQuarter(year, quarter),
+                fetchLatestFieldChecksByQuarter(year, quarter)
+            ]);
+
+            const results = [];
+            for (const [siteName, sysDoc] of Object.entries(sysBySite)) {
+                const isOld = !!(sysDoc.finalScores && sysDoc.finalScores.totalScore !== undefined);
+                const majorAccident = parseInt(sysDoc.deductions?.majorAccident || '0', 10) || 0;
+                const workAccident = parseInt(sysDoc.deductions?.workAccident || '0', 10) || 0;
+
+                if (isOld) {
+                    results.push({
+                        siteName,
+                        score: parseFloat(sysDoc.finalScores.totalScore) || 0,
+                        grade: sysDoc.finalScores.finalGrade || '-',
+                        majorAccident, workAccident,
+                        schema: 'old',
+                        sectionBreakdown: null
+                    });
+                    continue;
+                }
+
+                const progress = parseFloat(sysDoc.headerInfo?.progress) || 0;
+                const weights = getPhaseWeights(progress);
+                const systemRaw = Math.max(0, parseFloat(sysDoc.finalScores?.systemConverted) || 0);
+                const systemConverted = (systemRaw / 100) * weights.maxSystemScore;
+
+                const fieldDoc = fieldBySite[siteName];
+                let fieldConverted = 0;
+                let hasField = false;
+                if (fieldDoc) {
+                    hasField = true;
+                    const fieldRaw = Math.min(100, Math.max(0, parseFloat(fieldDoc.result?.totalScore) || 0));
+                    fieldConverted = (fieldRaw / 100) * weights.maxFieldScore;
+                }
+
+                const finalTotal = Math.max(0, systemConverted + fieldConverted);
+                let grade = '미흡';
+                if (finalTotal >= 90) grade = '우수';
+                else if (finalTotal >= 60) grade = '보통';
+
+                results.push({
+                    siteName,
+                    score: finalTotal,
+                    grade,
+                    majorAccident, workAccident,
+                    schema: 'new',
+                    hasField,
+                    sectionBreakdown: sysDoc.sectionBreakdown || null
+                });
+            }
+            return results;
+        }
+
+        function computeCompanyStats(results) {
+            if (results.length === 0) return null;
+            const avgScore = results.reduce((s, r) => s + r.score, 0) / results.length;
+            const gradeCounts = { 우수: 0, 보통: 0, 미흡: 0 };
+            results.forEach(r => { if (gradeCounts[r.grade] !== undefined) gradeCounts[r.grade]++; });
+            const totalMajor = results.reduce((s, r) => s + r.majorAccident, 0);
+            const totalWork = results.reduce((s, r) => s + r.workAccident, 0);
+            return { avgScore, gradeCounts, totalMajor, totalWork, siteCount: results.length };
+        }
+
+        function computeCategoryWeakness(results) {
+            const withBreakdown = results.filter(r => r.sectionBreakdown);
+            const counts = CATEGORY_NAMES.map(name => {
+                let weak = 0, strong = 0, total = 0;
+                withBreakdown.forEach(r => {
+                    const isWeak = (r.sectionBreakdown.weaknesses || []).some(w => w.category === name);
+                    const isStrong = (r.sectionBreakdown.strengths || []).some(s => s === name);
+                    if (isWeak) { weak++; total++; }
+                    else if (isStrong) { strong++; total++; }
+                });
+                return { name, weak, strong, total };
+            });
+            return { counts, sampleSize: withBreakdown.length };
+        }
+
+        window.__reportState = {};
+        window.charts = {};
+
+        function destroyChart(key) {
+            if (window.charts[key]) { window.charts[key].destroy(); window.charts[key] = null; }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        async function runSearch() {
+            const year = document.getElementById('year-search').value;
+            const quarter = document.getElementById('quarter-search').value;
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex';
+            document.getElementById('print-btn').style.display = 'none';
+
+            try {
+                const results = await computeSiteResults(year, quarter);
+                if (results.length === 0) {
+                    document.getElementById('result-area').innerHTML =
+                        `<div class="status-message">${escapeHtml(year)}년 ${escapeHtml(quarter)}에 저장된 시스템점검 데이터가 없습니다.</div>`;
+                    return;
+                }
+                window.__reportState = { year, quarter, results };
+                await renderReport(year, quarter, results);
+                document.getElementById('print-btn').style.display = 'inline-block';
+            } catch (error) {
+                console.error('보고서 집계 실패:', error);
+                document.getElementById('result-area').innerHTML =
+                    `<div class="status-message">집계 중 오류가 발생했습니다: ${escapeHtml(error.message)}</div>`;
+            } finally {
+                overlay.style.display = 'none';
+            }
+        }
+
+        window.runSearch = runSearch;
+
+        async function fetchTrend(year) {
+            const quarters = ['1분기', '2분기', '3분기', '4분기'];
+            const trend = [];
+            for (const q of quarters) {
+                const results = await computeSiteResults(year, q);
+                if (results.length === 0) continue;
+                const stats = computeCompanyStats(results);
+                trend.push({ label: `${year} ${q}`, avgScore: stats.avgScore });
+            }
+            return trend;
+        }
+
+        async function renderReport(year, quarter, results) {
+            const stats = computeCompanyStats(results);
+            const category = computeCategoryWeakness(results);
+            const trend = await fetchTrend(year);
+
+            const sorted = results.slice().sort((a, b) => a.score - b.score);
+
+            const area = document.getElementById('result-area');
+            area.innerHTML = `
+                <div class="section-title">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
+                <div class="kpi-grid">
+                    <div class="kpi-card"><div class="value">${stats.avgScore.toFixed(1)}</div><div class="label">전사 평균점수</div></div>
+                    <div class="kpi-card grade-good"><div class="value">${stats.gradeCounts.우수}</div><div class="label">우수 현장</div></div>
+                    <div class="kpi-card grade-mid"><div class="value">${stats.gradeCounts.보통}</div><div class="label">보통 현장</div></div>
+                    <div class="kpi-card grade-poor"><div class="value">${stats.gradeCounts.미흡}</div><div class="label">미흡 현장</div></div>
+                    <div class="kpi-card grade-poor"><div class="value">${stats.totalMajor}</div><div class="label">중대재해(건)</div></div>
+                    <div class="kpi-card grade-mid"><div class="value">${stats.totalWork}</div><div class="label">산재(건)</div></div>
+                </div>
+
+                <div class="section-title">현장별 종합점수</div>
+                <div class="chart-box tall"><canvas id="site-chart"></canvas></div>
+
+                <div class="section-title">전사 카테고리별 취약도 (시스템점검 기준)</div>
+                <div class="chart-box"><canvas id="category-chart"></canvas></div>
+                <p class="note">※ 세부 항목 데이터가 있는 현장(${category.sampleSize}개)만 반영됩니다. 구버전(1·2분기 등) 데이터는 총점만 있어 이 차트에는 포함되지 않습니다.</p>
+
+                <div class="section-title">분기별 전사 평균점수 추이 (${escapeHtml(year)}년)</div>
+                <div class="chart-box"><canvas id="trend-chart"></canvas></div>
+
+                <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>경영진 보고용 총평</span>
+                    <div class="no-print" style="display:flex; gap:8px;">
+                        <button id="ai-exec-btn" class="btn btn-ai" style="padding:4px 10px; font-size:0.8em;">&#9881; AI 총평 생성</button>
+                    </div>
+                </div>
+                <div id="exec-summary-display" contenteditable="true" data-placeholder="[AI 총평 생성] 버튼을 누르거나 이 영역을 직접 클릭해 입력하세요."></div>
+
+                <div class="section-title">현장별 상세</div>
+                <table class="site-table">
+                    <thead><tr><th class="text-left">현장명</th><th>종합점수</th><th>등급</th><th>중대재해</th><th>산재</th><th>비고</th></tr></thead>
+                    <tbody>
+                        ${sorted.map(r => `
+                            <tr>
+                                <td class="text-left">${escapeHtml(r.siteName)}</td>
+                                <td>${r.score.toFixed(1)}</td>
+                                <td><span class="grade-badge ${r.grade}">${escapeHtml(r.grade)}</span></td>
+                                <td>${r.majorAccident}</td>
+                                <td>${r.workAccident}</td>
+                                <td style="font-size:0.8em; color:#888;">${r.schema === 'old' ? '구버전(통합)' : (r.hasField ? '' : '현장점검 없음(시스템만)')}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            destroyChart('site');
+            destroyChart('category');
+            destroyChart('trend');
+
+            window.charts.site = new Chart(document.getElementById('site-chart'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(r => r.siteName),
+                    datasets: [{
+                        label: '종합점수',
+                        data: sorted.map(r => r.score),
+                        backgroundColor: sorted.map(r => r.grade === '우수' ? '#2e7d32' : r.grade === '보통' ? '#f57f17' : '#c62828')
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { min: 0, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            window.charts.category = new Chart(document.getElementById('category-chart'), {
+                type: 'bar',
+                data: {
+                    labels: category.counts.map(c => c.name.replace(/^\d+\.\s*/, '')),
+                    datasets: [{
+                        label: '약점으로 지목된 현장 비율(%)',
+                        data: category.counts.map(c => c.total > 0 ? Math.round(c.weak / c.total * 100) : 0),
+                        backgroundColor: '#3949ab'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            window.charts.trend = new Chart(document.getElementById('trend-chart'), {
+                type: 'line',
+                data: {
+                    labels: trend.map(t => t.label),
+                    datasets: [{
+                        label: '전사 평균점수',
+                        data: trend.map(t => t.avgScore),
+                        borderColor: '#1a237e',
+                        backgroundColor: 'rgba(26,35,126,0.15)',
+                        fill: true, tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            document.getElementById('ai-exec-btn').addEventListener('click', () => generateExecSummary(year, quarter, stats, category, results));
+            document.getElementById('exec-summary-display').addEventListener('input', function () {
+                if (this.textContent.trim() === '') this.innerHTML = '';
+            });
+        }
+
+        async function generateExecSummary(year, quarter, stats, category, results) {
+            const btn = document.getElementById('ai-exec-btn');
+            const display = document.getElementById('exec-summary-display');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = '생성 중...';
+            try {
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const baseUrl = isLocal
+                    ? 'http://127.0.0.1:5001/namhwa-safety-dashboard/us-central1'
+                    : 'https://us-central1-namhwa-safety-dashboard.cloudfunctions.net';
+                const apiUrl = `${baseUrl}/generate_shm_summary`;
+
+                const weakCategories = category.counts.filter(c => c.total > 0 && (c.weak / c.total) >= 0.5).map(c => c.name);
+                const sorted = results.slice().sort((a, b) => a.score - b.score);
+
+                const payload = {
+                    executive: true,
+                    period: `${year}년 ${quarter}`,
+                    siteCount: stats.siteCount,
+                    avgScore: Math.round(stats.avgScore * 10) / 10,
+                    gradeCounts: stats.gradeCounts,
+                    majorAccidentTotal: stats.totalMajor,
+                    workAccidentTotal: stats.totalWork,
+                    weakCategories,
+                    worstSites: sorted.slice(0, 3).map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade })),
+                    bestSites: sorted.slice(-3).reverse().map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade }))
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let detail = '';
+                    try { detail = (await response.json()).detail || ''; } catch (e) { }
+                    throw new Error(`서버 응답 오류 (${response.status}) ${detail}`);
+                }
+
+                const result = await response.json();
+                if (!result.success || !result.summary) throw new Error(result.detail || '결과 값이 없습니다.');
+
+                display.innerHTML = result.summary;
+                btn.style.backgroundColor = '#2e7d32';
+                btn.textContent = '✓ 생성 완료';
+            } catch (error) {
+                console.error('경영진 총평 생성 실패:', error);
+                alert('AI 총평 생성 중 오류가 발생했습니다: ' + error.message);
+                btn.textContent = '✗ 실패';
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = original;
+                    btn.disabled = false;
+                    btn.style.backgroundColor = '';
+                }, 2500);
+            }
+        }
+
+        document.getElementById('search-btn').addEventListener('click', runSearch);
+        document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+        // 년도 옵션(올해 기준 -1 ~ +1) + 오늘 기준 분기 자동 선택
+        const yearSel = document.getElementById('year-search');
+        const curYear = new Date().getFullYear();
+        for (let y = curYear - 1; y <= curYear + 1; y++) {
+            const opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = y + '년';
+            if (y === curYear) opt.selected = true;
+            yearSel.appendChild(opt);
+        }
+        document.getElementById('quarter-search').value = `${Math.ceil((new Date().getMonth() + 1) / 3)}분기`;
+
+        // 노션 등 외부 붙여넣기 서식 방지
+        document.addEventListener('paste', function (e) {
+            if (!e.target.isContentEditable) return;
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+    </script>
+</body>
+</html>
