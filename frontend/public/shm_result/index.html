@@ -192,6 +192,7 @@
         .phase-early { background-color: #009688 !important; }
         .phase-middle { background-color: #3f51b5 !important; }
         .phase-late { background-color: #673ab7 !important; }
+        .phase-complete { background-color: #2e7d32 !important; }
 
         #major-summary-display:empty:before {
             content: attr(data-placeholder);
@@ -302,6 +303,11 @@
 
         // 공정율에 따른 시스템:현장 반영 비율 (기존 shm_system 로직과 동일하게 유지)
         function getPhaseWeights(progress) {
+            // 공정율 100%(준공)는 물리적으로 더 이상 점검할 현장이 없어 현장점검 점수가 항상 0으로
+            // 잡히므로, 이를 종합점수에 반영하면 부당하게 깎이게 된다. 준공 현장은 시스템 점검만으로 평가.
+            if (progress >= 100) {
+                return { maxSystemScore: 100, maxFieldScore: 0, phaseText: "준공 단계 (시스템 점검만 반영)", phaseClass: "phase-complete" };
+            }
             if (progress < 30) {
                 return { maxSystemScore: 70, maxFieldScore: 30, phaseText: "초기 단계 (시스템70:현장30)", phaseClass: "phase-early" };
             } else if (progress < 80) {
