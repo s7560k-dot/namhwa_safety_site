@@ -1197,7 +1197,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
@@ -1241,15 +1241,12 @@
         const siteSelect = document.getElementById('site-name-select');
         const siteNewInput = document.getElementById('site-name-new-input');
 
+        // 현장명 목록은 매번 shm_checks/field_checks 컬렉션 전체를 훑지 않고,
+        // 저장할 때마다 이름만 누적해두는 별도의 작은 캐시 문서(metadata/site_names)에서 읽는다.
         async function loadSiteNameOptions(preselect) {
             try {
-                const [sysSnap, fieldSnap] = await Promise.all([
-                    getDocs(collection(db, "shm_checks")),
-                    getDocs(collection(db, "field_checks"))
-                ]);
-                const names = new Set();
-                sysSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
-                fieldSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+                const snap = await getDoc(doc(db, "metadata", "site_names"));
+                const names = new Set(snap.exists() ? (snap.data().names || []) : []);
                 if (preselect) names.add(preselect);
 
                 const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, 'ko'));
@@ -1265,6 +1262,15 @@
                 console.error('현장명 목록 조회 실패:', error);
                 siteSelect.innerHTML = '<option value="">현장 목록을 불러오지 못했습니다</option>' +
                     `<option value="${NEW_SITE_VALUE}">+ 새 현장 추가...</option>`;
+            }
+        }
+
+        async function registerSiteName(name) {
+            if (!name) return;
+            try {
+                await setDoc(doc(db, "metadata", "site_names"), { names: arrayUnion(name) }, { merge: true });
+            } catch (error) {
+                console.error('현장명 등록 실패:', error);
             }
         }
 
@@ -1396,6 +1402,7 @@
                 };
 
                 await addDoc(collection(db, "field_checks"), reportData);
+                await registerSiteName(siteName);
 
                 loadingOverlay.classList.add('hidden');
                 loadingOverlay.classList.remove('flex');

@@ -288,7 +288,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
@@ -350,16 +350,13 @@
             return candidates[0] || null;
         }
 
+        // 현장명 목록은 매번 shm_checks/field_checks 컬렉션 전체를 훑지 않고,
+        // 저장할 때마다 이름만 누적해두는 별도의 작은 캐시 문서(metadata/site_names)에서 읽는다.
         async function loadSiteNameOptions() {
             const select = document.getElementById('site-name-search');
             try {
-                const [sysSnap, fieldSnap] = await Promise.all([
-                    getDocs(collection(db, "shm_checks")),
-                    getDocs(collection(db, "field_checks"))
-                ]);
-                const names = new Set();
-                sysSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
-                fieldSnap.forEach(d => { const n = d.data().headerInfo?.siteName; if (n) names.add(n); });
+                const snap = await getDoc(doc(db, "metadata", "site_names"));
+                const names = new Set(snap.exists() ? (snap.data().names || []) : []);
 
                 const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, 'ko'));
                 if (sorted.length === 0) {
