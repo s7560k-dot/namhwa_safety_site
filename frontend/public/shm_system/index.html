@@ -303,6 +303,10 @@
             background-color: #673ab7 !important;
         }
 
+        .phase-complete {
+            background-color: #2e7d32 !important;
+        }
+
         .side-by-side-section {
             display: flex;
             gap: 20px;
@@ -1386,7 +1390,10 @@
                 // --- 평가 단계 뱃지 (참고용 표시. 실제 시스템:현장 가중치 합산은 종합결과표에서 진행) ---
                 let phaseText = "마무리 단계 (종합결과표 반영비율 시스템60:현장40)";
                 let phaseClass = "phase-late";
-                if (progress < 30) {
+                if (progress >= 100) {
+                    phaseText = "준공 단계 (종합결과표에서 시스템 점검만 반영)";
+                    phaseClass = "phase-complete";
+                } else if (progress < 30) {
                     phaseText = "초기 단계 (종합결과표 반영비율 시스템70:현장30)";
                     phaseClass = "phase-early";
                 } else if (progress < 80) {
