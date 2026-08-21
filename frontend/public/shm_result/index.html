@@ -581,6 +581,7 @@
                     siteName: siteName,
                     finalScore: Math.round(finalTotal * 10) / 10,
                     grade: grade, // '우수'/'보통'/'미흡' — 현장 전체 등급에 따라 AI 톤 모드 결정
+                    progress: parseFloat(systemDoc.headerInfo?.progress) || 0, // 공정율 100%(완공)이면 노고 치하 톤으로 전환
                     strengths: breakdown.strengths || [],
                     weaknesses: breakdown.weaknesses || [],
                     criticalIssues: breakdown.criticalIssues || []

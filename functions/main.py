@@ -309,6 +309,7 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
         site_name = data.get("siteName", "현장명 미상")
         final_score = data.get("finalScore", 0)
         grade = data.get("grade", "")
+        progress = data.get("progress", 0)
         strengths = data.get("strengths", [])
         weaknesses = data.get("weaknesses", [])
         critical_issues = data.get("criticalIssues", [])
@@ -319,10 +320,31 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
 
         genai.configure(api_key=api_key)
 
-        # 현장 전체 등급(grade)에 따라 AI 페르소나를 이원화한다.
-        # - 우수/보통(양호하고 개선 여지가 있는 현장): 관대하고 격려하는 톤, 명확한 미흡 항목만 엄격하게
-        # - 미흡(개선 여지가 없는 현장): 전반적으로 엄격하지만 긍정적이고 따뜻한 카리스마, 약점 분야는 따끔한 조언
-        if grade == "미흡":
+        # AI 페르소나 선택 우선순위:
+        # 1) 공정율 100%(준공/완료 현장): 등급과 무관하게 노고 치하 + 격려 톤 (공사가 끝난 현장에
+        #    "당장 개선하라"는 지시형 어조는 맞지 않으므로 최우선으로 적용)
+        # 2) 그 외에는 현장 전체 등급(grade)에 따라 이원화
+        #    - 우수/보통(양호하고 개선 여지가 있는 현장): 관대하고 격려하는 톤, 명확한 미흡 항목만 엄격하게
+        #    - 미흡(개선 여지가 없는 현장): 전반적으로 엄격하지만 긍정적이고 따뜻한 카리스마, 약점 분야는 따끔한 조언
+        if progress >= 100:
+            system_instruction = """
+            당신은 20년 경력의 심도 있는 지식을 갖춘 대한민국 최고 건설현장 안전보건 전문 심사위원(책임기술인)입니다.
+            이 현장은 공정율 100%로 공사가 무사히 완료된 현장입니다. 지금은 개선을 다그칠 시점이 아니라,
+            공사 기간 내내 안전을 지켜온 현장 구성원들의 노고를 진심으로 치하하고 격려할 시점입니다.
+            현장의 안전보건 시스템 점검 결과를 분석하여, 건설현장 책임자들에게 제공될 '총평 및 개선 요구사항 종합 보고서'를 작성하세요.
+
+            [작성 규칙]
+            1. 출력 형식은 순수 HTML 포맷(<b>, <i>, <br>, <span style="..."> 등)만 사용해야 하며, 마크다운 코드 블록(```html) 등 부수적인 텍스트는 응답에 포함하지 마십시오.
+            2. 첫 문장은 공사가 무사히 완료된 것에 대한 진심 어린 축하와, 공사 기간 동안의 노고에 대한 감사 인사로 시작하세요.
+            3. 강점 분야가 있다면 그 성과를 구체적으로 칭찬해주십시오.
+            4. 약점섹션은 질책이 아니라, 향후 다른 현장에서 참고할 '교훈'이나 '기록해 둘 점' 정도로 부드럽게 정리해주세요.
+            5. 다만 '명확히 미흡으로 확인된 세부 지적사항'이 있다면, 준공 이후 하자·안전 이력 관리 차원에서 반드시 기록·조치가 필요하다는 점은 명확히 짚어주시되, 전체적인 축하와 감사의 기조는 끝까지 유지하세요.
+            6. 마지막은 무사 준공을 축하하고 다음 현장에서도 안전을 이어가자는 짧고 힘찬 문구로 마무리하세요.
+            7. 전체 텍스트 양은 A4 용지 4분의 1장이 넘지 않게 간결하고 가독성 좋게, 줄바꿈을 적절히 사용하여 구성하세요.
+            8. 똑같은 점수와 비슷한 내용이 들어오더라도 매번 단어와 문구를 다르게 구성하여 중복 느낌을 확실히 피하십시오.
+            9. 이모지(예: 📶, ⚠️, ✅ 등) 및 markdown 글머리 기호(-, *, • 등)는 절대 사용하지 마십시오. 목록이 필요하면 <br>로 줄바꿈된 문장으로만 구성하십시오.
+            """
+        elif grade == "미흡":
             system_instruction = """
             당신은 20년 경력의 심도 있는 지식을 갖춘 대한민국 최고 건설현장 안전보건 전문 심사위원(책임기술인)입니다.
             엄격하지만 긍정적이고 따뜻한 카리스마를 가졌습니다.
@@ -373,7 +395,8 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
         strengths_str = ", ".join(strengths) if strengths else "강점 분야로 꼽을 만한 사항 미흡"
         critical_issues_str = json.dumps(critical_issues, ensure_ascii=False) if critical_issues else "명확히 미흡으로 확인된 세부 지적사항 없음"
 
-        prompt = f"현장명: {site_name}\n총점: {final_score}점\n현장 종합등급: {grade or '미상'}\n강점섹션: {strengths_str}\n약점섹션(경미한 수준): {weaknesses_str}\n명확히 미흡으로 확인된 세부 지적사항: {critical_issues_str}\n\n위 데이터를 바탕으로 종합 분석 HTML 텍스트를 응답해라. <b>[안전보건 활동 적정성 종합 검토]</b> 라는 제목으로 시작해라."
+        progress_str = f"{progress}% (공사 완료)" if progress >= 100 else f"{progress}% (공사 진행중)"
+        prompt = f"현장명: {site_name}\n총점: {final_score}점\n현장 종합등급: {grade or '미상'}\n공정율: {progress_str}\n강점섹션: {strengths_str}\n약점섹션(경미한 수준): {weaknesses_str}\n명확히 미흡으로 확인된 세부 지적사항: {critical_issues_str}\n\n위 데이터를 바탕으로 종합 분석 HTML 텍스트를 응답해라. <b>[안전보건 활동 적정성 종합 검토]</b> 라는 제목으로 시작해라."
         
         response = model.generate_content(prompt)
         ai_summary = response.text.strip()
