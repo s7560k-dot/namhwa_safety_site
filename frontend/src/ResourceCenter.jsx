@@ -20,7 +20,8 @@ import {
     LayoutDashboard,
     LogOut,
     Box,
-    Database
+    Database,
+    BarChart3
 } from 'lucide-react';
 
 // CI 규정집 색상 (R127 G0 B0)
@@ -448,6 +449,7 @@ const ResourceCenter = () => {
                                 { title: "SHM SYSTEM", sub: "Web System", icon: <Shield />, link: "/shm_system/index.html" },
                                 { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
                                 { title: "SHM RESULT", sub: "종합결과표", icon: <LayoutDashboard />, link: "/shm_result/index.html" },
+                                { title: "SHM REPORT", sub: "전사 분기 보고서", icon: <BarChart3 />, link: "/shm_report/index.html" },
                                 { title: "PRE CHECK", sub: "Checklist", icon: <CheckSquare />, link: "/pre_check/index.html" },
                                 { title: "DAILY ARCH", sub: "Architecture", icon: <ClipboardCheck />, link: "/daily_arch/index.html" },
                                 { title: "DAILY CE", sub: "Civil Eng.", icon: <ClipboardCheck />, link: "/daily_ce/index.html" },
