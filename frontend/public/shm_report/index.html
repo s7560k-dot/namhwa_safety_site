@@ -428,24 +428,28 @@
             return row && row.pct !== null ? row.pct : null;
         }
 
-        // P=방침목표(1) D=책임자업무(2)+법령이행(6) C=현장 확인점검(현장점검표 점수) A=나머지(3,4,5,7)
+        // Plan=계획수립(3,4,5) / Do=법령이행·책임자업무(2,6) / Check=현장확인점검(현장점검표 점수) / Action=환류활동(7)
+        // 방침목표 축은 카테고리1 고유 값이 아니라, 위 4개 축(Plan/Do/Check/Action)의 종합(평균) 점수를 표시한다.
         function computePDCA(categoryAchievement, results) {
-            const p = achievementFor(categoryAchievement, CATEGORY_NAMES[0]);
-            const d2 = achievementFor(categoryAchievement, CATEGORY_NAMES[1]);
-            const d6 = achievementFor(categoryAchievement, CATEGORY_NAMES[5]);
-            const dVals = [d2, d6].filter(v => v !== null);
-            const d = dVals.length ? dVals.reduce((a, b) => a + b, 0) / dVals.length : null;
+            const avgOf = names => {
+                const vals = names.map(n => achievementFor(categoryAchievement, n)).filter(v => v !== null);
+                return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+            };
+
+            const plan = avgOf([CATEGORY_NAMES[2], CATEGORY_NAMES[3], CATEGORY_NAMES[4]]);
+            const doVal = avgOf([CATEGORY_NAMES[1], CATEGORY_NAMES[5]]);
 
             const fieldScores = results.map(r => r.fieldRaw).filter(v => v !== null && v !== undefined);
-            const c = fieldScores.length ? fieldScores.reduce((a, b) => a + b, 0) / fieldScores.length : null;
+            const check = fieldScores.length ? fieldScores.reduce((a, b) => a + b, 0) / fieldScores.length : null;
 
-            const aNames = [CATEGORY_NAMES[2], CATEGORY_NAMES[3], CATEGORY_NAMES[4], CATEGORY_NAMES[6]];
-            const aVals = aNames.map(n => achievementFor(categoryAchievement, n)).filter(v => v !== null);
-            const a = aVals.length ? aVals.reduce((x, y) => x + y, 0) / aVals.length : null;
+            const action = achievementFor(categoryAchievement, CATEGORY_NAMES[6]);
+
+            const pdcaVals = [plan, doVal, check, action].filter(v => v !== null);
+            const policy = pdcaVals.length ? pdcaVals.reduce((a, b) => a + b, 0) / pdcaVals.length : null;
 
             const to10 = v => v === null ? null : Math.round((v / 10) * 10) / 10;
             return {
-                plan: to10(p), do: to10(d), check: to10(c), action: to10(a)
+                policy: to10(policy), plan: to10(plan), do: to10(doVal), check: to10(check), action: to10(action)
             };
         }
 
@@ -562,7 +566,7 @@
 
                 <div class="section-title">PDCA 관리사이클 이행 수준 (10점 만점)</div>
                 <div class="chart-box"><canvas id="pdca-chart"></canvas></div>
-                <p class="note">※ P=방침목표, D=관리책임자 업무수행+법령이행, C=현장 확인점검(현장점검표), A=나머지 절차(의견청취·비상대응·협력사관리·평가개선)</p>
+                <p class="note">※ 방침목표(종합)=Plan/Do/Check/Action 4개 축의 평균 / Plan(계획수립)=의견청취·비상대응·협력사관리 / Do(법령이행·책임자업무)=관리책임자 업무수행+법령이행 / Check(현장확인점검)=현장점검표 / Action(환류활동)=시스템 평가 및 개선</p>
 
                 <div class="section-title">전사 카테고리별 달성률 (시스템점검 기준)</div>
                 <div class="chart-box"><canvas id="category-chart"></canvas></div>
@@ -628,10 +632,10 @@
             window.charts.pdca = new Chart(document.getElementById('pdca-chart'), {
                 type: 'radar',
                 data: {
-                    labels: ['Plan(방침목표)', 'Do(책임자업무·법령이행)', 'Check(현장확인점검)', 'Action(기타절차)'],
+                    labels: ['방침목표(종합)', 'Plan(계획수립)', 'Do(법령이행·책임자업무)', 'Check(현장확인점검)', 'Action(환류활동)'],
                     datasets: [{
                         label: '이행수준',
-                        data: [pdca.plan, pdca.do, pdca.check, pdca.action].map(v => v === null ? 0 : v),
+                        data: [pdca.policy, pdca.plan, pdca.do, pdca.check, pdca.action].map(v => v === null ? 0 : v),
                         borderColor: '#1a237e',
                         backgroundColor: 'rgba(26,35,126,0.2)',
                         pointBackgroundColor: '#1a237e'
@@ -732,7 +736,7 @@
                     worstSites: sorted.slice(0, 3).map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade })),
                     bestSites: sorted.slice(-3).reverse().map(r => ({ name: r.siteName, score: Math.round(r.score * 10) / 10, grade: r.grade })),
                     pdca: {
-                        plan: pdca.plan, do: pdca.do, check: pdca.check, action: pdca.action
+                        policy: pdca.policy, plan: pdca.plan, do: pdca.do, check: pdca.check, action: pdca.action
                     },
                     topHazards: hazard.rows.slice(0, 3).map(h => ({ name: h.name, count: h.count }))
                 };

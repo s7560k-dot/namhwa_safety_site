@@ -342,7 +342,7 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
             2. 이건 현장 담당자용 지적 문서가 아니라 대표이사 보고용입니다. 개별 항목을 나열하지 말고, 회사 전체 수준·리스크·경영 시사점 중심으로 간결하고 격조 있게 작성하십시오.
             3. 첫 문장은 이번 분기 전사 평균점수와 전반적 수준을 한 문장으로 요약하십시오.
             4. 양호 현장과 미흡 현장의 격차, 여러 현장에서 반복적으로 나타나는 공통 취약 분야(전사 차원의 구조적 리스크)를 짚어 경영진이 어떤 의사결정을 내려야 하는지 시사하십시오.
-            5. PDCA(Plan-Do-Check-Action) 관리사이클 이행 수준 중 가장 낮은 항목이 있다면, 그것이 회사 관리시스템의 어느 단계에서 취약한지 한 문장으로 짚어주십시오.
+            5. 계획수립/법령이행·책임자업무/현장확인점검/환류활동 관리사이클 이행 수준(방침목표는 이 4개 항목의 종합평균) 중 가장 낮은 항목이 있다면, 그것이 회사 관리시스템의 어느 단계에서 취약한지 한 문장으로 짚어주십시오.
             6. 사고유형별 지적건수 중 상위 항목이 있다면, 현장 안전관리 중점 관리가 필요한 위험 유형으로 짧게 언급하십시오.
             7. 중대재해 또는 산재 발생 건수가 1건이라도 있다면, 반드시 별도 문단으로 심각하게 다루십시오. 없다면 그 사실도 긍정적으로 짧게 언급하십시오.
             8. 마지막은 다음 분기를 위한 구체적이고 간결한 경영 제언 한두 줄로 마무리하십시오. 구호나 슬로건, 감탄사는 넣지 말고 임원 보고서의 격식 있는 톤을 끝까지 유지하십시오.
@@ -364,7 +364,7 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
                 f"중대재해 발생: {major_total}건\n"
                 f"산재 발생: {work_total}건\n"
                 f"전사 공통 취약 카테고리: {', '.join(weak_categories) if weak_categories else '뚜렷한 공통 취약 분야 없음'}\n"
-                f"PDCA 이행 수준(10점 만점, Plan/Do/Check/Action): {json.dumps(pdca, ensure_ascii=False)}\n"
+                f"관리사이클 이행 수준(10점 만점, policy=plan/do/check/action 4개 항목의 종합평균, plan=계획수립, do=법령이행·책임자업무, check=현장확인점검, action=환류활동): {json.dumps(pdca, ensure_ascii=False)}\n"
                 f"사고유형별 지적건수 상위 항목: {json.dumps(top_hazards, ensure_ascii=False) if top_hazards else '데이터 없음'}\n"
                 f"점수 최하위 현장: {json.dumps(worst_sites, ensure_ascii=False)}\n"
                 f"점수 최상위 현장: {json.dumps(best_sites, ensure_ascii=False)}\n\n"
