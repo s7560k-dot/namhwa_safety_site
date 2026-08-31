@@ -447,6 +447,7 @@ const ResourceCenter = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
                                 { title: "SHM SYSTEM", sub: "Web System", icon: <Shield />, link: "/shm_system/index.html" },
+                                { title: "SHM SYSTEM (수정안)", sub: "중처법·산안법 보강 비교용", icon: <Shield />, link: "/shm_system_v2/index.html" },
                                 { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
                                 { title: "SHM RESULT", sub: "종합결과표", icon: <LayoutDashboard />, link: "/shm_result/index.html" },
                                 { title: "SHM REPORT", sub: "전사 분기 보고서", icon: <BarChart3 />, link: "/shm_report/index.html" },
