@@ -1448,17 +1448,36 @@
                 // 1. 계획: 대분류 소계 산출 시 공식 배점(Cap)을 초과하지 않도록 보정합니다.
                 // 2. 검증: 대분류 항목 소계가 공식 배점을 초과할 경우, 해당 배점 한도로 제한하여 화면 표시 점수와 내부 환산 점수의 합계를 일치시킵니다.
                 // 3. 구현: 각 대분류별 공식 배점을 정의하고 Math.min을 적용합니다.
+                //
+                // [형평성 보정] "해당없음"으로 평가된 항목은 그 현장에 적용되지 않는 항목인데,
+                // 예전 방식은 이 항목을 0점으로 취급하면서도 대분류의 배점(분모)은 그대로 두었다.
+                // 그 결과 해당없음 항목이 많은 현장일수록, 적용 가능한 항목에서 전부 만점을 받아도
+                // 대분류 점수가 낮게 나오는 불공평한 결과가 생겼다(예: 30점 만점 중 해당없음 4점을
+                // 빼면 실제 평가 대상은 26점뿐인데, 분모는 여전히 30점이라 26/30=86.7%로 나옴).
+                // 이제는 해당없음 항목을 분자·분모 양쪽에서 제외한 뒤(획득/평가가능배점), 그 비율을
+                // 대분류 공식 배점 기준으로 재환산해 "해당없음이 있어도 적용 항목만 놓고 보면
+                // 동일한 성과는 동일한 점수"가 되도록 한다. (신규 저장 데이터부터 적용됨 — 기존에
+                // 이미 저장된 점수는 재계산하지 않음)
                 const baseScores = { 1: 5, 2: 30, 3: 10, 4: 20, 5: 10, 6: 20, 7: 5 };
                 document.querySelectorAll('.main-table').forEach((table, index) => {
-                    let sectionSubtotal = 0;
-                    table.querySelectorAll('tbody .score-input').forEach(input => {
-                        sectionSubtotal += parseFloat(input.value) || 0;
+                    let sectionObtained = 0;
+                    let sectionPossible = 0;
+                    table.querySelectorAll('tbody tr').forEach(row => {
+                        const selectEl = row.querySelector('.eval-select');
+                        const scoreInput = row.querySelector('.score-input');
+                        if (!selectEl || !scoreInput) return;
+                        if (selectEl.value === 'na') return; // 해당없음: 분자·분모 모두에서 제외
+                        sectionPossible += parseFloat(selectEl.dataset.basePoints) || 0;
+                        sectionObtained += parseFloat(scoreInput.value) || 0;
                     });
-                    
+
                     const maxAllowed = baseScores[index + 1] || 100;
-                    // 대분류 배점 한도 초과분 제한 처리 (이유: 화면 소계 및 종합 표 합계가 내부 환산 기준과 일치되도록 수정)
-                    const cappedSubtotal = Math.min(sectionSubtotal, maxAllowed);
-                    
+                    // 평가 가능한 항목이 하나도 없으면(전 항목 해당없음) 감점할 대상이 없다는 뜻이므로 만점 처리.
+                    // 그 외에는 획득률을 대분류 공식 배점 기준으로 재환산.
+                    const cappedSubtotal = sectionPossible > 0
+                        ? Math.min((sectionObtained / sectionPossible) * maxAllowed, maxAllowed)
+                        : maxAllowed;
+
                     const subtotalCell = table.querySelector('tfoot .section-subtotal');
                     if (subtotalCell) subtotalCell.textContent = cappedSubtotal.toFixed(1);
 
