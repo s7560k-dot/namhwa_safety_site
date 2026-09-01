@@ -224,13 +224,15 @@
             .chart-box.tall { page-break-inside: avoid; }
             .note { font-size: 9pt !important; }
 
-            /* Chart.js 캔버스를 인쇄 시점에 실시간으로 resize()하면 인쇄용 레이아웃이 실제로
-               반영되기 전(또는 반영되는 도중)에 크기를 다시 계산해버려 축 눈금·라벨이 깨지는
-               문제가 있었다. 그 대신 인쇄 직전에 각 차트를 정적 이미지로 캡처해 캔버스 자리에
-               넣고, 인쇄가 끝나면 다시 원래 캔버스로 되돌린다. 캔버스/이미지 표시 전환은
-               CSS 미디어쿼리 타이밍에 기대지 않고 JS(swapChartsForPrint)에서 인라인 스타일로
-               직접 처리한다 — @media print 규칙 적용 시점과 캡처 시점이 어긋나면 빈 이미지가
-               캡처되는 경합 문제가 있었기 때문. */
+            /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
+               들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
+               인쇄 시점에 개입하지 않으므로 beforeprint/afterprint 타이밍 문제가 생기지 않는다. */
+            .chart-box canvas { display: none !important; }
+            .chart-box img.print-chart-img {
+                display: block !important;
+                width: 100% !important; height: 100% !important;
+                object-fit: contain !important;
+            }
 
             table.site-table { font-size: 10pt !important; }
             table.site-table th, table.site-table td { padding: 6px 8px !important; }
@@ -655,7 +657,12 @@
                 },
                 options: {
                     indexAxis: 'y',
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true, maintainAspectRatio: false,
+                    // Chart.js는 animation:false를 줘도 실제 캔버스 그리기는 여전히
+                    // requestAnimationFrame으로 미뤄서 처리한다(즉시 동기적으로 그려지지 않음).
+                    // onComplete는 그 실제 그리기가 끝난 뒤 호출되므로, 여기서 인쇄용 이미지를
+                    // 만들어야 빈 캔버스를 캡처하는 일이 없다.
+                    animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
                     scales: { x: { min: 0, max: 100 } },
                     plugins: { legend: { display: false } }
                 }
@@ -674,7 +681,12 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true, maintainAspectRatio: false,
+                    // Chart.js는 animation:false를 줘도 실제 캔버스 그리기는 여전히
+                    // requestAnimationFrame으로 미뤄서 처리한다(즉시 동기적으로 그려지지 않음).
+                    // onComplete는 그 실제 그리기가 끝난 뒤 호출되므로, 여기서 인쇄용 이미지를
+                    // 만들어야 빈 캔버스를 캡처하는 일이 없다.
+                    animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
                     scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
                     plugins: { legend: { display: false } }
                 }
@@ -691,7 +703,12 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true, maintainAspectRatio: false,
+                    // Chart.js는 animation:false를 줘도 실제 캔버스 그리기는 여전히
+                    // requestAnimationFrame으로 미뤄서 처리한다(즉시 동기적으로 그려지지 않음).
+                    // onComplete는 그 실제 그리기가 끝난 뒤 호출되므로, 여기서 인쇄용 이미지를
+                    // 만들어야 빈 캔버스를 캡처하는 일이 없다.
+                    animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
                     scales: { y: { min: 0, max: 100 } },
                     plugins: { legend: { display: false } }
                 }
@@ -709,7 +726,12 @@
                 },
                 options: {
                     indexAxis: 'y',
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true, maintainAspectRatio: false,
+                    // Chart.js는 animation:false를 줘도 실제 캔버스 그리기는 여전히
+                    // requestAnimationFrame으로 미뤄서 처리한다(즉시 동기적으로 그려지지 않음).
+                    // onComplete는 그 실제 그리기가 끝난 뒤 호출되므로, 여기서 인쇄용 이미지를
+                    // 만들어야 빈 캔버스를 캡처하는 일이 없다.
+                    animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
                     scales: { x: { min: 0 } },
                     plugins: { legend: { display: false } }
                 }
@@ -728,11 +750,24 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
+                    responsive: true, maintainAspectRatio: false,
+                    // Chart.js는 animation:false를 줘도 실제 캔버스 그리기는 여전히
+                    // requestAnimationFrame으로 미뤄서 처리한다(즉시 동기적으로 그려지지 않음).
+                    // onComplete는 그 실제 그리기가 끝난 뒤 호출되므로, 여기서 인쇄용 이미지를
+                    // 만들어야 빈 캔버스를 캡처하는 일이 없다.
+                    animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
                     scales: { y: { min: 0, max: 100 } },
                     plugins: { legend: { display: false } }
                 }
             });
+
+            // 인쇄용 이미지는 각 차트의 animation.onComplete에서 실제로 그려진 직후 자동으로
+            // 만들어진다(위 각 Chart 생성 옵션 참고). beforeprint 이벤트에 맞춰 그때그때
+            // 캡처/교체하는 방식은 브라우저마다 afterprint가 제때 발생하지 않아 "인쇄 미리보기를
+            // 열었다 닫기만 해도 캔버스가 계속 숨김 상태로 남고, 아직 로드 전인 빈 <img>의 깨진
+            // 이미지 아이콘만 보이는" 상태로 페이지가 멈춰 있는 문제가 있었다. 이제는 화면/인쇄
+            // 전환을 JS 개입 없이 순수 CSS(@media print)로만 처리하므로 그런 경합·잔류 상태가
+            // 생길 수 없다.
 
             document.getElementById('ai-exec-btn').addEventListener('click', () => generateExecSummary(year, quarter, stats, categoryAchievement, pdca, hazard, results));
             document.getElementById('exec-summary-display').addEventListener('input', function () {
@@ -807,33 +842,24 @@
         document.getElementById('search-btn').addEventListener('click', runSearch);
         document.getElementById('print-btn').addEventListener('click', () => window.print());
 
-        // Chart.js 캔버스는 화면 폭 기준으로 렌더링된 크기를 그대로 유지한다. 인쇄 시(세로 A4로
-        // 폭이 좁아짐) chart.resize()로 그 자리에서 다시 그리게 해봤지만, 인쇄 레이아웃이 실제로
-        // 적용되는 시점과 resize() 호출 시점이 정확히 맞물리지 않아 축 눈금·라벨 위치가 깨지는
-        // 문제가 있었다. 대신 인쇄 직전 각 차트를 정적 PNG 이미지로 캡처해 캔버스 자리에 넣고
-        // (이미지는 이미 완성된 픽셀이라 인쇄 레이아웃 폭이 얼마든 깨질 일이 없다), 인쇄가 끝나면
-        // 다시 캔버스로 되돌린다.
-        function swapChartsForPrint() {
-            Object.values(window.charts).forEach(chart => {
-                if (!chart) return;
-                const box = chart.canvas.closest('.chart-box');
-                if (!box) return;
-                box.querySelectorAll('img.print-chart-img').forEach(img => img.remove());
-                const img = document.createElement('img');
-                img.className = 'print-chart-img';
-                img.src = chart.toBase64Image('image/png', 1);
-                // 표시 전환은 @media print CSS 타이밍에 기대지 않고 여기서 인라인 스타일로 직접 처리.
-                img.style.cssText = 'display:block; width:100%; height:100%; object-fit:contain;';
-                chart.canvas.style.display = 'none';
-                box.appendChild(img);
-            });
+        // Chart.js 캔버스는 화면 폭 기준으로 렌더링된 크기를 그대로 유지하기 때문에, 인쇄 시(세로
+        // A4로 폭이 좁아짐) 캔버스 자체를 그대로 인쇄에 쓰면 오른쪽이 잘리거나 다음 섹션과 겹쳐
+        // 보인다. beforeprint 이벤트에서 그때그때 캔버스를 resize()하거나 이미지로 캡처해 교체하는
+        // 방식을 모두 시도했지만, 브라우저의 인쇄 미리보기는 beforeprint 시점의 DOM 변경을
+        // 안정적으로 반영하지 못했고(afterprint가 제때 발생하지 않아 캔버스가 계속 숨김 상태로
+        // 남는 등), 그 결과 "빈 이미지" 아이콘만 보이거나 차트 자체가 사라지는 문제가 있었다.
+        // 대신 차트를 만든 직후(각 차트 animation:false라 즉시 그려짐) 화면에는 안 보이는 인쇄용
+        // <img>를 미리 만들어 DOM에 넣어 두고, 화면↔인쇄 전환은 순수 CSS(@media print)만으로
+        // 처리한다 — JS가 인쇄 시점에 개입할 일이 전혀 없으므로 타이밍 문제 자체가 생길 수 없다.
+        function refreshPrintImage(chart) {
+            const box = chart.canvas.closest('.chart-box');
+            if (!box) return;
+            box.querySelectorAll('img.print-chart-img').forEach(img => img.remove());
+            const img = document.createElement('img');
+            img.className = 'print-chart-img';
+            img.src = chart.toBase64Image('image/png', 1);
+            box.appendChild(img);
         }
-        function restoreChartsAfterPrint() {
-            document.querySelectorAll('.chart-box img.print-chart-img').forEach(img => img.remove());
-            Object.values(window.charts).forEach(chart => { if (chart) chart.canvas.style.display = ''; });
-        }
-        window.addEventListener('beforeprint', swapChartsForPrint);
-        window.addEventListener('afterprint', restoreChartsAfterPrint);
 
         // 년도 옵션(올해 기준 -1 ~ +1) + 오늘 기준 분기 자동 선택
         const yearSel = document.getElementById('year-search');
