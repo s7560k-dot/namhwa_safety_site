@@ -195,16 +195,36 @@
         .no-print { }
 
         @media print {
-            @page { size: A4 landscape; margin: 15mm 10mm 10mm 10mm !important; }
+            /* 세로(A4 Portrait) 레이아웃, 상단 25mm / 좌우 10mm / 하단 10mm 여백 (shm_result 등 다른 보고서 페이지와 동일한 규격) */
+            @page { size: A4 portrait; margin: 25mm 10mm 10mm 10mm !important; }
             body, html {
                 margin: 0 !important; padding: 0 !important; background-color: #fff !important;
                 -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
-                font-size: 10.5pt !important;
+                font-size: 11pt !important; line-height: 1.5 !important;
             }
             .container { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 auto !important; width: 100% !important; max-width: 100% !important; }
             .no-print { display: none !important; }
-            .section-title { page-break-after: avoid; }
-            .chart-box { page-break-inside: avoid; }
+
+            /* 가독성을 위한 인쇄 전용 크기 재조정: 세로 레이아웃은 landscape보다 폭이 좁아지므로
+               KPI 카드는 6열→3열(2행)로, 차트는 폭 대비 과도하게 눌리지 않도록 높이를 낮춘다. */
+            h1 { font-size: 20pt !important; margin-bottom: 6px !important; }
+            .subtitle { font-size: 10pt !important; }
+            .section-title { font-size: 13.5pt !important; margin-top: 22px !important; margin-bottom: 10px !important; page-break-after: avoid; }
+
+            .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+            .kpi-card { padding: 10px 6px !important; page-break-inside: avoid; }
+            .kpi-card .value { font-size: 16pt !important; }
+            .kpi-card .label { font-size: 9pt !important; }
+
+            .chart-box { height: 230px !important; page-break-inside: avoid; }
+            .chart-box.tall { height: 280px !important; }
+            .note { font-size: 9pt !important; }
+
+            table.site-table { font-size: 10pt !important; }
+            table.site-table th, table.site-table td { padding: 6px 8px !important; }
+            .grade-badge { font-size: 9.5pt !important; }
+
+            #exec-summary-display { font-size: 11pt !important; line-height: 1.6 !important; }
         }
     </style>
 </head>
