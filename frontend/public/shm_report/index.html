@@ -143,8 +143,10 @@
             position: relative;
             height: 340px;
             margin-bottom: 10px;
+            overflow: hidden; /* 캔버스가 어떤 이유로든 박스보다 커지더라도 아래 내용과 겹치지 않도록 방지 */
         }
         .chart-box.tall { height: 420px; }
+        .chart-box img.print-chart-img { display: none; }
 
         .note {
             font-size: 0.82em;
@@ -221,6 +223,14 @@
             .chart-box:not(.tall) { height: 230px !important; page-break-inside: avoid; }
             .chart-box.tall { page-break-inside: avoid; }
             .note { font-size: 9pt !important; }
+
+            /* Chart.js 캔버스를 인쇄 시점에 실시간으로 resize()하면 인쇄용 레이아웃이 실제로
+               반영되기 전(또는 반영되는 도중)에 크기를 다시 계산해버려 축 눈금·라벨이 깨지는
+               문제가 있었다. 그 대신 인쇄 직전에 각 차트를 정적 이미지로 캡처해 캔버스 자리에
+               넣고, 인쇄가 끝나면 다시 원래 캔버스로 되돌린다. 캔버스/이미지 표시 전환은
+               CSS 미디어쿼리 타이밍에 기대지 않고 JS(swapChartsForPrint)에서 인라인 스타일로
+               직접 처리한다 — @media print 규칙 적용 시점과 캡처 시점이 어긋나면 빈 이미지가
+               캡처되는 경합 문제가 있었기 때문. */
 
             table.site-table { font-size: 10pt !important; }
             table.site-table th, table.site-table td { padding: 6px 8px !important; }
@@ -645,7 +655,7 @@
                 },
                 options: {
                     indexAxis: 'y',
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false, animation: false,
                     scales: { x: { min: 0, max: 100 } },
                     plugins: { legend: { display: false } }
                 }
@@ -664,7 +674,7 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false, animation: false,
                     scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
                     plugins: { legend: { display: false } }
                 }
@@ -681,7 +691,7 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false, animation: false,
                     scales: { y: { min: 0, max: 100 } },
                     plugins: { legend: { display: false } }
                 }
@@ -699,7 +709,7 @@
                 },
                 options: {
                     indexAxis: 'y',
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false, animation: false,
                     scales: { x: { min: 0 } },
                     plugins: { legend: { display: false } }
                 }
@@ -718,7 +728,7 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false, animation: false,
                     scales: { y: { min: 0, max: 100 } },
                     plugins: { legend: { display: false } }
                 }
@@ -797,16 +807,33 @@
         document.getElementById('search-btn').addEventListener('click', runSearch);
         document.getElementById('print-btn').addEventListener('click', () => window.print());
 
-        // Chart.js 캔버스는 화면 폭 기준으로 렌더링된 크기를 그대로 유지하기 때문에,
-        // 인쇄 시(세로 A4로 폭이 좁아짐) 별도 처리 없이는 차트가 인쇄 가능 영역보다 넓게 남아
-        // 오른쪽이 잘리거나 다음 섹션과 겹쳐 보이는 문제가 있었다. beforeprint에서 모든 차트를
-        // 강제로 resize()해 인쇄 시점의 컨테이너 크기에 맞추고, afterprint에서 화면 크기로 되돌린다.
-        window.addEventListener('beforeprint', () => {
-            Object.values(window.charts).forEach(chart => { if (chart) chart.resize(); });
-        });
-        window.addEventListener('afterprint', () => {
-            Object.values(window.charts).forEach(chart => { if (chart) chart.resize(); });
-        });
+        // Chart.js 캔버스는 화면 폭 기준으로 렌더링된 크기를 그대로 유지한다. 인쇄 시(세로 A4로
+        // 폭이 좁아짐) chart.resize()로 그 자리에서 다시 그리게 해봤지만, 인쇄 레이아웃이 실제로
+        // 적용되는 시점과 resize() 호출 시점이 정확히 맞물리지 않아 축 눈금·라벨 위치가 깨지는
+        // 문제가 있었다. 대신 인쇄 직전 각 차트를 정적 PNG 이미지로 캡처해 캔버스 자리에 넣고
+        // (이미지는 이미 완성된 픽셀이라 인쇄 레이아웃 폭이 얼마든 깨질 일이 없다), 인쇄가 끝나면
+        // 다시 캔버스로 되돌린다.
+        function swapChartsForPrint() {
+            Object.values(window.charts).forEach(chart => {
+                if (!chart) return;
+                const box = chart.canvas.closest('.chart-box');
+                if (!box) return;
+                box.querySelectorAll('img.print-chart-img').forEach(img => img.remove());
+                const img = document.createElement('img');
+                img.className = 'print-chart-img';
+                img.src = chart.toBase64Image('image/png', 1);
+                // 표시 전환은 @media print CSS 타이밍에 기대지 않고 여기서 인라인 스타일로 직접 처리.
+                img.style.cssText = 'display:block; width:100%; height:100%; object-fit:contain;';
+                chart.canvas.style.display = 'none';
+                box.appendChild(img);
+            });
+        }
+        function restoreChartsAfterPrint() {
+            document.querySelectorAll('.chart-box img.print-chart-img').forEach(img => img.remove());
+            Object.values(window.charts).forEach(chart => { if (chart) chart.canvas.style.display = ''; });
+        }
+        window.addEventListener('beforeprint', swapChartsForPrint);
+        window.addEventListener('afterprint', restoreChartsAfterPrint);
 
         // 년도 옵션(올해 기준 -1 ~ +1) + 오늘 기준 분기 자동 선택
         const yearSel = document.getElementById('year-search');
