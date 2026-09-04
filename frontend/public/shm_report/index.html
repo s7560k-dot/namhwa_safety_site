@@ -215,6 +215,43 @@
         .photo-log-cat { color: #555; }
         .photo-log-comment { color: #777; margin-top: 2px; }
 
+        /* 토목·건축공사 현황 지도: 좌측에 간략화된 대한민국 지도(정밀 행정경계 아님, 참고용
+           위치), 우측에 공종별 범례와 지역별 실제 현장명 목록을 배치한다. */
+        .site-map-wrap {
+            margin-top: 10px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+        .site-map-svg {
+            width: 220px;
+            flex-shrink: 0;
+        }
+        .site-map-side { flex: 1; min-width: 0; }
+        .site-map-legend {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        .site-map-legend-item { display: flex; align-items: center; gap: 6px; }
+        .site-map-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .site-map-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+        }
+        .site-map-region-group { font-size: 0.85em; }
+        .site-map-region-group strong { color: #333; }
+        .site-map-region-group ul { list-style: none; margin: 4px 0 0; padding: 0; color: #555; }
+        .site-map-region-group li { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+
         #exec-summary-display {
             padding: 15px;
             border: 1px solid #ddd;
@@ -301,6 +338,11 @@
             .photo-log-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
             .photo-log-card { page-break-inside: avoid; }
             .photo-log-caption { font-size: 8.5pt !important; padding: 6px 8px !important; }
+
+            .site-map-wrap { page-break-inside: avoid; gap: 14px !important; }
+            .site-map-svg { width: 170px !important; }
+            .site-map-legend { font-size: 9.5pt !important; margin-bottom: 8px !important; }
+            .site-map-list { font-size: 9pt !important; grid-template-columns: repeat(2, 1fr) !important; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
                들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
@@ -461,7 +503,9 @@
                         schema: 'old',
                         fieldRaw: parseFloat(sysDoc.deductions?.fieldScore) || null,
                         fieldItems: null,
-                        sectionBreakdown: null
+                        sectionBreakdown: null,
+                        region: sysDoc.headerInfo?.region || '',
+                        constructionType: sysDoc.headerInfo?.constructionType || ''
                     });
                     continue;
                 }
@@ -495,10 +539,102 @@
                     hasField,
                     fieldRaw: fieldRawScore,
                     fieldItems: fieldDoc ? (fieldDoc.items || null) : null,
-                    sectionBreakdown: sysDoc.sectionBreakdown || null
+                    sectionBreakdown: sysDoc.sectionBreakdown || null,
+                    region: sysDoc.headerInfo?.region || '',
+                    constructionType: sysDoc.headerInfo?.constructionType || ''
                 });
             }
             return results;
+        }
+
+        // 시/도별 대략적인 지도 좌표(viewBox 0 0 380 480 기준) — 정밀한 행정구역 경계가 아니라
+        // 참고용 위치이며, 여러 현장이 같은 지역에 있으면 세로로 살짝 겹쳐 쌓아 표시한다.
+        const SITE_REGION_COORDS = {
+            '서울': { x: 155, y: 118 }, '인천': { x: 128, y: 128 }, '경기': { x: 168, y: 148 },
+            '강원': { x: 245, y: 110 }, '충북': { x: 205, y: 200 }, '충남': { x: 148, y: 190 },
+            '대전': { x: 190, y: 210 }, '세종': { x: 172, y: 195 }, '전북': { x: 165, y: 260 },
+            '전남': { x: 140, y: 320 }, '광주': { x: 150, y: 300 }, '경북': { x: 250, y: 230 },
+            '대구': { x: 240, y: 280 }, '경남': { x: 228, y: 330 }, '부산': { x: 270, y: 350 },
+            '울산': { x: 275, y: 300 }, '제주': { x: 140, y: 440 }
+        };
+
+        // 대한민국 개략 윤곽선(간략화된 지도용 실루엣, 정밀 행정경계 아님)
+        const KOREA_MAP_PATH = 'M120,50 L200,35 L270,55 L285,150 L290,230 L295,300 L290,340 L280,365 ' +
+            'L260,380 L230,390 L200,395 L175,390 L150,378 L135,395 L120,415 L110,400 L120,380 ' +
+            'L105,340 L100,290 L95,250 L85,210 L100,180 L115,160 L100,140 L115,120 L105,95 L120,70 Z';
+
+        // 활성 현장을 지역(시/도)·공종(토목/건축)별로 묶어 지도 핀 데이터로 변환한다.
+        // region이 비어있는(아직 지역 정보가 입력되지 않은) 현장은 지도에서 제외한다.
+        function computeSiteMap(results) {
+            const withRegion = results.filter(r => r.region && SITE_REGION_COORDS[r.region]);
+            const byRegion = {};
+            withRegion.forEach(r => {
+                if (!byRegion[r.region]) byRegion[r.region] = [];
+                byRegion[r.region].push(r);
+            });
+            const pins = [];
+            Object.entries(byRegion).forEach(([region, sites]) => {
+                const base = SITE_REGION_COORDS[region];
+                sites.forEach((r, i) => {
+                    const offset = (i - (sites.length - 1) / 2) * 12;
+                    pins.push({
+                        siteName: r.siteName,
+                        region,
+                        constructionType: r.constructionType || '미분류',
+                        x: base.x,
+                        y: base.y + offset
+                    });
+                });
+            });
+            const counts = { 토목: 0, 건축: 0, 미분류: 0 };
+            pins.forEach(p => { counts[p.constructionType] = (counts[p.constructionType] || 0) + 1; });
+            return { pins, counts, totalSites: results.length, mappedSites: withRegion.length };
+        }
+
+        const CONSTRUCTION_TYPE_COLOR = { 토목: '#00897b', 건축: '#3949ab', 미분류: '#999' };
+
+        function renderSiteMap(siteMap) {
+            if (siteMap.pins.length === 0) return '';
+            const pinsSvg = siteMap.pins.map(p => {
+                const color = CONSTRUCTION_TYPE_COLOR[p.constructionType] || '#999';
+                return `<circle cx="${p.x}" cy="${p.y}" r="6" fill="${color}" stroke="#fff" stroke-width="1.5"><title>${escapeHtml(p.siteName)}</title></circle>`;
+            }).join('');
+
+            const legendHtml = ['토목', '건축'].map(type => {
+                const n = siteMap.counts[type] || 0;
+                if (n === 0) return '';
+                return `<div class="site-map-legend-item"><span class="site-map-dot" style="background:${CONSTRUCTION_TYPE_COLOR[type]}"></span>${escapeHtml(type)} ${n}개소</div>`;
+            }).join('');
+
+            // 지역별로 묶어 실제 현장명을 텍스트로도 함께 나열(지도만으로는 어떤 현장인지 알기 어려우므로).
+            const byRegion = {};
+            siteMap.pins.forEach(p => {
+                if (!byRegion[p.region]) byRegion[p.region] = [];
+                byRegion[p.region].push(p);
+            });
+            const listHtml = Object.entries(byRegion).map(([region, pins]) => {
+                const items = pins.map(p => `<li><span class="site-map-dot" style="background:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}"></span>${escapeHtml(p.siteName)} (${escapeHtml(p.constructionType)})</li>`).join('');
+                return `<div class="site-map-region-group"><strong>${escapeHtml(region)}</strong><ul>${items}</ul></div>`;
+            }).join('');
+
+            const unmapped = siteMap.totalSites - siteMap.mappedSites;
+            const unmappedNote = unmapped > 0
+                ? `<p class="note">※ 지역 정보가 입력되지 않은 현장 ${unmapped}곳은 지도에 표시되지 않았습니다.</p>`
+                : '';
+
+            return `
+                <div class="site-map-wrap">
+                    <svg class="site-map-svg" viewBox="0 0 380 480" xmlns="http://www.w3.org/2000/svg">
+                        <path d="${KOREA_MAP_PATH}" fill="#dde3f0" stroke="#b7c0da" stroke-width="1.5" />
+                        ${pinsSvg}
+                    </svg>
+                    <div class="site-map-side">
+                        <div class="site-map-legend">${legendHtml}</div>
+                        <div class="site-map-list">${listHtml}</div>
+                    </div>
+                </div>
+                ${unmappedNote}
+            `;
         }
 
         function computeCompanyStats(results) {
@@ -769,6 +905,7 @@
             const pdca = computePDCA(categoryAchievement, results);
             const hazard = computeHazardBreakdown(results);
             const hazardPhotos = collectHazardPhotos(hazard);
+            const siteMap = computeSiteMap(results);
             const trend = await fetchTrend(year);
 
             const sorted = results.slice().sort((a, b) => a.score - b.score);
@@ -777,6 +914,11 @@
 
             const area = document.getElementById('result-area');
             area.innerHTML = `
+                ${siteMap.pins.length > 0 ? `
+                <div class="section-title">${escapeHtml(year)}년 토목·건축공사 현황</div>
+                ${renderSiteMap(siteMap)}
+                ` : ''}
+
                 <div class="section-title">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
                 <div class="kpi-grid">
                     <div class="kpi-card"><div class="value">${stats.avgScore.toFixed(1)}</div><div class="label">전사 평균점수</div></div>
