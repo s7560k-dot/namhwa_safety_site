@@ -695,12 +695,10 @@
 
                 <div class="section-title">전사 카테고리별 달성률 (시스템점검 기준)</div>
                 <div class="chart-box"><canvas id="category-chart"></canvas></div>
-                <p class="note">※ 세부 항목 데이터가 있는 현장(${categoryAchievement.sampleSize}개) 기준입니다. 구버전(총점만 있는) 데이터는 강점/약점 이진 분류를 참고치로 환산해 포함했습니다.</p>
                 ${renderCategoryDetailList(categoryAchievement)}
 
                 <div class="section-title">사고유형별 지적건수 (현장점검 기준)</div>
                 <div class="chart-box"><canvas id="hazard-chart"></canvas></div>
-                <p class="note">※ 현장점검표 데이터가 있는 현장(${hazard.sampleSize}개) 기준입니다. 지적건수를 별도 입력하지 않은 항목은 평점이 감점(중하·하)인 경우 1건으로 추정 반영했습니다.</p>
                 ${renderHazardDetailList(hazard)}
 
                 <div class="section-title">분기별 전사 평균점수 추이 (${escapeHtml(year)}년)</div>
