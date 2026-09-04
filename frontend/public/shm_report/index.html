@@ -622,15 +622,20 @@
             let seq = 1;
             Object.entries(byRegion).forEach(([region, sites]) => {
                 const base = SITE_REGION_COORDS[region];
+                // 같은 지역(시/도)에 현장이 여러 곳이면 한 줄로 세로 겹쳐 표시하지 않고, 지역
+                // 중심점 주위로 원형으로 고르게 펼쳐서 번호가 서로 겹치지 않고 잘 구분되게 한다.
+                const radius = sites.length > 1 ? 14 + sites.length * 3 : 0;
                 sites.forEach((r, i) => {
-                    const offset = (i - (sites.length - 1) / 2) * 16;
+                    const angle = (i / sites.length) * Math.PI * 2 - Math.PI / 2;
+                    const dx = radius * Math.cos(angle);
+                    const dy = radius * Math.sin(angle);
                     pins.push({
                         number: seq++,
                         siteName: r.siteName,
                         region,
                         constructionType: r.constructionType || '미분류',
-                        x: base.x,
-                        y: base.y + offset
+                        x: base.x + dx,
+                        y: base.y + dy
                     });
                 });
             });
