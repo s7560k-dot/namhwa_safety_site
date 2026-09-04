@@ -402,8 +402,10 @@
         .site-goal-card { border: 1px solid #eee; border-radius: 8px; background-color: #faf9f6; overflow: hidden; }
         .site-goal-card svg { display: block; width: 100%; height: auto; }
         .site-goal-caption {
-            font-size: 11px; font-weight: 600; line-height: 1.4; text-align: center;
+            font-size: 11px; line-height: 1.35; text-align: center; font-family: inherit;
         }
+        .site-goal-caption-title { font-weight: 700; }
+        .site-goal-detail { font-weight: 400; color: #666; margin-top: 3px; font-size: 0.9em; }
         .site-goal-footer { padding: 4px 24px 18px; }
         .site-goal-title { font-size: 1.4em; font-weight: 800; color: #1a237e; line-height: 1.25; }
         .site-goal-sitename { font-size: 0.9em; color: #555; margin-top: 4px; }
@@ -1200,7 +1202,7 @@
         const PIN_SHAPE_PATH = 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z';
 
         function renderSiteGoalRoadmap(siteName, year, goals) {
-            const hasAny = (goals || []).some(g => g && g.trim());
+            const hasAny = (goals || []).some(g => g && (typeof g === 'string' ? g.trim() : (g.title || g.detail)));
             if (!hasAny) return '';
             const points = [
                 { x: 110, y: 230 }, { x: 280, y: 165 }, { x: 460, y: 100 }, { x: 630, y: 45 }
@@ -1208,16 +1210,23 @@
             const road = 'M 15,255 C 150,255 200,190 280,165 C 360,140 380,110 460,100 C 540,90 560,60 630,45 C 660,38 670,32 680,20';
             const scale = 2.3;
             const pinsSvg = points.map((p, i) => {
-                const text = (goals[i] || '').trim();
-                if (!text) return '';
+                const g = goals[i];
+                if (!g) return '';
+                const title = (typeof g === 'string' ? g : (g.title || '')).trim();
+                const detail = (typeof g === 'string' ? '' : (g.detail || '')).trim();
+                if (!title && !detail) return '';
                 const color = SITE_GOAL_PIN_COLORS[i];
                 const headCy = p.y - 13 * scale;
+                const detailHtml = detail ? `<div class="site-goal-detail">${escapeHtml(detail)}</div>` : '';
                 return `
                     <g>
                         <path d="${PIN_SHAPE_PATH}" transform="translate(${p.x - 12 * scale},${p.y - 22 * scale}) scale(${scale})" fill="${color}" />
                         <text x="${p.x}" y="${headCy + 5}" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">${escapeHtml(year)}</text>
-                        <foreignObject x="${p.x - 65}" y="${p.y + 10}" width="130" height="46">
-                            <div class="site-goal-caption" style="color:${color};">${escapeHtml(text)}</div>
+                        <foreignObject x="${p.x - 85}" y="${p.y + 8}" width="170" height="72">
+                            <div class="site-goal-caption" style="color:${color};">
+                                <div class="site-goal-caption-title">${escapeHtml(title)}</div>
+                                ${detailHtml}
+                            </div>
                         </foreignObject>
                     </g>`;
             }).join('');
@@ -1237,7 +1246,8 @@
         function renderSiteGoalsSection(year, results, roster) {
             const goalsBySite = {};
             (roster || []).forEach(r => {
-                if (r.goals && r.goals.some(g => g && g.trim())) goalsBySite[r.siteName] = r.goals;
+                const hasAny = r.goals && r.goals.some(g => g && (typeof g === 'string' ? g.trim() : (g.title || g.detail)));
+                if (hasAny) goalsBySite[r.siteName] = r.goals;
             });
             const ordered = results.slice()
                 .sort((a, b) => a.siteName.localeCompare(b.siteName))
