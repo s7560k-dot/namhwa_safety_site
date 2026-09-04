@@ -154,6 +154,22 @@
             margin-top: 4px;
         }
 
+        .hazard-detail-list {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 20px;
+        }
+        .hazard-detail-group {
+            font-size: 0.85em;
+            border-left: 3px solid #c62828;
+            padding-left: 10px;
+        }
+        .hazard-detail-group strong { color: #333; }
+        .hazard-detail-group ul { margin: 4px 0 0; padding-left: 18px; color: #555; }
+        .hazard-detail-group li { margin-bottom: 2px; }
+        .hazard-detail-more { color: #999; font-style: italic; }
+
         #exec-summary-display {
             padding: 15px;
             border: 1px solid #ddd;
@@ -223,6 +239,8 @@
             .chart-box:not(.tall) { height: 230px !important; page-break-inside: avoid; }
             .chart-box.tall { page-break-inside: avoid; }
             .note { font-size: 9pt !important; }
+            .hazard-detail-list { grid-template-columns: 1fr !important; gap: 6px !important; page-break-inside: avoid; }
+            .hazard-detail-group { font-size: 9pt !important; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
                들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
@@ -500,9 +518,15 @@
         }
         const HAZARD_INDEX_MAP = buildHazardIndexMap();
 
+        // sh_check checklistData의 중분류명을 index(0~100) 순서로 나열 — 문항 전체 텍스트가 아닌
+        // 중분류명만 담아 지적사항 상세 목록에 "어떤 설비/위치가 지적됐는지"를 가볍게 표시하는 용도.
+        const HAZARD_SUBCATEGORY_MAP = ['개구부','개구부','강관 비계/시스템비계','강관 비계/시스템비계','이동식 틀비계','이동식 틀비계','이동식 틀비계','말비계','말비계','달대비계','달대비계','달대비계','사다리','사다리','작업발판','작업발판','갱폼','갱폼','갱폼','갱폼','갱폼','교량 및 철골','교량 및 철골','교량 및 철골','추락방지망','추락방지망','추락방지망','유해위험 기계기구','유해위험 기계기구','건설기계','건설기계','건설기계','건설기계','건설기계','타워크레인','타워크레인','굴착/터파기','굴착/터파기','흙막이 공사','흙막이 공사','흙막이 공사','흙막이 공사','터널작업','터널작업','터널작업','터널작업','터널작업','거푸집동바리/시스템동바리','거푸집동바리/시스템동바리','거푸집동바리/시스템동바리','거푸집동바리/시스템동바리','거푸집동바리/시스템동바리','거푸집동바리/시스템동바리','분전반/수전설비','분전반/수전설비','분전반/수전설비','분전반/수전설비','이동식 발전기','이동식 발전기','이동식 발전기','작업전선','작업전선','작업전선','교류아크 용접기','교류아크 용접기','교류아크 용접기','이동식 투광등','이동식 투광등','양수기','양수기','기타','기타','방호선반','방호선반','낙하물 방지망','낙하물 방지망','가설통로','가설통로','가설통로','가설통로','터널작업','터널작업','기타','기타','기타','화재폭발','화재폭발','화재폭발','화재폭발','화재폭발','밀폐작업','밀폐작업','밀폐작업','밀폐작업','교통안전 시설','교통안전 시설','MSDS','보건관리','개인보호구','안전의식','음주'];
+
         function computeHazardBreakdown(results) {
             const totals = {};
             HAZARD_GROUPS.forEach(([name]) => { totals[name] = 0; });
+            const details = {};
+            HAZARD_GROUPS.forEach(([name]) => { details[name] = []; });
             let sampleSize = 0;
             results.forEach(r => {
                 if (!r.fieldItems) return;
@@ -520,10 +544,17 @@
                         const score = parseFloat(item.score);
                         if (!isNaN(score) && score < 0) count = 1;
                     }
+                    if (count > 0) {
+                        details[category].push({
+                            siteName: r.siteName,
+                            subcategory: HAZARD_SUBCATEGORY_MAP[item.index] || '',
+                            comment: (item.comment || '').trim()
+                        });
+                    }
                     totals[category] += count;
                 });
             });
-            const rows = HAZARD_GROUPS.map(([name]) => ({ name, count: totals[name] }))
+            const rows = HAZARD_GROUPS.map(([name]) => ({ name, count: totals[name], items: details[name] }))
                 .sort((a, b) => b.count - a.count);
             return { rows, sampleSize };
         }
@@ -539,6 +570,29 @@
             const div = document.createElement('div');
             div.textContent = str == null ? '' : String(str);
             return div.innerHTML;
+        }
+
+        // 사고유형별 지적건수 차트 아래에 실제 지적사항(현장명·세부항목·코멘트)을 텍스트로 나열한다.
+        // 차트는 건수만 보여주므로, 어떤 현장의 어떤 항목이 왜 지적됐는지는 이 목록으로 확인한다.
+        // DOM 텍스트로 렌더링하기 때문에 화면·인쇄 모두에서 그대로 보인다(차트처럼 이미지로 바뀌지 않음).
+        function renderHazardDetailList(hazard) {
+            const MAX_PER_CATEGORY = 5;
+            const sections = hazard.rows
+                .filter(row => row.count > 0)
+                .map(row => {
+                    const shown = row.items.slice(0, MAX_PER_CATEGORY);
+                    const more = row.items.length - shown.length;
+                    const itemsHtml = shown.map(it => {
+                        const label = it.comment
+                            ? `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}(${escapeHtml(it.comment)})`
+                            : `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}`;
+                        return `<li>${label}</li>`;
+                    }).join('');
+                    const moreHtml = more > 0 ? `<li class="hazard-detail-more">외 ${more}건 더</li>` : '';
+                    return `<div class="hazard-detail-group"><strong>${escapeHtml(row.name)} (${row.count}건)</strong><ul>${itemsHtml}${moreHtml}</ul></div>`;
+                });
+            if (sections.length === 0) return '';
+            return `<div class="hazard-detail-list">${sections.join('')}</div>`;
         }
 
         async function runSearch() {
@@ -618,6 +672,7 @@
                 <div class="section-title">사고유형별 지적건수 (현장점검 기준)</div>
                 <div class="chart-box"><canvas id="hazard-chart"></canvas></div>
                 <p class="note">※ 현장점검표 데이터가 있는 현장(${hazard.sampleSize}개) 기준입니다. 지적건수를 별도 입력하지 않은 항목은 평점이 감점(중하·하)인 경우 1건으로 추정 반영했습니다.</p>
+                ${renderHazardDetailList(hazard)}
 
                 <div class="section-title">분기별 전사 평균점수 추이 (${escapeHtml(year)}년)</div>
                 <div class="chart-box"><canvas id="trend-chart"></canvas></div>
