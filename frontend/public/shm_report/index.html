@@ -215,6 +215,42 @@
         .photo-log-cat { color: #555; }
         .photo-log-comment { color: #777; margin-top: 2px; }
 
+        /* 전사 카테고리별 달성률: 번호 배지 + 카테고리명 + 점선 + 원형 퍼센트 링으로 된
+           목록형 UI. 차트가 아니라 순수 HTML/SVG라서 인쇄 시에도 그대로 렌더링된다. */
+        .cat-rate-list {
+            margin-top: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .cat-rate-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+        }
+        .cat-rate-row:nth-child(odd) { background-color: #f7f8fb; }
+        .cat-rate-badge {
+            width: 26px; height: 26px;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+        .cat-rate-name { font-weight: 600; color: #333; white-space: nowrap; }
+        .cat-rate-divider { flex: 1; border-bottom: 2px dotted #ccc; margin: 0 4px; align-self: center; }
+        .cat-rate-ring { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
+        .cat-rate-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .cat-rate-ring-bg { fill: none; stroke: #eee; stroke-width: 5; }
+        .cat-rate-ring-fg { fill: none; stroke-width: 5; stroke-linecap: round; }
+        .cat-rate-pct {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72em; font-weight: bold; color: #333;
+        }
+
         /* 토목·건축공사 현황 지도: 위쪽 중앙에 간략화된 대한민국 지도(정밀 행정경계 아님,
            참고용 위치)를 크게 배치하고, 아래쪽에 공종별 범례와 지역별 실제 현장명 목록을
            중앙 정렬로 배치한다. */
@@ -350,6 +386,12 @@
                목록 전체가 통째로 다음 페이지로 밀려나면서 현재 페이지 하단에 큰 여백이 남고
                다음 페이지도 그만큼 내용이 밀리는 문제가 있었다. 그룹 단위로 좁히면 들어갈
                수 있는 그룹까지는 현재 페이지를 채우고, 넘치는 그룹만 다음 페이지로 넘어간다. */
+            .cat-rate-row { padding: 5px 10px !important; gap: 8px !important; page-break-inside: avoid; }
+            .cat-rate-badge { width: 20px !important; height: 20px !important; font-size: 8.5pt !important; }
+            .cat-rate-name { font-size: 9.5pt !important; }
+            .cat-rate-ring { width: 30px !important; height: 30px !important; }
+            .cat-rate-pct { font-size: 7.5pt !important; }
+
             .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; }
             .detail-group { font-size: 9pt !important; page-break-inside: avoid; }
 
@@ -951,6 +993,36 @@
             return `<div class="photo-log-grid">${cards}</div>`;
         }
 
+        // 전사 카테고리별 달성률: Chart.js 막대 차트 대신 번호 배지 + 카테고리명 + 점선 +
+        // 원형 퍼센트 링으로 이루어진 목록형 UI로 표시한다(요청하신 참고 이미지와 동일한
+        // 구성). 순수 HTML/SVG라서 인쇄 시에도 차트처럼 별도 이미지 캡처가 필요 없다.
+        const CATEGORY_RATE_COLORS = ['#fb8c00', '#8bc34a', '#43a047', '#00897b', '#00acc1', '#039be5', '#3949ab'];
+        function renderCategoryRateList(categoryAchievement) {
+            const r = 24;
+            const circumference = 2 * Math.PI * r;
+            const rows = categoryAchievement.rows.map((row, i) => {
+                const name = row.name.replace(/^\d+\.\s*/, '');
+                const pct = row.pct !== null ? Math.round(row.pct) : 0;
+                const color = CATEGORY_RATE_COLORS[i % CATEGORY_RATE_COLORS.length];
+                const dash = (pct / 100) * circumference;
+                return `
+                    <div class="cat-rate-row">
+                        <div class="cat-rate-badge" style="background:${color}">${i + 1}</div>
+                        <div class="cat-rate-name">${escapeHtml(name)}</div>
+                        <div class="cat-rate-divider"></div>
+                        <div class="cat-rate-ring">
+                            <svg viewBox="0 0 56 56">
+                                <circle class="cat-rate-ring-bg" cx="28" cy="28" r="${r}" />
+                                <circle class="cat-rate-ring-fg" cx="28" cy="28" r="${r}"
+                                    stroke="${color}" stroke-dasharray="${dash.toFixed(2)} ${circumference.toFixed(2)}" />
+                            </svg>
+                            <span class="cat-rate-pct">${pct}%</span>
+                        </div>
+                    </div>`;
+            }).join('');
+            return `<div class="cat-rate-list">${rows}</div>`;
+        }
+
         function renderCategoryDetailList(categoryAchievement) {
             const groups = categoryAchievement.rows.map(row => ({
                 name: row.name.replace(/^\d+\.\s*/, ''),
@@ -1042,7 +1114,7 @@
                 <p class="note">※ 방침목표(종합)=Plan/Do/Check/Action 4개 축의 평균 / Plan(계획수립)=의견청취·비상대응·협력사관리 / Do(법령이행·책임자업무)=관리책임자 업무수행+법령이행 / Check(현장확인점검)=현장점검표 / Action(환류활동)=시스템 평가 및 개선 / 점선은 우리사 목표 기준(8점대)입니다.</p>
 
                 <div class="section-title">전사 카테고리별 달성률 (시스템점검 기준)</div>
-                <div class="chart-box"><canvas id="category-chart"></canvas></div>
+                ${renderCategoryRateList(categoryAchievement)}
                 ${renderCategoryDetailList(categoryAchievement)}
 
                 <div class="section-title">사고유형별 지적건수 (현장점검 기준)</div>
@@ -1085,7 +1157,6 @@
 
             destroyChart('site');
             destroyChart('pdca');
-            destroyChart('category');
             destroyChart('hazard');
             destroyChart('trend');
 
@@ -1144,28 +1215,6 @@
                     animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
                     scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
                     plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 14, font: { size: 11 } } } }
-                }
-            });
-
-            window.charts.category = new Chart(document.getElementById('category-chart'), {
-                type: 'bar',
-                data: {
-                    labels: categoryAchievement.rows.map(c => c.name.replace(/^\d+\.\s*/, '')),
-                    datasets: [{
-                        label: '평균 달성률(%)',
-                        data: categoryAchievement.rows.map(c => c.pct !== null ? Math.round(c.pct) : 0),
-                        backgroundColor: '#3949ab'
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    // Chart.js는 animation:false를 줘도 실제 캔버스 그리기는 여전히
-                    // requestAnimationFrame으로 미뤄서 처리한다(즉시 동기적으로 그려지지 않음).
-                    // onComplete는 그 실제 그리기가 끝난 뒤 호출되므로, 여기서 인쇄용 이미지를
-                    // 만들어야 빈 캔버스를 캡처하는 일이 없다.
-                    animation: { duration: 0, onComplete: (ctx) => refreshPrintImage(ctx.chart) },
-                    scales: { y: { min: 0, max: 100 } },
-                    plugins: { legend: { display: false } }
                 }
             });
 
