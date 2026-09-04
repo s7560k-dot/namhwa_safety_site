@@ -222,11 +222,15 @@
             margin-top: 10px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            /* align-items는 기본값(stretch)을 그대로 둔다 — center로 두면 아래 목록
+               (.site-map-side)이 실제 폭만큼 넓어지지 못해 그리드가 항상 1열로만
+               찌그러지는 문제가 있었다. 지도는 폭이 고정돼 있으니 아래에서 스스로
+               가운데 정렬(align-self: center)한다. */
             gap: 18px;
         }
         .site-map-svg {
             width: 300px;
+            align-self: center;
         }
         .site-map-side { width: 100%; margin: 0 auto; }
         .site-map-legend {
@@ -253,7 +257,7 @@
            auto-fit이 자동으로 1열로 줄어들어 줄바꿈 없이 항상 한 줄로 표시된다. */
         .site-map-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 8px 16px;
         }
         .site-map-region-group { font-size: 0.85em; }
@@ -357,14 +361,15 @@
             /* 토목·건축공사 현황 지도는 1페이지 전체를 차지하도록 키우고, 바로 다음 섹션
                (핵심 지표, page-break-before-print 클래스)을 2페이지로 넘긴다. 지도는 페이지
                중앙에 크게, 공종 범례·현장 목록은 지도 아래 중앙 정렬로 배치한다. */
-            .site-map-wrap { page-break-inside: avoid; flex-direction: column !important; gap: 22px !important; align-items: center !important; margin-top: 20px !important; }
+            .site-map-wrap { page-break-inside: avoid; flex-direction: column !important; gap: 22px !important; margin-top: 20px !important; }
             .site-map-svg { width: 400px !important; }
             .site-map-side { max-width: 100% !important; }
             .site-map-legend { font-size: 14pt !important; justify-content: center !important; gap: 28px !important; margin-bottom: 20px !important; }
             .site-map-dot { width: 13px !important; height: 13px !important; }
-            /* 인쇄 폭(190mm)에서 두 열이 줄바꿈 없이 들어가지 않는 공사명은 auto-fit이 자동으로
-               1열로 줄여 항상 한 줄로 보이게 한다(아래 minmax는 화면용과 동일 기준). */
-            .site-map-list { font-size: 11.5pt !important; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)) !important; gap: 14px 22px !important; }
+            /* 현장 수가 늘면서(준공/위치 텍스트 포함) 11.5pt·2열로는 인쇄 폭(190mm)에 다 안
+               들어가 1열로 떨어지며 세로 길이가 페이지를 넘기는 문제가 있어, 8.5pt·2열로
+               조정해 줄바꿈 없이 2열을 유지하면서 세로 길이도 줄인다. */
+            .site-map-list { font-size: 8.5pt !important; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)) !important; gap: 10px 18px !important; }
             .site-map-region-group li { margin-bottom: 5px !important; }
             .page-break-before-print { page-break-before: always; }
 
@@ -616,13 +621,25 @@
             '제주': 'm 148.84429,592.92884 0.68,0.78 -0.45,0.6 0.79,-0.31 0.66,0.22 -0.52,0.53 0.39,1.16 -0.55,1.22 -2.07,-0.5 -0.45,-1.44 0.79,-1.97 0.73,-0.29 z m -4.62,15.13 -1.44,0.53 -1.71,1.75 -0.47,2.03 -2.47,2.48 0.16,1.44 -1.31,1.47 -2.13,0.47 -2.94,-0.56 -3.12,3.25 -2.42,0.16 -3.81,1.06 -0.76,-0.41 -2.02,0.31 -2.68,2.16 -0.08,0.78 -1.81,0.69 -0.87,-0.37 -0.13,-0.53 -1.71,-0.06 -0.52,1.28 -1.47,-0.87 -2.15,0.19 -1.6,0.81 -3.7,0.84 -1.1,-1.69 -0.74,-0.15 -2.340004,0.63 -1.34,-1.06 -0.52,0.06 -3.31,1.5 -4.23,-1.12 -3.1,2.03 0.03,2.97 -0.55,0.16 -0.31,-0.62 -0.52,-0.03 -0.95,0.62 -0.89,-0.59 0.24,-1.12 -0.84,-0.03 -2.13,-2.87 -2.99,-1.28 -1.89,-1.56 -1.84,-3 0.58,-3.31 -0.58,-1.81 0.42,-0.78 1.37,-0.69 0.03,-1.41 2.76,-1.78 1.18,-1.81 1.21,0.19 2.18,-2.5 0.45,-2.82 4.2,-1.69 0.08,-1.69 0.37,-0.28 1.94,-0.03 1.89,-0.53 0.24,-0.53 1.31,0.06 1.66,-1.35 0.47,-0.03 0.71,0.78 1.16,-0.88 4.150004,-1.1 1.26,-1 1.34,-0.09 0.34,-0.81 0.74,-0.41 2.02,0.6 1.26,-0.22 1.16,-0.75 0.97,0.44 1.26,-0.69 2.08,0.16 0.79,-1.16 3.7,-0.25 0.11,-0.81 1,-1.19 1.89,1.51 0.87,-0.28 0.24,-0.85 0.87,0.35 3.78,-1.25 3.18,0.38 0.24,-0.94 3.02,0.6 0.32,0.53 1.84,-0.6 0.92,0.1 0.1,1.41 1.21,1.6 1.08,0.09 0.68,0.85 1,-0.63 2.21,0.28 1.05,0.75 -0.42,1.32 1.02,0 0.34,0.94 -0.16,1.32 -0.81,0.09 -0.18,0.75 1.81,1.44 1.34,-0.5 0.13,0.88 0.95,0.81 -0.47,0.56 -1,-0.66 -0.81,1.22 -0.1,1.03 1.5,1.1 -0.73,0.88 -0.63,-0.5 0.26,-0.47 -0.87,-0.34 -1,4.65 z'
         };
 
-        // 활성 현장을 지역(시/도)·공종(토목/건축)별로 묶어 지도 핀 데이터로 변환한다.
-        // region이 비어있는(아직 지역 정보가 입력되지 않은) 현장은 지도에서 제외한다.
-        // ※ 이 목록은 매 조회마다 그 분기에 실제 저장된 현장(headerInfo.siteName)만 대상으로
-        // 다시 계산되므로, 향후 신규 착공 현장이 공사명·지역·공종을 채워 저장하면 자동으로
-        // 추가되고, 준공되어 더 이상 점검이 저장되지 않는 현장은 자동으로 빠진다(별도 수정 불필요).
-        function computeSiteMap(results) {
-            const withRegion = results.filter(r => r.region && SITE_REGION_COORDS[r.region]);
+        // 토목·건축공사 현황 지도는 그 분기에 점검표가 저장된 현장이 아니라, 별도로 관리되는
+        // 현장 현황판(metadata/site_roster)을 기준으로 그린다 — 분기 점검 제출 여부와 무관하게
+        // 회사가 현재 진행 중이거나 최근 준공한 현장을 그대로 보여주기 위함이다(예: 준공되어
+        // 더 이상 분기 점검을 제출하지 않는 현장도 "준공" 표시로 계속 보여줄 수 있음).
+        // 이 목록은 현재 화면 UI가 없어 요청 시 담당자가 직접(코드로) 갱신한다.
+        async function fetchSiteRoster() {
+            try {
+                const snap = await getDoc(doc(db, "metadata", "site_roster"));
+                return snap.exists() ? (snap.data().sites || []) : [];
+            } catch (e) {
+                console.error('현장 현황판(site_roster) 로드 실패:', e);
+                return [];
+            }
+        }
+
+        // roster 항목을 지역(시/도)·공종(토목/건축)별로 묶어 지도 핀 데이터로 변환한다.
+        // region이 비어있거나 알 수 없는 지역명인 항목은 지도에서 제외한다.
+        function computeSiteMap(roster) {
+            const withRegion = roster.filter(r => r.region && SITE_REGION_COORDS[r.region]);
             const byRegion = {};
             withRegion.forEach(r => {
                 if (!byRegion[r.region]) byRegion[r.region] = [];
@@ -644,6 +661,8 @@
                         siteName: r.siteName,
                         region,
                         constructionType: r.constructionType || '미분류',
+                        status: r.status || '진행중',
+                        locationNote: r.locationNote || '',
                         x: base.x + dx,
                         y: base.y + dy
                     });
@@ -651,7 +670,7 @@
             });
             const counts = { 토목: 0, 건축: 0, 미분류: 0 };
             pins.forEach(p => { counts[p.constructionType] = (counts[p.constructionType] || 0) + 1; });
-            return { pins, counts, totalSites: results.length, mappedSites: withRegion.length };
+            return { pins, counts, totalSites: roster.length, mappedSites: withRegion.length };
         }
 
         const CONSTRUCTION_TYPE_COLOR = { 토목: '#00897b', 건축: '#3949ab', 미분류: '#999' };
@@ -691,7 +710,14 @@
                 byRegion[p.region].push(p);
             });
             const listHtml = Object.entries(byRegion).map(([region, pins]) => {
-                const items = pins.map(p => `<li><span class="site-map-badge" style="color:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}">${circledNumber(p.number)}</span>${escapeHtml(p.siteName)} (${escapeHtml(p.constructionType)})</li>`).join('');
+                const items = pins.map(p => {
+                    // 진행중은 굳이 표시하지 않고, 준공 등 그 외 상태만 공종 옆에 덧붙인다.
+                    const typeLabel = p.status && p.status !== '진행중'
+                        ? `${p.constructionType}, ${p.status}`
+                        : p.constructionType;
+                    const noteHtml = p.locationNote ? ` - ${escapeHtml(p.locationNote)}` : '';
+                    return `<li><span class="site-map-badge" style="color:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}">${circledNumber(p.number)}</span>${escapeHtml(p.siteName)} (${escapeHtml(typeLabel)})${noteHtml}</li>`;
+                }).join('');
                 return `<div class="site-map-region-group"><strong>${escapeHtml(region)}</strong><ul>${items}</ul></div>`;
             }).join('');
 
@@ -983,7 +1009,8 @@
             const pdca = computePDCA(categoryAchievement, results);
             const hazard = computeHazardBreakdown(results);
             const hazardPhotos = collectHazardPhotos(hazard);
-            const siteMap = computeSiteMap(results);
+            const roster = await fetchSiteRoster();
+            const siteMap = computeSiteMap(roster);
             const trend = await fetchTrend(year);
 
             const sorted = results.slice().sort((a, b) => a.score - b.score);
