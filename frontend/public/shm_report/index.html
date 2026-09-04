@@ -154,21 +154,22 @@
             margin-top: 4px;
         }
 
-        .hazard-detail-list {
+        .detail-list {
             margin-top: 10px;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px 20px;
         }
-        .hazard-detail-group {
+        .detail-group {
             font-size: 0.85em;
             border-left: 3px solid #c62828;
             padding-left: 10px;
         }
-        .hazard-detail-group strong { color: #333; }
-        .hazard-detail-group ul { margin: 4px 0 0; padding-left: 18px; color: #555; }
-        .hazard-detail-group li { margin-bottom: 2px; }
-        .hazard-detail-more { color: #999; font-style: italic; }
+        .detail-group.accent-indigo { border-left-color: #3949ab; }
+        .detail-group strong { color: #333; }
+        .detail-group ul { margin: 4px 0 0; padding-left: 18px; color: #555; }
+        .detail-group li { margin-bottom: 2px; }
+        .detail-more { color: #999; font-style: italic; }
 
         #exec-summary-display {
             padding: 15px;
@@ -239,8 +240,8 @@
             .chart-box:not(.tall) { height: 230px !important; page-break-inside: avoid; }
             .chart-box.tall { page-break-inside: avoid; }
             .note { font-size: 9pt !important; }
-            .hazard-detail-list { grid-template-columns: 1fr !important; gap: 6px !important; page-break-inside: avoid; }
-            .hazard-detail-group { font-size: 9pt !important; }
+            .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; page-break-inside: avoid; }
+            .detail-group { font-size: 9pt !important; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
                들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
@@ -458,19 +459,28 @@
             const withBreakdown = results.filter(r => r.sectionBreakdown);
             const rows = CATEGORY_NAMES.map(name => {
                 let sum = 0, n = 0, approx = false;
+                const items = [];
                 withBreakdown.forEach(r => {
                     const cs = (r.sectionBreakdown.categoryScores || []).find(c => c.category === name);
                     if (cs && cs.possible > 0) {
                         sum += (cs.obtained / cs.possible) * 100;
                         n++;
-                        return;
+                    } else {
+                        const isWeak = (r.sectionBreakdown.weaknesses || []).some(w => w.category === name);
+                        const isStrong = (r.sectionBreakdown.strengths || []).some(s => s === name);
+                        if (isWeak) { sum += 50; n++; approx = true; }
+                        else if (isStrong) { sum += 100; n++; approx = true; }
                     }
-                    const isWeak = (r.sectionBreakdown.weaknesses || []).some(w => w.category === name);
-                    const isStrong = (r.sectionBreakdown.strengths || []).some(s => s === name);
-                    if (isWeak) { sum += 50; n++; approx = true; }
-                    else if (isStrong) { sum += 100; n++; approx = true; }
+                    // "미흡"으로 명확히 평가된 세부 항목(criticalIssues)을 카테고리별 지적사항
+                    // 목록용으로 함께 수집한다 — 달성률(%)과 무관하게, 그 카테고리에서 구체적으로
+                    // 무엇이 지적됐는지 보여주는 용도.
+                    (r.sectionBreakdown.criticalIssues || []).forEach(ci => {
+                        if (ci.category === name) {
+                            items.push({ siteName: r.siteName, criteria: ci.criteria, comment: (ci.comment || '').trim() });
+                        }
+                    });
                 });
-                return { name, pct: n > 0 ? sum / n : null, sampleSize: n, approx };
+                return { name, pct: n > 0 ? sum / n : null, sampleSize: n, approx, items };
             });
             return { rows, sampleSize: withBreakdown.length };
         }
@@ -572,27 +582,45 @@
             return div.innerHTML;
         }
 
-        // 사고유형별 지적건수 차트 아래에 실제 지적사항(현장명·세부항목·코멘트)을 텍스트로 나열한다.
-        // 차트는 건수만 보여주므로, 어떤 현장의 어떤 항목이 왜 지적됐는지는 이 목록으로 확인한다.
-        // DOM 텍스트로 렌더링하기 때문에 화면·인쇄 모두에서 그대로 보인다(차트처럼 이미지로 바뀌지 않음).
-        function renderHazardDetailList(hazard) {
-            const MAX_PER_CATEGORY = 5;
-            const sections = hazard.rows
-                .filter(row => row.count > 0)
-                .map(row => {
-                    const shown = row.items.slice(0, MAX_PER_CATEGORY);
-                    const more = row.items.length - shown.length;
-                    const itemsHtml = shown.map(it => {
-                        const label = it.comment
-                            ? `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}(${escapeHtml(it.comment)})`
-                            : `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}`;
-                        return `<li>${label}</li>`;
-                    }).join('');
-                    const moreHtml = more > 0 ? `<li class="hazard-detail-more">외 ${more}건 더</li>` : '';
-                    return `<div class="hazard-detail-group"><strong>${escapeHtml(row.name)} (${row.count}건)</strong><ul>${itemsHtml}${moreHtml}</ul></div>`;
+        // 지적/미흡 사항 텍스트를 카테고리별로 나열하는 공용 렌더러(사고유형별 지적건수,
+        // 카테고리별 달성률 두 차트에서 공유). 차트는 건수·비율만 보여주므로, 무엇이 왜
+        // 지적됐는지는 이 목록으로 확인한다. DOM 텍스트로 렌더링하기 때문에 화면·인쇄 모두에서
+        // 그대로 보인다(차트처럼 이미지로 바뀌지 않음).
+        function renderDetailList(groups, accentClass) {
+            const MAX_PER_GROUP = 5;
+            const sections = groups
+                .filter(g => g.count > 0)
+                .map(g => {
+                    const shown = g.items.slice(0, MAX_PER_GROUP);
+                    const more = g.items.length - shown.length;
+                    const itemsHtml = shown.map(label => `<li>${label}</li>`).join('');
+                    const moreHtml = more > 0 ? `<li class="detail-more">외 ${more}건 더</li>` : '';
+                    return `<div class="detail-group ${accentClass || ''}"><strong>${escapeHtml(g.name)} (${g.count}건)</strong><ul>${itemsHtml}${moreHtml}</ul></div>`;
                 });
             if (sections.length === 0) return '';
-            return `<div class="hazard-detail-list">${sections.join('')}</div>`;
+            return `<div class="detail-list">${sections.join('')}</div>`;
+        }
+
+        function renderHazardDetailList(hazard) {
+            const groups = hazard.rows.map(row => ({
+                name: row.name,
+                count: row.count,
+                items: row.items.map(it => it.comment
+                    ? `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}(${escapeHtml(it.comment)})`
+                    : `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}`)
+            }));
+            return renderDetailList(groups, '');
+        }
+
+        function renderCategoryDetailList(categoryAchievement) {
+            const groups = categoryAchievement.rows.map(row => ({
+                name: row.name.replace(/^\d+\.\s*/, ''),
+                count: (row.items || []).length,
+                items: (row.items || []).map(it => it.comment
+                    ? `${escapeHtml(it.siteName)} - ${escapeHtml(it.criteria)}(${escapeHtml(it.comment)})`
+                    : `${escapeHtml(it.siteName)} - ${escapeHtml(it.criteria)}`)
+            }));
+            return renderDetailList(groups, 'accent-indigo');
         }
 
         async function runSearch() {
@@ -668,6 +696,7 @@
                 <div class="section-title">전사 카테고리별 달성률 (시스템점검 기준)</div>
                 <div class="chart-box"><canvas id="category-chart"></canvas></div>
                 <p class="note">※ 세부 항목 데이터가 있는 현장(${categoryAchievement.sampleSize}개) 기준입니다. 구버전(총점만 있는) 데이터는 강점/약점 이진 분류를 참고치로 환산해 포함했습니다.</p>
+                ${renderCategoryDetailList(categoryAchievement)}
 
                 <div class="section-title">사고유형별 지적건수 (현장점검 기준)</div>
                 <div class="chart-box"><canvas id="hazard-chart"></canvas></div>
