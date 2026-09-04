@@ -1269,7 +1269,7 @@
         // 점검일·공정율·종합점수·등급·안전보건관리체계 조직 명단, roster의 목표 텍스트,
         // sh_check 항목 사진)만 사용하며, 발주처·공사금액·공사개요·시정예방지시서 등 저장된
         // 곳이 없는 항목은 안내 문구로 대체한다.
-        function renderSitePages(results, roster, hazardPhotos) {
+        function renderSitePages(results, roster) {
             if (results.length === 0) return '';
             const goalsBySite = {};
             (roster || []).forEach(r => {
@@ -1296,9 +1296,6 @@
                 const goals = goalsBySite[r.siteName];
                 const goalHtml = goals ? renderSiteGoalRoadmap(r.siteName, goals) : '';
 
-                const sitePhotos = (hazardPhotos || []).filter(p => p.siteName === r.siteName);
-                const photoLogHtml = sitePhotos.length > 0 ? renderPhotoLog(sitePhotos) : '';
-
                 // shm_corrective(시정예방조치 요구서)와 동일한 로직으로 그 자리에서 생성한다 —
                 // 별도로 저장된 시정예방지시서 문서는 없고, 저장된 점검 데이터에서 매번 다시
                 // 추려내는 방식이라 shm_corrective를 직접 열었을 때와 항상 같은 내용이 나온다.
@@ -1306,6 +1303,23 @@
                 const deficiencyHtml = deficiencyLines.length > 0
                     ? `<ol class="deficiency-list">${deficiencyLines.map(l => `<li>${escapeHtml(l.text)}</li>`).join('')}</ol>`
                     : `<p class="note">※ 이번 분기 점검에서 "미흡"으로 평가된 항목이 없습니다.</p>`;
+
+                // 사진대지는 shm_corrective와 동일하게 위 시정예방 지시 목록과 같은 항목·같은
+                // 번호로 매칭한다(지적사항 목록 중 사진이 첨부된 항목만 추려 보여줌).
+                const photoItems = deficiencyLines.map((l, i) => ({ num: i + 1, ...l })).filter(l => l.photoUrl);
+                const photoLogHtml = photoItems.length > 0 ? `
+                    <div class="photo-log-grid">
+                        ${photoItems.map(p => `
+                            <div class="photo-log-card">
+                                <a href="${escapeHtml(p.photoUrl)}" target="_blank" rel="noopener">
+                                    <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="점검 사진 ${p.num}">
+                                </a>
+                                <div class="photo-log-caption">
+                                    <div class="photo-log-no">${p.num}.</div>
+                                    <div class="photo-log-site">${escapeHtml(p.text)}</div>
+                                </div>
+                            </div>`).join('')}
+                    </div>` : '';
 
                 return `
                     <div class="site-page page-break-before-print">
@@ -1506,7 +1520,7 @@
                     </tbody>
                 </table>
 
-                ${renderSitePages(results, roster, hazardPhotos)}
+                ${renderSitePages(results, roster)}
             `;
 
             destroyChart('site');
