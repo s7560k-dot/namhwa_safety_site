@@ -668,12 +668,12 @@
                     });
                 });
             });
-            const counts = { 토목: 0, 건축: 0, 미분류: 0 };
+            const counts = { 토목: 0, 건축: 0, 조경: 0, 미분류: 0 };
             pins.forEach(p => { counts[p.constructionType] = (counts[p.constructionType] || 0) + 1; });
             return { pins, counts, totalSites: roster.length, mappedSites: withRegion.length };
         }
 
-        const CONSTRUCTION_TYPE_COLOR = { 토목: '#00897b', 건축: '#3949ab', 미분류: '#999' };
+        const CONSTRUCTION_TYPE_COLOR = { 토목: '#00897b', 건축: '#3949ab', 조경: '#7cb342', 미분류: '#999' };
 
         // 현장 순번을 원문자 숫자(①②③...)로 변환. 20개를 넘어가면 "(21)"과 같은 괄호 표기로 대체.
         const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩',
@@ -697,7 +697,7 @@
                     `font-size="26" font-weight="700" fill="${color}"><title>${escapeHtml(p.siteName)}</title>${circledNumber(p.number)}</text>`;
             }).join('');
 
-            const legendHtml = ['토목', '건축'].map(type => {
+            const legendHtml = ['토목', '건축', '조경'].map(type => {
                 const n = siteMap.counts[type] || 0;
                 if (n === 0) return '';
                 return `<div class="site-map-legend-item"><span class="site-map-dot" style="background:${CONSTRUCTION_TYPE_COLOR[type]}"></span>${escapeHtml(type)} ${n}개소</div>`;
