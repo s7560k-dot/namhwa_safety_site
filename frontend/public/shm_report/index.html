@@ -244,6 +244,11 @@
             border-radius: 50%;
             flex-shrink: 0;
         }
+        /* 지도 핀과 짝을 이루는 원문자 숫자(①②③...) — 현장 목록 각 줄 맨 앞에 표시. */
+        .site-map-badge {
+            font-weight: bold;
+            margin-right: 4px;
+        }
         .site-map-list {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -603,6 +608,9 @@
 
         // 활성 현장을 지역(시/도)·공종(토목/건축)별로 묶어 지도 핀 데이터로 변환한다.
         // region이 비어있는(아직 지역 정보가 입력되지 않은) 현장은 지도에서 제외한다.
+        // ※ 이 목록은 매 조회마다 그 분기에 실제 저장된 현장(headerInfo.siteName)만 대상으로
+        // 다시 계산되므로, 향후 신규 착공 현장이 공사명·지역·공종을 채워 저장하면 자동으로
+        // 추가되고, 준공되어 더 이상 점검이 저장되지 않는 현장은 자동으로 빠진다(별도 수정 불필요).
         function computeSiteMap(results) {
             const withRegion = results.filter(r => r.region && SITE_REGION_COORDS[r.region]);
             const byRegion = {};
@@ -611,11 +619,13 @@
                 byRegion[r.region].push(r);
             });
             const pins = [];
+            let seq = 1;
             Object.entries(byRegion).forEach(([region, sites]) => {
                 const base = SITE_REGION_COORDS[region];
                 sites.forEach((r, i) => {
                     const offset = (i - (sites.length - 1) / 2) * 16;
                     pins.push({
+                        number: seq++,
                         siteName: r.siteName,
                         region,
                         constructionType: r.constructionType || '미분류',
@@ -631,6 +641,13 @@
 
         const CONSTRUCTION_TYPE_COLOR = { 토목: '#00897b', 건축: '#3949ab', 미분류: '#999' };
 
+        // 현장 순번을 원문자 숫자(①②③...)로 변환. 20개를 넘어가면 "(21)"과 같은 괄호 표기로 대체.
+        const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩',
+            '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
+        function circledNumber(n) {
+            return CIRCLED_DIGITS[n - 1] || `(${n})`;
+        }
+
         function renderSiteMap(siteMap) {
             if (siteMap.pins.length === 0) return '';
             const activeRegions = new Set(siteMap.pins.map(p => p.region));
@@ -638,9 +655,12 @@
                 const active = activeRegions.has(name);
                 return `<path d="${d}" fill="${active ? '#c5cee6' : '#eef1f8'}" stroke="#a9b4d4" stroke-width="1" />`;
             }).join('');
+            // 핀은 색으로 공종(토목/건축)을, 원문자 숫자로 개별 현장을 나타낸다 — 아래 목록의
+            // 번호와 1:1로 대응되어 지도만 봐도 어느 현장인지 목록에서 바로 찾을 수 있다.
             const pinsSvg = siteMap.pins.map(p => {
                 const color = CONSTRUCTION_TYPE_COLOR[p.constructionType] || '#999';
-                return `<circle cx="${p.x}" cy="${p.y}" r="8" fill="${color}" stroke="#fff" stroke-width="2"><title>${escapeHtml(p.siteName)}</title></circle>`;
+                return `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" ` +
+                    `font-size="26" font-weight="700" fill="${color}"><title>${escapeHtml(p.siteName)}</title>${circledNumber(p.number)}</text>`;
             }).join('');
 
             const legendHtml = ['토목', '건축'].map(type => {
@@ -656,7 +676,7 @@
                 byRegion[p.region].push(p);
             });
             const listHtml = Object.entries(byRegion).map(([region, pins]) => {
-                const items = pins.map(p => `<li><span class="site-map-dot" style="background:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}"></span>${escapeHtml(p.siteName)} (${escapeHtml(p.constructionType)})</li>`).join('');
+                const items = pins.map(p => `<li><span class="site-map-badge" style="color:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}">${circledNumber(p.number)}</span>${escapeHtml(p.siteName)} (${escapeHtml(p.constructionType)})</li>`).join('');
                 return `<div class="site-map-region-group"><strong>${escapeHtml(region)}</strong><ul>${items}</ul></div>`;
             }).join('');
 
