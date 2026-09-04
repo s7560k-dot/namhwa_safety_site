@@ -372,6 +372,31 @@
         .grade-badge.보통 { background-color: #f57f17; }
         .grade-badge.미흡 { background-color: #c62828; }
 
+        /* 현장별 개요: 현장마다 카드 하나씩(2열 그리드), 기본정보 표 + 안전보건관리체계
+           조직 명단 표로 구성. 발주처·공사금액 등 저장되지 않은 항목은 넣지 않았다. */
+        .site-ov-grid {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .site-ov-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .site-ov-title {
+            background-color: #1a237e; color: #fff; font-weight: bold;
+            padding: 8px 14px; font-size: 0.95em;
+        }
+        .site-ov-table, .site-ov-org-table { width: 100%; border-collapse: collapse; }
+        .site-ov-table th, .site-ov-table td,
+        .site-ov-org-table th, .site-ov-org-table td {
+            border: 1px solid #eee; padding: 6px 10px; font-size: 0.85em; text-align: center;
+        }
+        .site-ov-table th, .site-ov-org-table th { background-color: #f5f6fa; font-weight: 600; width: 22%; }
+        .site-ov-org-table td { text-align: left; }
+        .site-ov-org-title {
+            background-color: #eef1fb; font-weight: bold; font-size: 0.82em;
+            padding: 5px 10px; color: #333;
+        }
+
         .no-print { }
 
         @media print {
@@ -455,6 +480,13 @@
             table.site-table { font-size: 10pt !important; }
             table.site-table th, table.site-table td { padding: 6px 8px !important; }
             .grade-badge { font-size: 9.5pt !important; }
+
+            .site-ov-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; gap: 10px !important; }
+            .site-ov-card { page-break-inside: avoid; }
+            .site-ov-title { font-size: 9.5pt !important; padding: 5px 10px !important; }
+            .site-ov-table th, .site-ov-table td,
+            .site-ov-org-table th, .site-ov-org-table td { font-size: 8pt !important; padding: 4px 6px !important; }
+            .site-ov-org-title { font-size: 7.5pt !important; padding: 3px 8px !important; }
 
             #exec-summary-display { font-size: 11pt !important; line-height: 1.6 !important; }
 
@@ -614,7 +646,12 @@
                         fieldItems: null,
                         sectionBreakdown: null,
                         region: sysDoc.headerInfo?.region || '',
-                        constructionType: sysDoc.headerInfo?.constructionType || ''
+                        constructionType: sysDoc.headerInfo?.constructionType || '',
+                        checkDate: sysDoc.headerInfo?.checkDate || '',
+                        progress: sysDoc.headerInfo?.progress || '',
+                        manager: sysDoc.headerInfo?.evaluators?.manager || '',
+                        safetyManager: sysDoc.headerInfo?.evaluators?.safetyManager || '',
+                        supervisors: sysDoc.headerInfo?.evaluators?.supervisors || []
                     });
                     continue;
                 }
@@ -650,7 +687,12 @@
                     fieldItems: fieldDoc ? (fieldDoc.items || null) : null,
                     sectionBreakdown: sysDoc.sectionBreakdown || null,
                     region: sysDoc.headerInfo?.region || '',
-                    constructionType: sysDoc.headerInfo?.constructionType || ''
+                    constructionType: sysDoc.headerInfo?.constructionType || '',
+                    checkDate: sysDoc.headerInfo?.checkDate || '',
+                    progress: sysDoc.headerInfo?.progress || '',
+                    manager: sysDoc.headerInfo?.evaluators?.manager || '',
+                    safetyManager: sysDoc.headerInfo?.evaluators?.safetyManager || '',
+                    supervisors: sysDoc.headerInfo?.evaluators?.supervisors || []
                 });
             }
             return results;
@@ -1104,6 +1146,35 @@
             ]
         };
 
+        // 현장별 개요: 현재 시스템에 실제로 저장된 정보(현장명·점검일·공정율·종합점수·등급·
+        // 안전보건관리체계 조직 명단)만으로 카드를 구성한다. 발주처·공사금액·공사개요·현장
+        // 사진 등은 어디에도 저장돼 있지 않아 이번에는 포함하지 않았다.
+        function renderSiteOverviewCards(results) {
+            if (results.length === 0) return '';
+            const cards = results.slice().sort((a, b) => a.siteName.localeCompare(b.siteName)).map(r => {
+                const supervisorsText = (r.supervisors && r.supervisors.length > 0) ? r.supervisors.join(', ') : '-';
+                const progressText = r.progress !== '' && r.progress !== undefined && r.progress !== null ? `${escapeHtml(String(r.progress))}%` : '-';
+                return `
+                    <div class="site-ov-card">
+                        <div class="site-ov-title">${escapeHtml(r.siteName)}</div>
+                        <table class="site-ov-table">
+                            <tr><th>점검일</th><td>${escapeHtml(r.checkDate || '-')}</td><th>공정율</th><td>${progressText}</td></tr>
+                            <tr><th>종합점수</th><td>${r.score.toFixed(1)}</td><th>등급</th><td><span class="grade-badge ${r.grade}">${escapeHtml(r.grade)}</span></td></tr>
+                        </table>
+                        <div class="site-ov-org-title">안전보건관리체계(조직)</div>
+                        <table class="site-ov-org-table">
+                            <tr><th>현장소장</th><td>${escapeHtml(r.manager || '-')}</td></tr>
+                            <tr><th>관리감독자</th><td>${escapeHtml(supervisorsText)}</td></tr>
+                            <tr><th>안전관리자</th><td>${escapeHtml(r.safetyManager || '-')}</td></tr>
+                        </table>
+                    </div>`;
+            }).join('');
+            return `
+                <div class="section-title">현장별 개요</div>
+                <div class="site-ov-grid">${cards}</div>
+            `;
+        }
+
         function renderTeamPerformance(year, quarter) {
             const preset = TEAM_PERFORMANCE_PRESET[`${year}-${quarter}`];
             const cardsHtml = preset
@@ -1286,6 +1357,8 @@
                         `).join('')}
                     </tbody>
                 </table>
+
+                ${renderSiteOverviewCards(results)}
             `;
 
             destroyChart('site');
