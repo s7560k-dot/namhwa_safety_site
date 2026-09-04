@@ -376,6 +376,9 @@
            기본정보 표 + 안전보건관리체계 조직 명단 표로 구성. 발주처·공사금액 등 저장되지
            않은 항목은 넣지 않았다. */
         .site-page { margin-top: 10px; }
+        /* 시정예방 지시: shm_corrective와 동일 로직으로 생성한 '미흡' 항목 목록. */
+        .deficiency-list { margin: 10px 0 0; padding-left: 22px; }
+        .deficiency-list li { margin-bottom: 8px; font-size: 0.88em; line-height: 1.5; color: #333; }
         .site-ov-table, .site-ov-org-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .site-ov-table th, .site-ov-table td,
         .site-ov-org-table th, .site-ov-org-table td {
@@ -493,6 +496,7 @@
             .site-ov-table th, .site-ov-table td,
             .site-ov-org-table th, .site-ov-org-table td { font-size: 8pt !important; padding: 4px 6px !important; }
             .site-ov-org-title { font-size: 7.5pt !important; padding: 3px 8px !important; }
+            .deficiency-list li { font-size: 9pt !important; margin-bottom: 5px !important; }
 
             .site-goal-card { page-break-inside: avoid; padding: 10px 16px !important; }
             .site-goal-title { font-size: 12pt !important; }
@@ -664,7 +668,8 @@
                         progress: sysDoc.headerInfo?.progress || '',
                         manager: sysDoc.headerInfo?.evaluators?.manager || '',
                         safetyManager: sysDoc.headerInfo?.evaluators?.safetyManager || '',
-                        supervisors: sysDoc.headerInfo?.evaluators?.supervisors || []
+                        supervisors: sysDoc.headerInfo?.evaluators?.supervisors || [],
+                        evaluationItems: sysDoc.evaluationItems || null
                     });
                     continue;
                 }
@@ -705,7 +710,8 @@
                     progress: sysDoc.headerInfo?.progress || '',
                     manager: sysDoc.headerInfo?.evaluators?.manager || '',
                     safetyManager: sysDoc.headerInfo?.evaluators?.safetyManager || '',
-                    supervisors: sysDoc.headerInfo?.evaluators?.supervisors || []
+                    supervisors: sysDoc.headerInfo?.evaluators?.supervisors || [],
+                    evaluationItems: sysDoc.evaluationItems || null
                 });
             }
             return results;
@@ -1164,6 +1170,70 @@
         // 텍스트가 없는 현장은 이 섹션 자체가 표시되지 않는다.
         const SITE_GOAL_PIN_COLORS = ['#4db6ac', '#26c6da', '#ec407a', '#ffa726'];
 
+        // 시정예방 지시: shm_corrective(시정예방조치 요구서)와 동일한 로직으로, 별도로
+        // 저장된 문서가 아니라 이미 저장된 시스템점검(evaluationItems)·현장점검(fieldItems)
+        // 데이터에서 '미흡' 항목만 그 자리에서 추려 생성한다(shm_corrective의
+        // buildDeficiencyLines/SECTIONS_DATA/CHECKLIST_DATA를 그대로 이식).
+        const SECTIONS_DATA = [{"title":"1. 안전보건경영 방침 및 목표관리 절차 (배점: 5)","isPerformance":false,"rows":[{"criteria":"방침 및 목표의 적정 수립 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"법규 및 기타 요구사항의 반영 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"방침/목표 수립시 전구성원 참여","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"안전보건 목표의 구체성 및 측정 가능성","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"년, 월간 안전보건활동 계획 수립 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"방침/목표에 대한 경영자 검토 및 승인","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"안전보건계획 전구성원 공유 및 게시","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"목표(과제) 성과 측정 실시 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]},{"criteria":"목표 미달성시 개선대책 수립 여부","points":0.5,"options":[{"v":0.5,"t":"우수"},{"v":0.3,"t":"보통"},{"v":0.1,"t":"미흡"}]}]},{"title":"2. 안전보건관리책임자 등 업무수행 평가 절차 (배점: 30)","isPerformance":true,"rows":[{"criteria":"위험성평가 체계 구축 및 실행 총괄","points":2.5,"options":[{"v":2.5,"t":"우수"},{"v":1.5,"t":"보통"},{"v":0.7,"t":"미흡"}]},{"criteria":"도급·용역·위탁 시 산재예방 조치","points":2.5,"options":[{"v":2.5,"t":"우수"},{"v":1.5,"t":"보통"},{"v":0.7,"t":"미흡"}]},{"criteria":"산재 예방계획 수립 및 이행 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가 실시 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"안전보건 협의체 회의 주관 및 결과 관리","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"도급시 산업재해 예방조치(협의체 운영 등) 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업환경의 점검 및 개선 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"법령요지, 안전보건관리규정 게시 등","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"안전조치(기계기구,설비,폭발,전기,굴착,하역,해체,중량물취급, 추락, 낙하, 천재지변 등)","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"산업재해 발생 위험시 작업중지 및 근로자 대피 등 안전보건에 관한 필요한 조치","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업복·보호구 착용 교육지도 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가 참여 및 개선조치 실행확인","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업 시작 전 안전점검 실시 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"소속 근로자 의견 청취 및 개선 요구","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"작업장 정리정돈 및 통로 확보에 대한 확인, 감독 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가에 관한 보좌 및 지도, 조언","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"사업장 순회점검에 따른 지도 및 조치 건의","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"작업환경측정 및 개선 지도·조언","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"건강진단 실시 준비 및 결과에 따른 사후관리 지도","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"현장 안전교육계획의 수립 및 안전교육 실시에 관한 보좌 및 지도, 조언","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"산업재해 발생 원인조사, 분석 및 재발 방지를 위한 기술적 지도, 조언","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"법 또는 법에 따른 명령으로 정한 안전에 관한 사항의 이행에 관한 보좌 및 지도, 조언","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]}]},{"title":"3. 종사자 의견 청취 절차 (배점: 10)","isPerformance":false,"rows":[{"criteria":"종사자 의견청취 절차 계획 수립 및 이행 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"청취 의견 기록 관리 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":1,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"청취 의견 협의체 안건 상정 및 협의, 의결 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"청취 의견에 대한 개선안 이행 및 공유 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"시행 또는 개선안 공유 및 게시 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":1,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"아차사고 발굴 및 개선활동","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"작업중지권에 대한 근로자의 권리 안내 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]}]},{"title":"4. 비상사태 대비·대응 절차 (배점: 20)","isPerformance":false,"rows":[{"criteria":"비상 연락 체계의 구성 및 교육 실시 여부","points":7,"options":[{"v":7,"t":"우수"},{"v":5,"t":"보통"},{"v":2,"t":"미흡"}]},{"criteria":"시나리오별 모의 훈련 실시 여부","points":7,"options":[{"v":7,"t":"우수"},{"v":5,"t":"보통"},{"v":2,"t":"미흡"}]},{"criteria":"비상시 대응 계획 수립 및 작성 여부","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"비상대응 장비/자재 확보 및 관리 상태","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]}]},{"title":"5. 협력사 수준관리 절차 (배점: 10)","isPerformance":false,"rows":[{"criteria":"안전보건에 관한 정보 제공 및 공유 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"정기 협력사 안전보건 점검 및 평가 실시","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"위험성평가 관련 교육 및 자료 제공 여부","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"협력사 산업안전보건관리비 집행 내역 확인 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"최초 위험성평가 자료 협력사 배포 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"근로자 교육 실시 장소 제공, 자료 제공 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"안전보건을 위한 공사 기간 검토 여부(공기단축, 원가절감 요구)","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]}]},{"title":"6. 안전보건관계 법령 등 이행관리 절차 (배점: 20)","isPerformance":false,"rows":[{"criteria":"안전보건관리책임자 등 지정 및 교육 이수 여부","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"보호구 지급 및 관리, 장비 반입 시 점검 등","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"유해위험작업 작업계획서 작성 및 이행 여부","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"위험성평가 실시 및 결과의 기록·보존","points":4,"options":[{"v":4,"t":"우수"},{"v":2.5,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"물질안전보건자료(MSDS) 게시 및 교육","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"산업안전보건위원회 설치 및 운영","points":2,"options":[{"v":2,"t":"우수"},{"v":1.2,"t":"보통"},{"v":0.6,"t":"미흡"}]},{"criteria":"안전보건교육 실시 및 기록 관리","points":3,"options":[{"v":3,"t":"우수"},{"v":2,"t":"보통"},{"v":1,"t":"미흡"}]},{"criteria":"안전보건 표지의 설치 및 부착 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"산업재해 발생 보고 의무 이행","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"재발방지대책 수립 및 공유, 교육 실시 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"공사안전보건대장 작성 및 준수 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]}]},{"title":"7. 시스템 평가 및 개선 절차 (배점: 5)","isPerformance":false,"rows":[{"criteria":"주/월간 업무보고 자료 제출 및 기한 준수 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"안전보건팀 권고사항 회람 또는 교육 실시 여부","points":1,"options":[{"v":1,"t":"우수"},{"v":0.6,"t":"보통"},{"v":0.3,"t":"미흡"}]},{"criteria":"성과측정 결과 환류 및 개선방안 검토 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]},{"criteria":"월간 계획 제출시 성과측정 결과에 대한 환류활동 여부","points":1.5,"options":[{"v":1.5,"t":"우수"},{"v":1,"t":"보통"},{"v":0.5,"t":"미흡"}]}]}];
+        const CHECKLIST_DATA = [{"category":"추락","subcategory":"개구부","count":2,"weight":5,"items":["개구부 덮개 설치(재질, 고정, 경고표지 등) 및 유지 관리여부","대형개구부(발코니, 자재반출구, 계단실, E/V입구, 흙막이 단부 등) 안전난간 설치여부"]},{"category":"추락","subcategory":"강관 비계/시스템비계","count":2,"weight":5,"items":["비계 설치상태(침하, 좌굴(수직도), 작업발판, 승강로 등) 이상여부","비계 안전시설(안전난간대, 낙하물방지망, 수직보호망 등) 설치상태 이상여부"]},{"category":"추락","subcategory":"이동식 틀비계","count":3,"weight":3,"items":["이동식틀비계 설치상태(규격품, 작업발판, 브레싱 등) 이상여부","이동식틀비계 안전시설(안전난간대, 아웃트리거, 바퀴구름방지장치 등) 이상여부","틀비계 실명제 등 실시여부"]},{"category":"추락","subcategory":"말비계","count":2,"weight":3,"items":["비규격품(목재) 사용여부 및 관리여부","발판 폭 40㎝ 이상 확보 및 구조적 안전여부"]},{"category":"추락","subcategory":"달대비계","count":3,"weight":5,"items":["로프 설치상태(주/보조로프 사용 및 로프손상, 2점지지, 풀림방지 등) 실시여부","로프 안전조치(주로프 16mm, 보조로프 14mm, 벽체 접촉부 마모예방조치 등) 실시여부","추락예방조치(작업자 수직구명로프(코브라), 바닥여장길이 1m이상) 실시 여부"]},{"category":"추락","subcategory":"사다리","count":2,"weight":3,"items":["사다리 사용상태(상부고정/여장길이 확보/설치각도/목재사다리)이상여부","사다리 전도예방조치(아웃트리거 설치, 미끄럼방지판 등) 사용여부"]},{"category":"추락","subcategory":"작업발판","count":2,"weight":3,"items":["비규격(목재, 단관파이프, 각파이프, 유로폼 등) 작업발판 사용여부","작업발판 설치기준(하부고정, 밀실여부, 폭) 준수 여부"]},{"category":"추락","subcategory":"갱폼","count":5,"weight":5,"items":["추락 예방조치(안전난간/작업발판 누락, 작업발판 이격거리, 압송관 개구부 보호 등) 여부","낙하 예방조치(앵커볼트 설치간격, 인양고리 상태 및 변형 유무, 정리정돈 등) 여부","전도 예방조치(작업발판 정리정돈 등) 실시 여부","승강시설(근로자 이동통로 확보 등) 및 적정여부","기타 갱폼 설치기준 준수여부"]},{"category":"추락","subcategory":"교량 및 철골","count":3,"weight":5,"items":["추락예방조치(개인보호구, 안전난간대 시설, 추락방지망 등 ) 실시여부","승강시 안전시설(안전블럭, 코브라 등)설치 및 사용여부","자재 정리정돈 상태(철골 적재, 철골상부 자재 적재 유무 등) 이상여부"]},{"category":"추락","subcategory":"추락방지망","count":3,"weight":5,"items":["추락방지망 설치상태(망재질, 망연결, 밀실도 등) 이상여부","추락방지망 설치장소(E/V개구부, 대형개구부, 손상등) 누락여부","추락방지망 관리(폐기물, 폐자재 등) 적정여부"]},{"category":"충돌 및 협착","subcategory":"유해위험 기계기구","count":2,"weight":3,"items":["방호장치(둥근톱, 고속절단기, 그라인더 등) 설치 및 사용여부","철근가공기 풋스위치 덮개 사용여부"]},{"category":"충돌 및 협착","subcategory":"건설기계","count":5,"weight":5,"items":["협착 예방조치(후진경보등, 경보음, 후방감시카메라, 신호수 등) 실시 및 작동여부","건설기계 방호장치(권과방지장치, 과상승방지장치, 리미트스위치 등) 부착 및 작동여부","장비전도 방지장치(아웃트리거, 고임목 등) 적정여부","인양 중 낙하 예방조치(퀵커플러 안전핀, 후크해지장치, 유도로프 등) 실시여부","장비실명제 카드 부착여부"]},{"category":"충돌 및 협착","subcategory":"타워크레인","count":2,"weight":5,"items":["자체점검(1회/6개월) 실시 여부","크레인 하부 방호울 및 시건장치 설치여부"]},{"category":"붕괴 및 도괴","subcategory":"굴착/터파기","count":2,"weight":3,"items":["굴착 법면 토사붕괴(굴착구배, 굴착단부 토사적치 등) 예방여부","굴착부 통행시설 확보여부"]},{"category":"붕괴 및 도괴","subcategory":"흙막이 공사","count":4,"weight":5,"items":["가시설 시공시 설계도서 준수 여부","가시설 설치시기 및 과굴착에 의한 붕괴 사고 위험여부","흙막이 벽체(토류판, 쉬트파일 등) 변위 및 부재 변형 여부","띠장 설치상태(스티프너, 브레싱, 볼트너트 연결, 띠장 연결부 보강 등) 이상여부"]},{"category":"붕괴 및 도괴","subcategory":"터널작업","count":5,"weight":3,"items":["차징카 안전조치(협착, 낙반 등) 실시 여부","작업대차 안전조치(작업발판, 승강로, 안전난간 등) 적정여부","터널 내 통행로 확보여부","비상사태(외부와의 통신체계, 비상조명, 소음방지대책 등) 예방조치 실시여부","작업환경(조도75Lux, 환기시설 등) 적정여부"]},{"category":"붕괴 및 도괴","subcategory":"거푸집동바리/시스템동바리","count":6,"weight":5,"items":["거푸집동바리 설치 계획 및 조립도 등 작성 및 비치여부","거푸집동바리 설치기준 준수(설치간격, 2본연결 설치시 4개이상 볼트체결 등) 여부","가설자재(재사용 검정품, 파이프서포트, 연결핀, 클램프 등) 적정 사용여부","붕괴 예방조치(밑받침, 수평연결재, 동바리 고정, 수직도, 고정목, u헤드고정 등) 실시여부","수평연결재 적정(전용철물 사용, 누락여부 등) 설치여부","거푸집동바리 설치, 해체시 정리정돈 실시여부"]},{"category":"감전","subcategory":"분전반/수전설비","count":4,"weight":5,"items":["접지시설(외함접지, 접지봉 매립, 접지극 손상, 적정 접지선 사용 등) 적정여부","누전차단기(정격감도전류 30mmA이하, 동작시간 0.03초이내)설치/ 경유 및 작동 여부","접근/접촉 방지조치(아크릴판, 시건장치, 안전표지 등) 실시여부","고압가공선로 감전예방(방호관, 접근한계거리 준수, 절연보호구 등)을 위한 접근방지 조치"]},{"category":"감전","subcategory":"이동식 발전기","count":3,"weight":3,"items":["접지시설(외함접지, 접지봉 매립, 접지극 손상, 적정 접지선 사용 등) 실시 여부","누전차단기(정격감도전류 30mmA이하, 동작시간 0.03초이내)설치/ 경유 및 작동 여부","회전체 접근방지조치 실시여부"]},{"category":"감전","subcategory":"작업전선","count":3,"weight":3,"items":["접지상태(3P전선, 접지선 연결, 피복손상여부, 접지극 손상) 이상 여부","반입전 점검실시 및 유해위험기계기구 스티커 부착여부","누전차단기 내장형 릴선 사용 및 정상 작동 여부"]},{"category":"감전","subcategory":"교류아크 용접기","count":3,"weight":3,"items":["자동전격방지기 설치 및 정상작동(회로 결선의 적절성) 여부","감전예방(외함접지, 접지봉 매립, 피복손상, 충전부 절연조치 등) 조치 여부","화재예방(불티비산방지포, 소화기, 주변 가연성 물질 차단 등) 조치 여부"]},{"category":"감전","subcategory":"이동식 투광등","count":2,"weight":1,"items":["누전차단(외함접지, 손잡이 절연조치, 거치대 활용 등) 조치 여부","감전예방(전등 보호갓, 투광등 보호덮개) 실시여부"]},{"category":"감전","subcategory":"양수기","count":2,"weight":1,"items":["접지상태(3P전선, 접지선 연결, 피복손상여부, 접지극 손상) 이상여부","회전체(엔진양수기) 접근방지조치 실시여부"]},{"category":"감전","subcategory":"기타","count":2,"weight":1,"items":["유해위험기계기구 점검필증 부착여부","기타 유해위험기계기구 감전(접지, 누전차단기 등) 예방조치 실시여부"]},{"category":"낙하 및 전도","subcategory":"방호선반","count":2,"weight":3,"items":["방호선반(설치자재, 안전표지판 등)설치상태 이상여부","방호선반 설치 위치선정(건물 주출입구, 통행 용이 장소 등) 적정여부"]},{"category":"낙하 및 전도","subcategory":"낙하물 방지망","count":2,"weight":3,"items":["낙하물방지망 설치상태(매10m마다, 내민길이, 자재선정 등) 적정여부","낙하물방지망 관리(폐기물, 폐자재, 손상 등) 적정여부"]},{"category":"낙하 및 전도","subcategory":"가설통로","count":4,"weight":3,"items":["전도 예방조치(정리정돈, 미끄럼방지조치 등) 실시 여부","통로 조도(75Lux 이상) 확보 여부","통로 발판재의 적정 사용여부","1m이상의 가설계단 안전난간 설치여부"]},{"category":"낙하 및 전도","subcategory":"터널작업","count":2,"weight":3,"items":["암석의 부석정리 및 상부 천공시 하부 근로자 출입금지 조치의 적정 여부","버럭 운반차량 적재기준 설정 및 운반시 덮개 설치 적정 여부"]},{"category":"낙하 및 전도","subcategory":"기타","count":3,"weight":1,"items":["낙하위험장소 하부 출입통제(접근금지시설, 신호수, 위험표지, 위험테이프 등)조치 여부","상하 동시작업 실시 여부","줄걸이 용구(와이어로프, 슬링밸트, 샤클, 하카클램프, 해지장치 등) 적정여부"]},{"category":"기타","subcategory":"화재폭발","count":5,"weight":5,"items":["아세틸렌 및 LPG 역화방지기 부착 및 압력게이지/ 호스 파손여부","압력용기(LPG, 산소통 등)전용 운반구 사용여부","위험물질/인화물질 보관시설(안전표지, 시건장치 등) 설치 및 관리여부","화기 사용 주변 가연성물질 격리 여부 및 소화시설 비치여부","기타 화재폭발 위험 안전 조치사항"]},{"category":"기타","subcategory":"밀폐작업","count":4,"weight":5,"items":["밀폐공간 환기시설 설치 및 운용 여부","밀폐공간 및 유해가스 발생구간 작업전 유해가스농도 및 산소농도 측정여부","작업장내 호흡용 보호구, 안전대, 안전로프 등 보호장구 비치여부","관리책임자 선임 및 지휘감독, 감시인 배치 여부"]},{"category":"기타","subcategory":"교통안전 시설","count":2,"weight":1,"items":["교통안전시설물(안내표지판, PE드럼, 윙카, 갈매기표시, 휀스 등) 적정 설치 여부","기타 교통안전시설물 설치상태"]},{"category":"기타","subcategory":"MSDS","count":1,"weight":1,"items":["MSDS 표지 현장게시 및 부착여부"]},{"category":"기타","subcategory":"보건관리","count":1,"weight":1,"items":["현장내 휴게시설, 화장실 및 세면장 비치 및 청결상태"]},{"category":"기타","subcategory":"개인보호구","count":1,"weight":3,"items":["작업상황에 맞는 개인보호구 지급 및 착용여부"]},{"category":"기타","subcategory":"안전의식","count":1,"weight":1,"items":["작업상황에 맞는 안전표지판 및 안전현수막 설치여부"]},{"category":"기타","subcategory":"음주","count":1,"weight":3,"items":["현장내 근로자 음주 및  음주흔적(소주병, 막걸리병 등)"]}];
+        function flattenSystemRows() {
+            const flat = [];
+            SECTIONS_DATA.forEach(section => {
+                section.rows.forEach(row => flat.push(row));
+            });
+            return flat;
+        }
+        function flattenFieldItems() {
+            const flat = [];
+            CHECKLIST_DATA.forEach(sc => {
+                for (let i = 0; i < sc.count; i++) {
+                    flat.push({ category: sc.category, subcategory: sc.subcategory, criteria: sc.items[i] });
+                }
+            });
+            return flat;
+        }
+        function correctiveHtmlToPlainText(html) {
+            if (!html) return '';
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            tmp.querySelectorAll('br, div, p').forEach(el => el.replaceWith(' ' + (el.textContent || '')));
+            return tmp.textContent.replace(/\s+/g, ' ').trim();
+        }
+        const FIELD_POOR_SCORES = ['-0.1', '-0.3'];
+        function buildDeficiencyLines(evaluationItems, fieldItems) {
+            const lines = [];
+            if (Array.isArray(evaluationItems)) {
+                const flatSys = flattenSystemRows();
+                evaluationItems.forEach(item => {
+                    const rowDef = flatSys[item.index];
+                    if (!rowDef) return;
+                    const worst = rowDef.options.find(o => o.t === '미흡');
+                    if (!worst) return;
+                    if (parseFloat(item.selectedValue) !== worst.v) return;
+                    const comment = correctiveHtmlToPlainText(item.comment);
+                    let text = `[시스템점검] ${rowDef.criteria}`;
+                    if (comment) text += ` - ${comment}`;
+                    lines.push({ text, photoUrl: null });
+                });
+            }
+            if (Array.isArray(fieldItems)) {
+                const flatField = flattenFieldItems();
+                fieldItems.forEach(item => {
+                    if (!FIELD_POOR_SCORES.includes(item.score)) return;
+                    if (!item.photoUrl) return;
+                    const rowDef = flatField[item.index];
+                    if (!rowDef) return;
+                    const comment = (item.comment || '').trim();
+                    const cnt = parseInt(item.issueCount, 10);
+                    let text = `[현장점검/${rowDef.category}·${rowDef.subcategory}] ${rowDef.criteria}`;
+                    if (cnt > 0) text += ` (지적 ${cnt}건)`;
+                    if (comment) text += ` - ${comment}`;
+                    lines.push({ text, photoUrl: item.photoUrl });
+                });
+            }
+            return lines;
+        }
+
         function renderSiteGoalRoadmap(siteName, goals) {
             const hasAny = (goals || []).some(g => g && (typeof g === 'string' ? g.trim() : (g.title || g.detail)));
             if (!hasAny) return '';
@@ -1229,6 +1299,14 @@
                 const sitePhotos = (hazardPhotos || []).filter(p => p.siteName === r.siteName);
                 const photoLogHtml = sitePhotos.length > 0 ? renderPhotoLog(sitePhotos) : '';
 
+                // shm_corrective(시정예방조치 요구서)와 동일한 로직으로 그 자리에서 생성한다 —
+                // 별도로 저장된 시정예방지시서 문서는 없고, 저장된 점검 데이터에서 매번 다시
+                // 추려내는 방식이라 shm_corrective를 직접 열었을 때와 항상 같은 내용이 나온다.
+                const deficiencyLines = buildDeficiencyLines(r.evaluationItems, r.fieldItems);
+                const deficiencyHtml = deficiencyLines.length > 0
+                    ? `<ol class="deficiency-list">${deficiencyLines.map(l => `<li>${escapeHtml(l.text)}</li>`).join('')}</ol>`
+                    : `<p class="note">※ 이번 분기 점검에서 "미흡"으로 평가된 항목이 없습니다.</p>`;
+
                 return `
                     <div class="site-page page-break-before-print">
                         <div class="section-title">${escapeHtml(r.siteName)} — 현장 개요</div>
@@ -1237,7 +1315,7 @@
                         ${goalHtml ? `<div class="section-title">현장 목표</div>${goalHtml}` : ''}
 
                         <div class="section-title">시정예방 지시</div>
-                        <p class="note">※ 점검 결과에 따른 시정예방 지시 내용은 아직 별도로 저장되는 곳이 없어 표시할 데이터가 없습니다.</p>
+                        ${deficiencyHtml}
 
                         ${photoLogHtml ? `<div class="section-title">점검 사진대지</div>${photoLogHtml}` : ''}
                     </div>`;
