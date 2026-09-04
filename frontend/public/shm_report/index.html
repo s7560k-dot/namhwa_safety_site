@@ -257,8 +257,13 @@
             .note { font-size: 9pt !important; }
             .site-list-note { font-size: 10pt !important; }
             .site-list-note li { padding: 4px 0 !important; }
-            .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; page-break-inside: avoid; }
-            .detail-group { font-size: 9pt !important; }
+            /* page-break-inside: avoid를 목록 전체(.detail-list)가 아니라 카테고리별 그룹
+               (.detail-group) 단위로 걸어둔다. 전체 목록에 걸어두면 페이지에 절반만 들어가도
+               목록 전체가 통째로 다음 페이지로 밀려나면서 현재 페이지 하단에 큰 여백이 남고
+               다음 페이지도 그만큼 내용이 밀리는 문제가 있었다. 그룹 단위로 좁히면 들어갈
+               수 있는 그룹까지는 현재 페이지를 채우고, 넘치는 그룹만 다음 페이지로 넘어간다. */
+            .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; }
+            .detail-group { font-size: 9pt !important; page-break-inside: avoid; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
                들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
