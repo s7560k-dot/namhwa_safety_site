@@ -396,19 +396,26 @@
             background-color: #eef1fb; font-weight: bold; font-size: 0.82em;
             padding: 5px 10px; color: #333;
         }
-        /* 현장 목표: 오르막길 로드맵 SVG + 하단에 "안전보건경영 목표" 타이틀/현장명.
+        /* 현장 목표: 그래픽 없이 "안전보건경영 목표" 타이틀/현장명 + 1~4번 순번 텍스트 목록.
            카드 하나당 현장 하나(현장별 개요 카드와 동일한 가나다순). */
         .site-goal-list { margin-top: 10px; display: flex; flex-direction: column; gap: 16px; }
-        .site-goal-card { border: 1px solid #eee; border-radius: 8px; background-color: #faf9f6; overflow: hidden; }
-        .site-goal-card svg { display: block; width: 100%; height: auto; }
-        .site-goal-caption {
-            font-size: 11px; line-height: 1.35; text-align: center; font-family: inherit;
+        .site-goal-card { border: 1px solid #eee; border-radius: 8px; background-color: #faf9f6; padding: 16px 24px; }
+        .site-goal-header { margin-bottom: 12px; }
+        .site-goal-title { font-size: 1.3em; font-weight: 800; color: #1a237e; }
+        .site-goal-sitename { font-size: 0.9em; color: #555; margin-top: 2px; }
+        .site-goal-simple-list { list-style: none; margin: 0; padding: 0; }
+        .site-goal-simple-list li {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 10px 0; border-top: 1px dashed #ddd;
         }
-        .site-goal-caption-title { font-weight: 700; }
-        .site-goal-detail { font-weight: 400; color: #666; margin-top: 3px; font-size: 0.9em; }
-        .site-goal-footer { padding: 4px 24px 18px; }
-        .site-goal-title { font-size: 1.4em; font-weight: 800; color: #1a237e; line-height: 1.25; }
-        .site-goal-sitename { font-size: 0.9em; color: #555; margin-top: 4px; }
+        .site-goal-simple-list li:first-child { border-top: none; }
+        .site-goal-num {
+            display: flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+            color: #fff; font-weight: 800; font-size: 0.8em; margin-top: 1px;
+        }
+        .site-goal-caption-title { font-weight: 700; font-size: 0.95em; }
+        .site-goal-detail { font-weight: 400; color: #666; margin-top: 3px; font-size: 0.88em; line-height: 1.5; }
 
         .no-print { }
 
@@ -501,10 +508,12 @@
             .site-ov-org-table th, .site-ov-org-table td { font-size: 8pt !important; padding: 4px 6px !important; }
             .site-ov-org-title { font-size: 7.5pt !important; padding: 3px 8px !important; }
 
-            .site-goal-card { page-break-inside: avoid; }
-            .site-goal-title { font-size: 13pt !important; }
-            .site-goal-sitename { font-size: 9pt !important; }
-            .site-goal-footer { padding: 4px 16px 12px !important; }
+            .site-goal-card { page-break-inside: avoid; padding: 10px 16px !important; }
+            .site-goal-title { font-size: 12pt !important; }
+            .site-goal-sitename { font-size: 8.5pt !important; }
+            .site-goal-simple-list li { padding: 6px 0 !important; }
+            .site-goal-caption-title { font-size: 9pt !important; }
+            .site-goal-detail { font-size: 8pt !important; }
 
             #exec-summary-display { font-size: 11pt !important; line-height: 1.6 !important; }
 
@@ -1193,53 +1202,37 @@
             `;
         }
 
-        // 현장 목표: "안전보건경영 목표" 로드맵을 순수 SVG로 직접 그린다(이미지 파일 첨부 대신
-        // 코드로 구현 — 담당자가 site_roster에 현장별 목표 텍스트 4개만 채워 넣으면 자동으로
-        // 그려진다). 오르막길을 오르는 4개의 핀에 순번(1~4)과 목표 문구를 표시하며, 텍스트가
-        // 없는 현장은 이 섹션 자체가 표시되지 않는다.
+        // 현장 목표: "안전보건경영 목표" — 로드맵 그래픽 없이 1~4번 순번 텍스트 목록으로 표시한다
+        // (담당자가 site_roster에 현장별 목표 텍스트 4개만 채워 넣으면 자동으로 나열된다).
+        // 텍스트가 없는 현장은 이 섹션 자체가 표시되지 않는다.
         const SITE_GOAL_PIN_COLORS = ['#4db6ac', '#26c6da', '#ec407a', '#ffa726'];
-        // 지도 핀(Google Maps 스타일) 실루엣 — 24단위 기준, 뾰족한 끝(12,22)이 도로에 닿는 지점.
-        const PIN_SHAPE_PATH = 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z';
 
         function renderSiteGoalRoadmap(siteName, goals) {
             const hasAny = (goals || []).some(g => g && (typeof g === 'string' ? g.trim() : (g.title || g.detail)));
             if (!hasAny) return '';
-            const points = [
-                { x: 110, y: 230 }, { x: 280, y: 165 }, { x: 460, y: 100 }, { x: 630, y: 45 }
-            ];
-            const road = 'M 15,255 C 150,255 200,190 280,165 C 360,140 380,110 460,100 C 540,90 560,60 630,45 C 660,38 670,32 680,20';
-            const scale = 2.3;
-            const pinsSvg = points.map((p, i) => {
-                const g = goals[i];
+            const itemsHtml = goals.map((g, i) => {
                 if (!g) return '';
                 const title = (typeof g === 'string' ? g : (g.title || '')).trim();
                 const detail = (typeof g === 'string' ? '' : (g.detail || '')).trim();
                 if (!title && !detail) return '';
                 const color = SITE_GOAL_PIN_COLORS[i];
-                const headCy = p.y - 13 * scale;
                 const detailHtml = detail ? `<div class="site-goal-detail">${escapeHtml(detail)}</div>` : '';
                 return `
-                    <g>
-                        <path d="${PIN_SHAPE_PATH}" transform="translate(${p.x - 12 * scale},${p.y - 22 * scale}) scale(${scale})" fill="${color}" />
-                        <text x="${p.x}" y="${headCy + 6}" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">${i + 1}</text>
-                        <foreignObject x="${p.x - 85}" y="${p.y + 8}" width="170" height="72">
-                            <div class="site-goal-caption" style="color:${color};">
-                                <div class="site-goal-caption-title">${escapeHtml(title)}</div>
-                                ${detailHtml}
-                            </div>
-                        </foreignObject>
-                    </g>`;
+                    <li>
+                        <span class="site-goal-num" style="background:${color};">${i + 1}</span>
+                        <div>
+                            <div class="site-goal-caption-title" style="color:${color};">${escapeHtml(title)}</div>
+                            ${detailHtml}
+                        </div>
+                    </li>`;
             }).join('');
             return `
                 <div class="site-goal-card">
-                    <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
-                        <path d="${road}" fill="none" stroke="#d7dae0" stroke-width="16" stroke-linecap="round" />
-                        ${pinsSvg}
-                    </svg>
-                    <div class="site-goal-footer">
-                        <div class="site-goal-title">안전보건경영<br>목표</div>
+                    <div class="site-goal-header">
+                        <div class="site-goal-title">안전보건경영 목표</div>
                         <div class="site-goal-sitename">${escapeHtml(siteName)}</div>
                     </div>
+                    <ul class="site-goal-simple-list">${itemsHtml}</ul>
                 </div>`;
         }
 
