@@ -182,15 +182,38 @@
         .detail-group ul { margin: 4px 0 0; padding-left: 18px; color: #555; }
         .detail-group li { margin-bottom: 2px; }
         .detail-more { color: #999; font-style: italic; }
-        .detail-photo-thumb {
-            display: inline-block;
-            width: 40px; height: 40px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            vertical-align: middle;
-            margin-left: 6px;
+
+        /* 지적사항 사진대지: 텍스트 목록과는 별도 섹션으로, 사진이 첨부된 지적사항만
+           카드 형태(사진 + 캡션)로 모아 보여준다. 건설현장 보고서에서 흔히 쓰는
+           "사진대지" 양식과 동일하게 사진을 크게, 캡션을 사진 아래에 배치한다. */
+        .photo-log-grid {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
         }
+        .photo-log-card {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: #fafafa;
+        }
+        .photo-log-img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            background-color: #eee;
+        }
+        .photo-log-caption {
+            padding: 8px 10px;
+            font-size: 0.82em;
+            line-height: 1.5;
+        }
+        .photo-log-no { font-weight: bold; color: #3949ab; }
+        .photo-log-site { font-weight: bold; color: #333; }
+        .photo-log-cat { color: #555; }
+        .photo-log-comment { color: #777; margin-top: 2px; }
 
         #exec-summary-display {
             padding: 15px;
@@ -273,7 +296,11 @@
                수 있는 그룹까지는 현재 페이지를 채우고, 넘치는 그룹만 다음 페이지로 넘어간다. */
             .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; }
             .detail-group { font-size: 9pt !important; page-break-inside: avoid; }
-            .detail-photo-thumb { width: 30px !important; height: 30px !important; }
+
+            /* 사진대지 카드도 그룹과 동일하게 카드 단위로 페이지가 넘어가도록 한다. */
+            .photo-log-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+            .photo-log-card { page-break-inside: avoid; }
+            .photo-log-caption { font-size: 8.5pt !important; padding: 6px 8px !important; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
                들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
@@ -617,9 +644,8 @@
         // 지적/미흡 사항 텍스트를 카테고리별로 나열하는 공용 렌더러(사고유형별 지적건수,
         // 카테고리별 달성률 두 차트에서 공유). 차트는 건수·비율만 보여주므로, 무엇이 왜
         // 지적됐는지는 이 목록으로 확인한다. DOM 텍스트로 렌더링하기 때문에 화면·인쇄 모두에서
-        // 그대로 보인다(차트처럼 이미지로 바뀌지 않음).
-        // 각 항목(item)은 문자열(기존 라벨) 또는 { label, photoUrl } 객체일 수 있다 — 사진이
-        // 첨부된 지적사항(sh_check 항목에 photoUrl이 있는 경우)은 라벨 옆에 작은 썸네일을 붙인다.
+        // 그대로 보인다(차트처럼 이미지로 바뀌지 않음). 사진은 이 텍스트 목록에는 넣지 않고
+        // 별도의 "사진대지" 섹션(renderPhotoLog)에서 모아 보여준다.
         function renderDetailList(groups, accentClass) {
             const MAX_PER_GROUP = 5;
             const sections = groups
@@ -627,14 +653,7 @@
                 .map(g => {
                     const shown = g.items.slice(0, MAX_PER_GROUP);
                     const more = g.items.length - shown.length;
-                    const itemsHtml = shown.map(it => {
-                        const label = typeof it === 'string' ? it : it.label;
-                        const photoUrl = typeof it === 'object' && it.photoUrl ? it.photoUrl : null;
-                        const photoHtml = photoUrl
-                            ? `<a href="${escapeHtml(photoUrl)}" target="_blank" rel="noopener"><img src="${escapeHtml(photoUrl)}" class="detail-photo-thumb" alt="지적사항 사진"></a>`
-                            : '';
-                        return `<li>${label}${photoHtml}</li>`;
-                    }).join('');
+                    const itemsHtml = shown.map(label => `<li>${label}</li>`).join('');
                     const moreHtml = more > 0 ? `<li class="detail-more">외 ${more}건 더</li>` : '';
                     return `<div class="detail-group ${accentClass || ''}"><strong>${escapeHtml(g.name)} (${g.count}건)</strong><ul>${itemsHtml}${moreHtml}</ul></div>`;
                 });
@@ -646,14 +665,51 @@
             const groups = hazard.rows.map(row => ({
                 name: row.name,
                 count: row.count,
-                items: row.items.map(it => ({
-                    label: it.comment
-                        ? `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}(${escapeHtml(it.comment)})`
-                        : `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}`,
-                    photoUrl: it.photoUrl
-                }))
+                items: row.items.map(it => it.comment
+                    ? `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}(${escapeHtml(it.comment)})`
+                    : `${escapeHtml(it.siteName)} - ${escapeHtml(it.subcategory)}`)
             }));
             return renderDetailList(groups, '');
+        }
+
+        // 사진이 첨부된 지적사항만 모아 "사진대지" 카드 목록으로 렌더링한다.
+        // (현재 sh_check/현장점검표 항목만 photoUrl을 가지므로 사고유형별 지적건수에서만 나온다.)
+        function collectHazardPhotos(hazard) {
+            const photos = [];
+            hazard.rows.forEach(row => {
+                row.items.forEach(it => {
+                    if (it.photoUrl) {
+                        photos.push({
+                            category: row.name,
+                            siteName: it.siteName,
+                            subcategory: it.subcategory,
+                            comment: it.comment,
+                            photoUrl: it.photoUrl
+                        });
+                    }
+                });
+            });
+            return photos;
+        }
+
+        function renderPhotoLog(photos) {
+            if (photos.length === 0) return '';
+            const cards = photos.map((p, i) => {
+                const commentHtml = p.comment ? `<div class="photo-log-comment">${escapeHtml(p.comment)}</div>` : '';
+                return `
+                    <div class="photo-log-card">
+                        <a href="${escapeHtml(p.photoUrl)}" target="_blank" rel="noopener">
+                            <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="지적사항 사진">
+                        </a>
+                        <div class="photo-log-caption">
+                            <div class="photo-log-no">사진 ${i + 1}</div>
+                            <div class="photo-log-site">${escapeHtml(p.siteName)}</div>
+                            <div class="photo-log-cat">${escapeHtml(p.category)} - ${escapeHtml(p.subcategory)}</div>
+                            ${commentHtml}
+                        </div>
+                    </div>`;
+            }).join('');
+            return `<div class="photo-log-grid">${cards}</div>`;
         }
 
         function renderCategoryDetailList(categoryAchievement) {
@@ -712,6 +768,7 @@
             const categoryAchievement = computeCategoryAchievement(results);
             const pdca = computePDCA(categoryAchievement, results);
             const hazard = computeHazardBreakdown(results);
+            const hazardPhotos = collectHazardPhotos(hazard);
             const trend = await fetchTrend(year);
 
             const sorted = results.slice().sort((a, b) => a.score - b.score);
@@ -745,6 +802,11 @@
                 <div class="section-title">사고유형별 지적건수 (현장점검 기준)</div>
                 <div class="chart-box"><canvas id="hazard-chart"></canvas></div>
                 ${renderHazardDetailList(hazard)}
+
+                ${hazardPhotos.length > 0 ? `
+                <div class="section-title">지적사항 사진대지</div>
+                ${renderPhotoLog(hazardPhotos)}
+                ` : ''}
 
                 <div class="section-title">분기별 전사 평균점수 추이 (${escapeHtml(year)}년)</div>
                 <div class="chart-box"><canvas id="trend-chart"></canvas></div>
