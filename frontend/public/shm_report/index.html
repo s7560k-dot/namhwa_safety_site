@@ -372,20 +372,11 @@
         .grade-badge.보통 { background-color: #f57f17; }
         .grade-badge.미흡 { background-color: #c62828; }
 
-        /* 현장별 개요: 현장마다 카드 하나씩(2열 그리드), 기본정보 표 + 안전보건관리체계
-           조직 명단 표로 구성. 발주처·공사금액 등 저장되지 않은 항목은 넣지 않았다. */
-        .site-ov-grid {
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 16px;
-        }
-        .site-ov-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-        .site-ov-title {
-            background-color: #1a237e; color: #fff; font-weight: bold;
-            padding: 8px 14px; font-size: 0.95em;
-        }
-        .site-ov-table, .site-ov-org-table { width: 100%; border-collapse: collapse; }
+        /* 현장별 개요: 현장 하나당 인쇄 페이지 한 장(.site-page, page-break-before-print).
+           기본정보 표 + 안전보건관리체계 조직 명단 표로 구성. 발주처·공사금액 등 저장되지
+           않은 항목은 넣지 않았다. */
+        .site-page { margin-top: 10px; }
+        .site-ov-table, .site-ov-org-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .site-ov-table th, .site-ov-table td,
         .site-ov-org-table th, .site-ov-org-table td {
             border: 1px solid #eee; padding: 6px 10px; font-size: 0.85em; text-align: center;
@@ -396,10 +387,8 @@
             background-color: #eef1fb; font-weight: bold; font-size: 0.82em;
             padding: 5px 10px; color: #333;
         }
-        /* 현장 목표: 그래픽 없이 "안전보건경영 목표" 타이틀/현장명 + 1~4번 순번 텍스트 목록.
-           카드 하나당 현장 하나(현장별 개요 카드와 동일한 가나다순). */
-        .site-goal-list { margin-top: 10px; display: flex; flex-direction: column; gap: 16px; }
-        .site-goal-card { border: 1px solid #eee; border-radius: 8px; background-color: #faf9f6; padding: 16px 24px; }
+        /* 현장 목표: 그래픽 없이 "안전보건경영 목표" 타이틀/현장명 + 1~4번 순번 텍스트 목록. */
+        .site-goal-card { border: 1px solid #eee; border-radius: 8px; background-color: #faf9f6; padding: 16px 24px; margin-top: 10px; }
         .site-goal-header { margin-bottom: 12px; }
         .site-goal-title { font-size: 1.3em; font-weight: 800; color: #1a237e; }
         .site-goal-sitename { font-size: 0.9em; color: #555; margin-top: 2px; }
@@ -501,9 +490,6 @@
             table.site-table th, table.site-table td { padding: 6px 8px !important; }
             .grade-badge { font-size: 9.5pt !important; }
 
-            .site-ov-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; gap: 10px !important; }
-            .site-ov-card { page-break-inside: avoid; }
-            .site-ov-title { font-size: 9.5pt !important; padding: 5px 10px !important; }
             .site-ov-table th, .site-ov-table td,
             .site-ov-org-table th, .site-ov-org-table td { font-size: 8pt !important; padding: 4px 6px !important; }
             .site-ov-org-title { font-size: 7.5pt !important; padding: 3px 8px !important; }
@@ -1173,35 +1159,6 @@
             ]
         };
 
-        // 현장별 개요: 현재 시스템에 실제로 저장된 정보(현장명·점검일·공정율·종합점수·등급·
-        // 안전보건관리체계 조직 명단)만으로 카드를 구성한다. 발주처·공사금액·공사개요·현장
-        // 사진 등은 어디에도 저장돼 있지 않아 이번에는 포함하지 않았다.
-        function renderSiteOverviewCards(results) {
-            if (results.length === 0) return '';
-            const cards = results.slice().sort((a, b) => a.siteName.localeCompare(b.siteName)).map(r => {
-                const supervisorsText = (r.supervisors && r.supervisors.length > 0) ? r.supervisors.join(', ') : '-';
-                const progressText = r.progress !== '' && r.progress !== undefined && r.progress !== null ? `${escapeHtml(String(r.progress))}%` : '-';
-                return `
-                    <div class="site-ov-card">
-                        <div class="site-ov-title">${escapeHtml(r.siteName)}</div>
-                        <table class="site-ov-table">
-                            <tr><th>점검일</th><td>${escapeHtml(r.checkDate || '-')}</td><th>공정율</th><td>${progressText}</td></tr>
-                            <tr><th>종합점수</th><td>${r.score.toFixed(1)}</td><th>등급</th><td><span class="grade-badge ${r.grade}">${escapeHtml(r.grade)}</span></td></tr>
-                        </table>
-                        <div class="site-ov-org-title">안전보건관리체계(조직)</div>
-                        <table class="site-ov-org-table">
-                            <tr><th>현장소장</th><td>${escapeHtml(r.manager || '-')}</td></tr>
-                            <tr><th>관리감독자</th><td>${escapeHtml(supervisorsText)}</td></tr>
-                            <tr><th>안전관리자</th><td>${escapeHtml(r.safetyManager || '-')}</td></tr>
-                        </table>
-                    </div>`;
-            }).join('');
-            return `
-                <div class="section-title">현장별 개요</div>
-                <div class="site-ov-grid">${cards}</div>
-            `;
-        }
-
         // 현장 목표: "안전보건경영 목표" — 로드맵 그래픽 없이 1~4번 순번 텍스트 목록으로 표시한다
         // (담당자가 site_roster에 현장별 목표 텍스트 4개만 채워 넣으면 자동으로 나열된다).
         // 텍스트가 없는 현장은 이 섹션 자체가 표시되지 않는다.
@@ -1236,21 +1193,56 @@
                 </div>`;
         }
 
-        function renderSiteGoalsSection(results, roster) {
+        // 현장별 개요를 현장 하나당 인쇄 페이지 한 장으로 구성한다. 각 페이지는
+        // 현장 개요 → 현장 목표(있는 경우) → 시정예방 지시(데이터 준비 전까지는 안내 문구만) →
+        // 점검 사진대지(있는 경우) 순으로 배치된다. 현재 시스템에 실제로 저장된 정보(현장명·
+        // 점검일·공정율·종합점수·등급·안전보건관리체계 조직 명단, roster의 목표 텍스트,
+        // sh_check 항목 사진)만 사용하며, 발주처·공사금액·공사개요·시정예방지시서 등 저장된
+        // 곳이 없는 항목은 안내 문구로 대체한다.
+        function renderSitePages(results, roster, hazardPhotos) {
+            if (results.length === 0) return '';
             const goalsBySite = {};
             (roster || []).forEach(r => {
                 const hasAny = r.goals && r.goals.some(g => g && (typeof g === 'string' ? g.trim() : (g.title || g.detail)));
                 if (hasAny) goalsBySite[r.siteName] = r.goals;
             });
-            const ordered = results.slice()
-                .sort((a, b) => a.siteName.localeCompare(b.siteName))
-                .filter(r => goalsBySite[r.siteName]);
-            if (ordered.length === 0) return '';
-            const cards = ordered.map(r => renderSiteGoalRoadmap(r.siteName, goalsBySite[r.siteName])).join('');
-            return `
-                <div class="section-title">현장 목표</div>
-                <div class="site-goal-list">${cards}</div>
-            `;
+
+            const pages = results.slice().sort((a, b) => a.siteName.localeCompare(b.siteName)).map(r => {
+                const supervisorsText = (r.supervisors && r.supervisors.length > 0) ? r.supervisors.join(', ') : '-';
+                const progressText = r.progress !== '' && r.progress !== undefined && r.progress !== null ? `${escapeHtml(String(r.progress))}%` : '-';
+
+                const overviewHtml = `
+                    <table class="site-ov-table">
+                        <tr><th>점검일</th><td>${escapeHtml(r.checkDate || '-')}</td><th>공정율</th><td>${progressText}</td></tr>
+                        <tr><th>종합점수</th><td>${r.score.toFixed(1)}</td><th>등급</th><td><span class="grade-badge ${r.grade}">${escapeHtml(r.grade)}</span></td></tr>
+                    </table>
+                    <div class="site-ov-org-title">안전보건관리체계(조직)</div>
+                    <table class="site-ov-org-table">
+                        <tr><th>현장소장</th><td>${escapeHtml(r.manager || '-')}</td></tr>
+                        <tr><th>관리감독자</th><td>${escapeHtml(supervisorsText)}</td></tr>
+                        <tr><th>안전관리자</th><td>${escapeHtml(r.safetyManager || '-')}</td></tr>
+                    </table>`;
+
+                const goals = goalsBySite[r.siteName];
+                const goalHtml = goals ? renderSiteGoalRoadmap(r.siteName, goals) : '';
+
+                const sitePhotos = (hazardPhotos || []).filter(p => p.siteName === r.siteName);
+                const photoLogHtml = sitePhotos.length > 0 ? renderPhotoLog(sitePhotos) : '';
+
+                return `
+                    <div class="site-page page-break-before-print">
+                        <div class="section-title">${escapeHtml(r.siteName)} — 현장 개요</div>
+                        ${overviewHtml}
+
+                        ${goalHtml ? `<div class="section-title">현장 목표</div>${goalHtml}` : ''}
+
+                        <div class="section-title">시정예방 지시</div>
+                        <p class="note">※ 점검 결과에 따른 시정예방 지시 내용은 아직 별도로 저장되는 곳이 없어 표시할 데이터가 없습니다.</p>
+
+                        ${photoLogHtml ? `<div class="section-title">점검 사진대지</div>${photoLogHtml}` : ''}
+                    </div>`;
+            }).join('');
+            return pages;
         }
 
         function renderTeamPerformance(year, quarter) {
@@ -1436,9 +1428,7 @@
                     </tbody>
                 </table>
 
-                ${renderSiteOverviewCards(results)}
-
-                ${renderSiteGoalsSection(results, roster)}
+                ${renderSitePages(results, roster, hazardPhotos)}
             `;
 
             destroyChart('site');
