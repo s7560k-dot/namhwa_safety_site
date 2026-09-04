@@ -154,6 +154,18 @@
             margin-top: 4px;
         }
 
+        .site-list-note {
+            list-style: none;
+            margin: 6px 0 0;
+            padding: 0;
+            font-size: 0.82em;
+            color: #888;
+        }
+        .site-list-note li {
+            padding: 2px 0;
+            border-bottom: 1px dotted #eee;
+        }
+
         .detail-list {
             margin-top: 10px;
             display: grid;
@@ -236,10 +248,15 @@
             .kpi-card .label { font-size: 9pt !important; }
 
             /* .chart-box.tall(현장별 종합점수)은 현장 수에 따라 렌더링 시 인라인 height가 계산되므로
-               여기서 고정값으로 덮어쓰지 않는다 — 현장이 많아도 막대·라벨이 겹치지 않게 하기 위함. */
+               여기서 고정값으로 덮어쓰지 않는다 — 인쇄는 그 시점에 캡처해 둔 정적 이미지를 그대로
+               보여주는 방식이라(realtime redraw 아님), 여기서 박스 높이만 늘려봐야 막대 간격이
+               넓어지지 않고 이미지 상하에 여백만 생긴다. 막대 간격 자체는 캡처 전 높이(화면용
+               인라인 height) 계산식에서 늘려야 하므로 그쪽에서 처리한다. */
             .chart-box:not(.tall) { height: 230px !important; page-break-inside: avoid; }
             .chart-box.tall { page-break-inside: avoid; }
             .note { font-size: 9pt !important; }
+            .site-list-note { font-size: 10pt !important; }
+            .site-list-note li { padding: 4px 0 !important; }
             .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; page-break-inside: avoid; }
             .detail-group { font-size: 9pt !important; }
 
@@ -670,7 +687,8 @@
             const trend = await fetchTrend(year);
 
             const sorted = results.slice().sort((a, b) => a.score - b.score);
-            const siteList = sorted.slice().reverse().map(r => `${r.siteName}(${escapeHtml(r.grade)})`).join(', ');
+            // 현장별로 한 줄씩 표시(인쇄 시 여백 배분을 위해 쉼표로 이어붙이지 않음).
+            const siteListItems = sorted.slice().reverse().map(r => `<li>${escapeHtml(r.siteName)} (${escapeHtml(r.grade)})</li>`).join('');
 
             const area = document.getElementById('result-area');
             area.innerHTML = `
@@ -685,8 +703,8 @@
                 </div>
 
                 <div class="section-title">현장별 종합점수</div>
-                <div class="chart-box tall" id="site-chart-box" style="height:${Math.max(320, sorted.length * 40)}px;"><canvas id="site-chart"></canvas></div>
-                <p class="note">${escapeHtml(siteList)}</p>
+                <div class="chart-box tall" id="site-chart-box" style="height:${Math.max(320, sorted.length * 58)}px;"><canvas id="site-chart"></canvas></div>
+                <ul class="site-list-note">${siteListItems}</ul>
 
                 <div class="section-title">PDCA 관리사이클 이행 수준 (10점 만점)</div>
                 <div class="chart-box"><canvas id="pdca-chart"></canvas></div>
