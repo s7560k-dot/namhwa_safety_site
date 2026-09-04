@@ -308,6 +308,24 @@
             white-space: nowrap;
         }
 
+        /* 안전보건팀 성과 지표: 상단(제목+연간 중점과제 4개+로고) + 분기별 성과 분석 카드 4개.
+           카드 텍스트는 exec-summary-display와 동일하게 contenteditable로 직접 수정 가능. */
+        .tp-section { margin-top: 14px; }
+        .tp-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+        .tp-title { font-size: 1.5em; font-weight: 800; color: #1a237e; margin: 0 0 10px; line-height: 1.3; }
+        .tp-goals { margin: 0; padding-left: 18px; color: #444; font-size: 0.9em; line-height: 1.8; }
+        .tp-logo { height: 40px; flex-shrink: 0; }
+        .tp-subtitle {
+            font-weight: bold; font-size: 1.05em; color: #333;
+            margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #3949ab;
+        }
+        .tp-cards { display: flex; flex-direction: column; gap: 12px; cursor: text; }
+        .tp-cards:empty:before { content: attr(data-placeholder); color: #999; }
+        .tp-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; background-color: #fafbff; }
+        .tp-card-title { font-weight: bold; color: #1a237e; margin-bottom: 6px; }
+        .tp-card p { margin: 4px 0; font-size: 0.88em; line-height: 1.6; color: #444; }
+        .tp-card p strong { color: #222; }
+
         #exec-summary-display {
             padding: 15px;
             border: 1px solid #ddd;
@@ -431,6 +449,15 @@
             .grade-badge { font-size: 9.5pt !important; }
 
             #exec-summary-display { font-size: 11pt !important; line-height: 1.6 !important; }
+
+            .tp-section { page-break-inside: avoid; margin-top: 10px !important; }
+            .tp-title { font-size: 16pt !important; }
+            .tp-goals { font-size: 9.5pt !important; }
+            .tp-logo { height: 30px !important; }
+            .tp-subtitle { font-size: 11pt !important; margin: 12px 0 8px !important; }
+            .tp-card { page-break-inside: avoid; padding: 8px 12px !important; }
+            .tp-card-title { font-size: 10pt !important; }
+            .tp-card p { font-size: 8.5pt !important; }
         }
     </style>
 </head>
@@ -1028,6 +1055,74 @@
         // 원형 퍼센트 링으로 이루어진 목록형 UI로 표시한다(요청하신 참고 이미지와 동일한
         // 구성). 순수 HTML/SVG라서 인쇄 시에도 차트처럼 별도 이미지 캡처가 필요 없다.
         const CATEGORY_RATE_COLORS = ['#fb8c00', '#8bc34a', '#43a047', '#00897b', '#00acc1', '#039be5', '#3949ab'];
+        // 안전보건팀의 연간 고정 중점 추진 과제(4개) — 데이터가 아니라 조직의 방침이므로
+        // 분기와 무관하게 항상 동일하게 표시한다.
+        const TEAM_PERFORMANCE_GOALS = [
+            '관리감독자 업무 활동성 강화',
+            '사전 위험성평가로 유해위험요인 관리',
+            '협력사 안전관리 지원체계 강화',
+            '작업표준/안전지침 정립'
+        ];
+
+        // 위 4개 중점 과제별 "성과 분석/주요 과제" — 실제 점검 데이터를 근거로 작성해야 하므로
+        // 분기마다 새로 작성이 필요하다. 아직 작성되지 않은 분기는 카드 영역에 안내 문구만
+        // 표시하고, 담당자가 직접 입력하거나 요청 시 채워 넣을 수 있도록 contenteditable로 둔다.
+        // '2026-3분기' 값은 2026년 3분기 시스템점검 데이터(카테고리별 달성률·criticalIssues)를
+        // 근거로 작성됨.
+        const TEAM_PERFORMANCE_PRESET = {
+            '2026-3분기': [
+                {
+                    title: '관리감독자 업무 활동성 강화',
+                    analysis: '안전보건관리책임자 등 업무수행 평가 절차 항목은 이번 분기 달성률 73.8%로 7개 평가 절차 중 중간 수준을 유지했습니다. 구례 촌스데이하우스에서는 도급업체 대상 산재예방 조치 점검 내용이 미흡하게 확인되었고, 대광새마을금고 골프연습장 현장에서는 현장관리책임자의 승인이 인감이 아닌 자필서명으로 이뤄져야 한다는 지적이 있었습니다.',
+                    task: '현장관리책임자·안전관리자의 승인·서명 절차를 표준화하고, 도급업체 대상 산재예방 조치 점검을 정례화하여 관리감독자의 실질적인 현장 통제력을 강화해야 합니다.'
+                },
+                {
+                    title: '사전 위험성평가로 유해위험요인 관리',
+                    analysis: '이번 분기 점검에서 가장 많은 지적이 집중된 영역입니다. "종사자 의견 청취 절차"의 세부항목인 아차사고 발굴 및 개선활동에서 점검 대상 7개 현장 중 4개 현장(25-A-00부대, 대광새마을금고, 수원 권선동, 23-U-세탁소)이 지적을 받았고, 이 중 3개 현장은 위험성평가를 근간으로 한 아차사고 발굴 활동 자체가 미흡하다는 공통된 문제가 확인되었습니다.',
+                    task: '위험성평가 결과와 아차사고 발굴·개선활동을 연계하는 절차를 현장별로 재정비하고, 작업 전 점검·교육과 위험성평가의 실질적 연동을 강화해야 합니다.'
+                },
+                {
+                    title: '협력사 안전관리 지원체계 강화',
+                    analysis: '협력사 수준관리 절차의 달성률은 68.3%로 7개 카테고리 중 두 번째로 낮은 수준입니다. 23-U-세탁소 신축 시설공사에서 협력사 산업안전보건관리비 집행 내역에 대한 증빙이 확인되지 않아 지적되었습니다.',
+                    task: '협력사별 안전관리비 집행 내역을 분기 단위로 수합·점검하는 체계를 구축하고, 집행 증빙 제출을 정례화해야 합니다.'
+                },
+                {
+                    title: '작업표준/안전지침 정립',
+                    analysis: '안전보건관계 법령 등 이행관리 절차는 76.8%로 7개 카테고리 중 가장 높은 달성률을 기록했으나, 25-A-00부대 시설공사에서는 유해위험작업 작업계획서에 사전조사 내용·장비이동경로·지반상태 등 법정 필수 기재사항이 누락되었고, 23-U-세탁소에서는 협력사를 포함한 현장 구성원의 개인보호구 지급 내용이 확인되지 않았습니다.',
+                    task: '작업계획서 표준 양식에 법정 필수 기재항목 체크리스트를 반영하고, 개인보호구 지급·관리대장을 통해 지급 이력을 추적할 수 있도록 개선해야 합니다.'
+                }
+            ]
+        };
+
+        function renderTeamPerformance(year, quarter) {
+            const preset = TEAM_PERFORMANCE_PRESET[`${year}-${quarter}`];
+            const cardsHtml = preset
+                ? preset.map((c, i) => `
+                    <div class="tp-card">
+                        <div class="tp-card-title">${i + 1}. ${escapeHtml(c.title)}</div>
+                        <p><strong>분석:</strong> ${escapeHtml(c.analysis)}</p>
+                        <p><strong>주요 과제:</strong> ${escapeHtml(c.task)}</p>
+                    </div>`).join('')
+                : '';
+            const placeholder = preset ? '' : `이 분기의 성과 분석은 아직 작성되지 않았습니다. 직접 입력하시거나, 요청 주시면 그 분기 데이터를 근거로 작성해 드립니다.`;
+
+            const goalsHtml = TEAM_PERFORMANCE_GOALS.map(g => `<li>${escapeHtml(g)}</li>`).join('');
+
+            return `
+                <div class="tp-section">
+                    <div class="tp-header">
+                        <div>
+                            <h2 class="tp-title">${escapeHtml(year)}년 안전보건팀 성과 지표</h2>
+                            <ul class="tp-goals">${goalsHtml}</ul>
+                        </div>
+                        <img class="tp-logo" src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true" alt="회사 로고" onerror="this.style.display='none'">
+                    </div>
+                    <div class="tp-subtitle">${escapeHtml(quarter)} 점검 결과 성과 분석</div>
+                    <div class="tp-cards" id="tp-cards-display" contenteditable="true" data-placeholder="${escapeHtml(placeholder)}">${cardsHtml}</div>
+                </div>
+            `;
+        }
+
         function renderCategoryRateList(categoryAchievement) {
             const r = 24;
             const circumference = 2 * Math.PI * r;
@@ -1143,6 +1238,8 @@
                 <div class="section-title">PDCA 관리사이클 이행 수준 (10점 만점)</div>
                 <div class="chart-box"><canvas id="pdca-chart"></canvas></div>
                 <p class="note">※ 방침목표(종합)=Plan/Do/Check/Action 4개 축의 평균 / Plan(계획수립)=의견청취·비상대응·협력사관리 / Do(법령이행·책임자업무)=관리책임자 업무수행+법령이행 / Check(현장확인점검)=현장점검표 / Action(환류활동)=시스템 평가 및 개선 / 점선은 우리사 목표 기준(8점대)입니다.</p>
+
+                ${renderTeamPerformance(year, quarter)}
 
                 <div class="section-title">전사 카테고리별 달성률 (시스템점검 기준)</div>
                 ${renderCategoryRateList(categoryAchievement)}
