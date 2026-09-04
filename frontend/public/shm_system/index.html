@@ -614,6 +614,39 @@
                 <th>작성부서</th>
                 <td><input type="text" class="input-text" value="안전보건팀"></td>
             </tr>
+            <tr>
+                <th>지역(시/도)</th>
+                <td>
+                    <select id="site-region-select" class="input-text">
+                        <option value="">선택</option>
+                        <option value="서울">서울</option>
+                        <option value="부산">부산</option>
+                        <option value="대구">대구</option>
+                        <option value="인천">인천</option>
+                        <option value="광주">광주</option>
+                        <option value="대전">대전</option>
+                        <option value="울산">울산</option>
+                        <option value="세종">세종</option>
+                        <option value="경기">경기</option>
+                        <option value="강원">강원</option>
+                        <option value="충북">충북</option>
+                        <option value="충남">충남</option>
+                        <option value="전북">전북</option>
+                        <option value="전남">전남</option>
+                        <option value="경북">경북</option>
+                        <option value="경남">경남</option>
+                        <option value="제주">제주</option>
+                    </select>
+                </td>
+                <th>공종</th>
+                <td>
+                    <select id="site-type-select" class="input-text">
+                        <option value="">선택</option>
+                        <option value="건축">건축</option>
+                        <option value="토목">토목</option>
+                    </select>
+                </td>
+            </tr>
         </table>
 
         <div class="side-by-side-section">
@@ -880,6 +913,8 @@
                     checkDate: checkDate,
                     progress: document.querySelector('.progress-input').value,
                     department: document.querySelector('.header-table tr:nth-child(2) td:nth-child(4) input').value,
+                    region: document.getElementById('site-region-select').value,
+                    constructionType: document.getElementById('site-type-select').value,
                     evaluators: {
                         manager: document.querySelectorAll('.header-table td input[placeholder*="현장소장"]')[0]?.value || '',
                         safetyManager: document.querySelectorAll('.header-table td input[placeholder*="안전관리자"]')[0]?.value || '',
@@ -1019,6 +1054,12 @@
 
                 const deptEl = document.querySelector('.header-table tr:nth-child(2) td:nth-child(4) input');
                 if (deptEl) deptEl.value = data.headerInfo.department || '';
+
+                const regionEl = document.getElementById('site-region-select');
+                if (regionEl) regionEl.value = data.headerInfo.region || '';
+
+                const typeEl = document.getElementById('site-type-select');
+                if (typeEl) typeEl.value = data.headerInfo.constructionType || '';
 
                 const hmInput = document.querySelectorAll('.header-table td input[placeholder*="현장소장"]')[0];
                 if (hmInput) hmInput.value = data.headerInfo.evaluators?.manager || '';
