@@ -711,12 +711,11 @@
             });
             const listHtml = Object.entries(byRegion).map(([region, pins]) => {
                 const items = pins.map(p => {
-                    // 진행중은 굳이 표시하지 않고, 준공 등 그 외 상태만 공종 옆에 덧붙인다.
-                    const typeLabel = p.status && p.status !== '진행중'
-                        ? `${p.constructionType}, ${p.status}`
-                        : p.constructionType;
+                    // 진행중은 굳이 표시하지 않고, 준공/착공 등 그 외 상태만 "(공종)_상태" 형태로
+                    // 공종 표기 뒤에 덧붙인다.
+                    const statusSuffix = p.status && p.status !== '진행중' ? `_${escapeHtml(p.status)}` : '';
                     const noteHtml = p.locationNote ? ` - ${escapeHtml(p.locationNote)}` : '';
-                    return `<li><span class="site-map-badge" style="color:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}">${circledNumber(p.number)}</span>${escapeHtml(p.siteName)} (${escapeHtml(typeLabel)})${noteHtml}</li>`;
+                    return `<li><span class="site-map-badge" style="color:${CONSTRUCTION_TYPE_COLOR[p.constructionType]}">${circledNumber(p.number)}</span>${escapeHtml(p.siteName)}(${escapeHtml(p.constructionType)})${statusSuffix}${noteHtml}</li>`;
                 }).join('');
                 return `<div class="site-map-region-group"><strong>${escapeHtml(region)}</strong><ul>${items}</ul></div>`;
             }).join('');
