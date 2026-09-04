@@ -339,10 +339,15 @@
             .photo-log-card { page-break-inside: avoid; }
             .photo-log-caption { font-size: 8.5pt !important; padding: 6px 8px !important; }
 
-            .site-map-wrap { page-break-inside: avoid; gap: 14px !important; }
-            .site-map-svg { width: 170px !important; }
-            .site-map-legend { font-size: 9.5pt !important; margin-bottom: 8px !important; }
-            .site-map-list { font-size: 9pt !important; grid-template-columns: repeat(2, 1fr) !important; }
+            /* 토목·건축공사 현황 지도는 1페이지 전체를 차지하도록 키우고, 바로 다음 섹션
+               (핵심 지표, page-break-before-print 클래스)을 2페이지로 넘긴다. */
+            .site-map-wrap { page-break-inside: avoid; gap: 30px !important; align-items: center !important; margin-top: 20px !important; }
+            .site-map-svg { width: 340px !important; }
+            .site-map-legend { font-size: 14pt !important; gap: 28px !important; margin-bottom: 20px !important; }
+            .site-map-dot { width: 13px !important; height: 13px !important; }
+            .site-map-list { font-size: 11.5pt !important; grid-template-columns: repeat(2, 1fr) !important; gap: 14px 22px !important; }
+            .site-map-region-group li { margin-bottom: 5px !important; }
+            .page-break-before-print { page-break-before: always; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
                들어가 있다(refreshPrintImage). 화면↔인쇄 전환은 여기 CSS만으로 처리 — JS가
@@ -953,7 +958,7 @@
                 ${renderSiteMap(siteMap)}
                 ` : ''}
 
-                <div class="section-title">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
+                <div class="section-title${siteMap.pins.length > 0 ? ' page-break-before-print' : ''}">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
                 <div class="kpi-grid">
                     <div class="kpi-card"><div class="value">${stats.avgScore.toFixed(1)}</div><div class="label">전사 평균점수</div></div>
                     <div class="kpi-card grade-good"><div class="value">${stats.gradeCounts.양호}</div><div class="label">양호 현장</div></div>
