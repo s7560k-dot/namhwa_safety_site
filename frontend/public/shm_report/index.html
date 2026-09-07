@@ -62,19 +62,22 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            text-align: center;
-            color: #1a237e;
-            margin-bottom: 4px;
+        /* 표지(1페이지): 진한 파란 바탕 카드 안에 흰색 라운드 카드를 겹쳐 놓고, 우측 상단에
+           로고, 가운데에 큰 제목/부제, 하단에 담당자·날짜·팀을 배치한다. 제목/부제/하단 정보는
+           분기마다 바뀌므로 exec-summary-display와 동일하게 contenteditable로 직접 수정 가능. */
+        .report-cover { background-color: #3f6df6; border-radius: 20px; padding: 14px; margin-top: 6px; box-sizing: border-box; }
+        .report-cover-inner {
+            background-color: #fff; border-radius: 14px; padding: 40px 30px;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+            min-height: 460px; text-align: center; box-sizing: border-box;
         }
-
-        /* 회사 로고: 1페이지 제목 우측 상단에 배치. 로고 원본 비율이 가로로 매우 길어서
-           (400x65) 단순히 h1 옆에 절대배치하면 폭이 넓어 제목과 겹친다. 좌우에 로고 폭만큼
-           빈 칸을 둔 3열 그리드로 만들어 h1은 페이지 중앙에 그대로 남고 로고만 우측 끝에
-           오도록 한다. */
-        .report-header { display: grid; grid-template-columns: 180px 1fr 180px; align-items: center; }
-        .report-header h1 { grid-column: 2; }
-        .report-logo { grid-column: 3; justify-self: end; height: 28px; }
+        .report-cover-header { align-self: flex-end; display: flex; align-items: center; gap: 8px; }
+        .report-cover-header span { font-weight: 800; color: #1a237e; font-size: 0.95em; }
+        .report-cover-logo { height: 24px; }
+        .report-cover-body { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 14px; }
+        .report-cover-title { font-size: 2.1em; font-weight: 800; color: #3355dd; margin: 0; line-height: 1.35; outline: none; }
+        .report-cover-subtitle { font-size: 0.95em; color: #666; margin: 0; outline: none; }
+        .report-cover-footer { font-size: 0.85em; font-weight: 700; color: #3355dd; outline: none; }
 
         .subtitle {
             text-align: center;
@@ -201,11 +204,16 @@
             gap: 16px;
         }
         .photo-log-card {
+            position: relative;
             border: 1px solid #ddd;
             border-radius: 6px;
             overflow: hidden;
             background-color: #fafafa;
         }
+        /* 2열 격자에서 사진이 딱 1장뿐일 때, 그 한 장이 옆 빈 칸 없이 두 칸을 모두
+           차지하도록 한다(사진대지 전 섹션 공통). */
+        .photo-log-card.full-width { grid-column: 1 / -1; }
+        .photo-log-card.full-width .photo-log-img { aspect-ratio: 16 / 9; }
         .photo-log-img {
             display: block;
             width: 100%;
@@ -222,6 +230,21 @@
         .photo-log-site { font-weight: bold; color: #333; }
         .photo-log-cat { color: #555; }
         .photo-log-comment { color: #777; margin-top: 2px; }
+
+        /* 현장 전경(1장) + 안전보건팀 점검·교육 사진(여러 장): sh_check 지적사항 사진과는
+           별개로 관리자가 직접 올리고 지우는 갤러리이지만, 지적사항 사진대지와 완전히 같은
+           카드 모양(.photo-log-card/.photo-log-grid)을 그대로 재사용해 시각적으로 통일하고
+           인쇄 시 2열 배치 규칙도 그대로 물려받는다. 아래는 그 위에 얹는 추가 요소만 정의한다. */
+        .site-photo-delete-btn {
+            position: absolute; top: 5px; right: 5px; padding: 3px 8px; font-size: 0.7em; font-weight: 600;
+            border: 1px solid #ffcdd2; border-radius: 5px; background-color: #fdecea; color: #c62828; cursor: pointer;
+        }
+        .site-photo-add-card {
+            aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; text-align: center;
+            border: 2px dashed #bbb; color: #888; font-size: 0.8em; font-weight: 600;
+            cursor: pointer; padding: 8px; box-sizing: border-box;
+        }
+        .site-photo-add-card:hover { border-color: #3949ab; color: #3949ab; background-color: #f5f6fd; }
 
         /* 전사 카테고리별 달성률: 번호 배지 + 카테고리명 + 점선 + 원형 퍼센트 링으로 된
            목록형 UI. 차트가 아니라 순수 HTML/SVG라서 인쇄 시에도 그대로 렌더링된다. */
@@ -417,23 +440,37 @@
             body, html {
                 margin: 0 !important; padding: 0 !important; background-color: #fff !important;
                 -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
-                font-size: 11pt !important; line-height: 1.5 !important;
+                font-size: 12pt !important; line-height: 1.55 !important;
             }
             .container { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 auto !important; width: 100% !important; max-width: 100% !important; }
             .no-print { display: none !important; }
 
             /* 가독성을 위한 인쇄 전용 크기 재조정: 세로 레이아웃은 landscape보다 폭이 좁아지므로
-               KPI 카드는 6열→3열(2행)로, 차트는 폭 대비 과도하게 눌리지 않도록 높이를 낮춘다. */
-            h1 { font-size: 20pt !important; margin-bottom: 6px !important; }
-            .report-header { grid-template-columns: 130px 1fr 130px !important; }
-            .report-logo { height: 20px !important; }
-            .subtitle { font-size: 10pt !important; }
-            .section-title { font-size: 13.5pt !important; margin-top: 22px !important; margin-bottom: 10px !important; page-break-after: avoid; }
+               KPI 카드는 6열→3열(2행)로, 차트는 폭 대비 과도하게 눌리지 않도록 높이를 낮춘다.
+               (전체적으로 텍스트 크기를 최대한 키우고, 카드/표의 padding·간격도 함께 늘려
+               페이지 하단에 빈 여백이 뭉치지 않도록 조정했다.) */
+            .subtitle { font-size: 11pt !important; }
 
-            .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
-            .kpi-card { padding: 10px 6px !important; page-break-inside: avoid; }
-            .kpi-card .value { font-size: 16pt !important; }
-            .kpi-card .label { font-size: 9pt !important; }
+            /* 표지는 항상 1페이지 전체를 차지하고, 바로 다음 섹션(지도 또는 핵심 지표)이
+               2페이지부터 시작하도록 페이지를 나눈다. */
+            /* box-sizing: border-box이므로 padding이 height 안에 포함된다 — 인쇄 가능 영역
+               높이(297mm - 위 25mm - 아래 10mm = 262mm)에 맞춰 고정 height를 주면, 안쪽
+               카드가 padding을 아무리 늘려도 항상 정확히 한 페이지 안에 들어간다.
+               (이전에 min-height만 주고 padding은 별도로 더해지는 content-box 기본값 때문에
+               카드가 262mm를 넘어서 다음 페이지로 잘려 넘어가는 문제가 있었다.) */
+            .report-cover { page-break-after: always; margin-top: 0 !important; padding: 10px !important; height: 258mm !important; box-sizing: border-box !important; }
+            .report-cover-inner { height: 100% !important; min-height: 0 !important; padding: 50px 30px !important; }
+            .report-cover-header span { font-size: 12pt !important; }
+            .report-cover-logo { height: 22px !important; }
+            .report-cover-title { font-size: 30pt !important; }
+            .report-cover-subtitle { font-size: 13pt !important; }
+            .report-cover-footer { font-size: 11.5pt !important; }
+            .section-title { font-size: 15pt !important; margin-top: 26px !important; margin-bottom: 13px !important; page-break-after: avoid; }
+
+            .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }
+            .kpi-card { padding: 13px 8px !important; page-break-inside: avoid; }
+            .kpi-card .value { font-size: 19pt !important; }
+            .kpi-card .label { font-size: 10.5pt !important; }
 
             /* .chart-box.tall(현장별 종합점수)은 현장 수에 따라 렌더링 시 인라인 height가 계산되므로
                여기서 고정값으로 덮어쓰지 않는다 — 인쇄는 그 시점에 캡처해 둔 정적 이미지를 그대로
@@ -442,27 +479,35 @@
                인라인 height) 계산식에서 늘려야 하므로 그쪽에서 처리한다. */
             .chart-box:not(.tall) { height: 230px !important; page-break-inside: avoid; }
             .chart-box.tall { page-break-inside: avoid; }
-            .note { font-size: 9pt !important; }
-            .site-list-note { font-size: 10pt !important; }
-            .site-list-note li { padding: 4px 0 !important; }
+            .note { font-size: 10pt !important; }
+            .site-list-note { font-size: 11pt !important; }
+            .site-list-note li { padding: 5px 0 !important; }
             /* page-break-inside: avoid를 목록 전체(.detail-list)가 아니라 카테고리별 그룹
                (.detail-group) 단위로 걸어둔다. 전체 목록에 걸어두면 페이지에 절반만 들어가도
                목록 전체가 통째로 다음 페이지로 밀려나면서 현재 페이지 하단에 큰 여백이 남고
                다음 페이지도 그만큼 내용이 밀리는 문제가 있었다. 그룹 단위로 좁히면 들어갈
                수 있는 그룹까지는 현재 페이지를 채우고, 넘치는 그룹만 다음 페이지로 넘어간다. */
-            .cat-rate-row { padding: 5px 10px !important; gap: 8px !important; page-break-inside: avoid; }
-            .cat-rate-badge { width: 20px !important; height: 20px !important; font-size: 8.5pt !important; }
-            .cat-rate-name { font-size: 9.5pt !important; }
-            .cat-rate-ring { width: 30px !important; height: 30px !important; }
-            .cat-rate-pct { font-size: 7.5pt !important; }
+            .cat-rate-list { border-color: #999 !important; }
+            .cat-rate-row { padding: 7px 12px !important; gap: 10px !important; page-break-inside: avoid; }
+            .cat-rate-badge { width: 24px !important; height: 24px !important; font-size: 9.5pt !important; }
+            .cat-rate-name { font-size: 11pt !important; }
+            .cat-rate-ring { width: 36px !important; height: 36px !important; }
+            .cat-rate-pct { font-size: 8.5pt !important; }
 
-            .detail-list { grid-template-columns: 1fr !important; gap: 6px !important; }
-            .detail-group { font-size: 9pt !important; page-break-inside: avoid; }
+            .detail-list { grid-template-columns: 1fr !important; gap: 8px !important; }
+            .detail-group { font-size: 10.5pt !important; page-break-inside: avoid; }
 
-            /* 사진대지 카드도 그룹과 동일하게 카드 단위로 페이지가 넘어가도록 한다. */
-            .photo-log-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-            .photo-log-card { page-break-inside: avoid; }
-            .photo-log-caption { font-size: 8.5pt !important; padding: 6px 8px !important; }
+            /* 사진대지(지적사항 사진대지·점검 사진대지·현장전경/안전보건팀 사진 등 모든
+               .photo-log-grid 섹션)는 항상 2열×n행으로 고정한다 — 이전에는 auto-fit으로
+               사진이 1장뿐이면 폭 전체를 채우도록 했으나, 섹션마다 레이아웃이 들쭉날쭉해
+               보이는 문제가 있어 모든 사진대지를 같은 2열 격자로 통일했다. 사진이 홀수개면
+               마지막 줄의 남은 한 칸만 비고, 카드 자체 크기는 항상 일정하다. */
+            .photo-log-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }
+            /* 연한 회색(#ddd/#eee) 테두리는 실제 인쇄(또는 PDF 저장)에서 거의 안 보일 만큼
+               흐리게 나오므로, 카드형 박스들은 인쇄용으로 더 진한 회색으로 덮어써 테두리가
+               또렷하게 보이도록 한다. */
+            .photo-log-card { page-break-inside: avoid; border-color: #999 !important; }
+            .photo-log-caption { font-size: 10pt !important; padding: 8px 10px !important; line-height: 1.5 !important; }
 
             /* 토목·건축공사 현황 지도는 1페이지 전체를 차지하도록 키우고, 바로 다음 섹션
                (핵심 지표, page-break-before-print 클래스)을 2페이지로 넘긴다. 지도는 페이지
@@ -470,13 +515,13 @@
             .site-map-wrap { page-break-inside: avoid; flex-direction: column !important; gap: 22px !important; margin-top: 20px !important; }
             .site-map-svg { width: 400px !important; }
             .site-map-side { max-width: 100% !important; }
-            .site-map-legend { font-size: 14pt !important; justify-content: center !important; gap: 28px !important; margin-bottom: 20px !important; }
+            .site-map-legend { font-size: 15pt !important; justify-content: center !important; gap: 28px !important; margin-bottom: 20px !important; }
             .site-map-dot { width: 13px !important; height: 13px !important; }
             /* 현장 수가 늘면서(준공/위치 텍스트 포함) 11.5pt·2열로는 인쇄 폭(190mm)에 다 안
-               들어가 1열로 떨어지며 세로 길이가 페이지를 넘기는 문제가 있어, 8.5pt·2열로
+               들어가 1열로 떨어지며 세로 길이가 페이지를 넘기는 문제가 있어, 9.5pt·2열로
                조정해 줄바꿈 없이 2열을 유지하면서 세로 길이도 줄인다. */
-            .site-map-list { font-size: 8.5pt !important; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)) !important; gap: 10px 18px !important; }
-            .site-map-region-group li { margin-bottom: 5px !important; }
+            .site-map-list { font-size: 9.5pt !important; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)) !important; gap: 12px 18px !important; }
+            .site-map-region-group li { margin-bottom: 6px !important; }
             .page-break-before-print { page-break-before: always; }
 
             /* 인쇄용 이미지(<img class="print-chart-img">)는 차트가 만들어질 때 이미 DOM에
@@ -489,31 +534,37 @@
                 object-fit: contain !important;
             }
 
-            table.site-table { font-size: 10pt !important; }
-            table.site-table th, table.site-table td { padding: 6px 8px !important; }
-            .grade-badge { font-size: 9.5pt !important; }
+            table.site-table { font-size: 11pt !important; }
+            table.site-table th, table.site-table td { padding: 7px 9px !important; }
+            .grade-badge { font-size: 10.5pt !important; }
 
+            /* 현장별 개요 페이지: 표·목표·시정예방 지시·사진대지 모두 텍스트를 크게
+               키우고 padding·줄간격도 함께 넉넉히 늘려, 지적사항이 적은 현장의 페이지
+               하단에도 빈 여백이 뭉치지 않고 자연스럽게 채워지도록 한다. */
+            .site-page { margin-top: 14px !important; }
             .site-ov-table th, .site-ov-table td,
-            .site-ov-org-table th, .site-ov-org-table td { font-size: 8pt !important; padding: 4px 6px !important; }
-            .site-ov-org-title { font-size: 7.5pt !important; padding: 3px 8px !important; }
-            .deficiency-list li { font-size: 9pt !important; margin-bottom: 5px !important; }
+            .site-ov-org-table th, .site-ov-org-table td { font-size: 10.5pt !important; padding: 7px 10px !important; }
+            .site-ov-org-title { font-size: 10pt !important; padding: 6px 10px !important; }
+            .deficiency-list { padding-left: 26px !important; }
+            .deficiency-list li { font-size: 11pt !important; margin-bottom: 10px !important; line-height: 1.6 !important; }
 
-            .site-goal-card { page-break-inside: avoid; padding: 10px 16px !important; }
-            .site-goal-title { font-size: 12pt !important; }
-            .site-goal-sitename { font-size: 8.5pt !important; }
-            .site-goal-simple-list li { padding: 6px 0 !important; }
-            .site-goal-caption-title { font-size: 9pt !important; }
-            .site-goal-detail { font-size: 8pt !important; }
+            .site-goal-card { page-break-inside: avoid; padding: 16px 22px !important; border-color: #999 !important; }
+            .site-goal-title { font-size: 15pt !important; }
+            .site-goal-sitename { font-size: 10.5pt !important; }
+            .site-goal-simple-list li { padding: 11px 0 !important; gap: 14px !important; }
+            .site-goal-num { width: 26px !important; height: 26px !important; font-size: 10pt !important; }
+            .site-goal-caption-title { font-size: 11.5pt !important; }
+            .site-goal-detail { font-size: 10.5pt !important; line-height: 1.6 !important; }
 
-            #exec-summary-display { font-size: 11pt !important; line-height: 1.6 !important; }
+            #exec-summary-display { font-size: 12pt !important; line-height: 1.7 !important; border: 1.5px solid #888 !important; }
 
             .tp-section { page-break-inside: avoid; margin-top: 10px !important; }
-            .tp-title { font-size: 16pt !important; }
-            .tp-goals { font-size: 9.5pt !important; }
-            .tp-subtitle { font-size: 11pt !important; margin: 12px 0 8px !important; }
-            .tp-card { page-break-inside: avoid; padding: 8px 12px !important; }
-            .tp-card-title { font-size: 10pt !important; }
-            .tp-card p { font-size: 8.5pt !important; }
+            .tp-title { font-size: 17pt !important; }
+            .tp-goals { font-size: 11pt !important; line-height: 1.9 !important; }
+            .tp-subtitle { font-size: 12.5pt !important; margin: 14px 0 9px !important; }
+            .tp-card { page-break-inside: avoid; padding: 10px 14px !important; border-color: #999 !important; }
+            .tp-card-title { font-size: 11.5pt !important; }
+            .tp-card p { font-size: 10pt !important; }
         }
     </style>
 </head>
@@ -521,11 +572,6 @@
 <body>
 
     <div class="container" id="main-content">
-        <div class="report-header">
-            <h1>전사 안전보건 분기 보고서</h1>
-            <img class="report-logo" src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true" alt="회사 로고" onerror="this.style.display='none'">
-        </div>
-
         <div class="search-bar no-print">
             <label for="year-search">년도</label>
             <select id="year-search"></select>
@@ -577,7 +623,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
@@ -589,6 +636,7 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         const CATEGORY_NAMES = [
             "1. 안전보건경영 방침 및 목표관리 절차",
@@ -775,6 +823,79 @@
                 console.error('현장 현황판(site_roster) 로드 실패:', e);
                 return [];
             }
+        }
+
+        // 현장 전경 / 안전보건팀 점검·교육 사진: sh_check가 지적사항 사진을 올릴 때 쓰는 것과
+        // 동일한 방식(Firebase Storage에 data URL로 업로드 후 다운로드 URL 획득)을 재사용한다.
+        // 저장 위치는 site_roster 문서의 해당 현장 항목(overviewPhoto/teamPhotos)이며,
+        // 지적사항 기반의 "점검 사진대지"와는 완전히 별개로 관리자가 직접 올리고 지운다.
+        function sanitizeForStoragePath(name) {
+            return String(name).replace(/[^\w가-힣]+/g, '_');
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error || new Error('파일을 읽을 수 없습니다.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function uploadSitePhotoFile(siteName, file, kind) {
+            const dataUrl = await readFileAsDataURL(file);
+            const rand = Math.random().toString(36).slice(2, 8);
+            const path = `sites/site_gallery/${sanitizeForStoragePath(siteName)}/${kind}_${Date.now()}_${rand}.jpg`;
+            const storageRef = ref(storage, path);
+            await uploadString(storageRef, dataUrl, 'data_url');
+            return await getDownloadURL(storageRef);
+        }
+
+        // site_roster 문서 전체를 읽어 특정 현장 항목만 수정한 뒤 배열 전체를 다시 저장한다
+        // (Firestore는 배열 내부 한 항목만 골라 patch할 수 없어 항상 배열째로 다시 써야 한다).
+        async function updateSiteRosterEntry(siteName, mutateFn) {
+            const rosterRef = doc(db, "metadata", "site_roster");
+            const snap = await getDoc(rosterRef);
+            const sites = snap.exists() ? (snap.data().sites || []) : [];
+            const idx = sites.findIndex(s => s.siteName === siteName);
+            if (idx === -1) throw new Error(`현장 현황판에서 "${siteName}"을(를) 찾을 수 없습니다.`);
+            mutateFn(sites[idx]);
+            await updateDoc(rosterRef, { sites });
+        }
+
+        async function refreshReportAfterPhotoChange() {
+            const state = window.__reportState;
+            if (!state) return;
+            await renderReport(state.year, state.quarter, state.results);
+        }
+
+        async function handleOverviewPhotoUpload(siteName, file) {
+            const url = await uploadSitePhotoFile(siteName, file, 'overview');
+            await updateSiteRosterEntry(siteName, (site) => { site.overviewPhoto = url; });
+            await refreshReportAfterPhotoChange();
+        }
+
+        async function handleOverviewPhotoDelete(siteName) {
+            await updateSiteRosterEntry(siteName, (site) => { delete site.overviewPhoto; });
+            await refreshReportAfterPhotoChange();
+        }
+
+        async function handleTeamPhotosUpload(siteName, files) {
+            for (const file of files) {
+                const url = await uploadSitePhotoFile(siteName, file, 'team');
+                await updateSiteRosterEntry(siteName, (site) => {
+                    if (!site.teamPhotos) site.teamPhotos = [];
+                    site.teamPhotos.push({ url, caption: '' });
+                });
+            }
+            await refreshReportAfterPhotoChange();
+        }
+
+        async function handleTeamPhotoDelete(siteName, index) {
+            await updateSiteRosterEntry(siteName, (site) => {
+                if (site.teamPhotos) site.teamPhotos.splice(index, 1);
+            });
+            await refreshReportAfterPhotoChange();
         }
 
         // roster 항목을 지역(시/도)·공종(토목/건축)별로 묶어 지도 핀 데이터로 변환한다.
@@ -1104,10 +1225,13 @@
 
         function renderPhotoLog(photos) {
             if (photos.length === 0) return '';
+            // 사진대지는 항상 2열×n행 고정이지만, 사진이 딱 1장뿐이면 그 한 장만 두 칸을
+            // 다 차지하게(full-width) 해서 옆에 빈 칸이 남지 않도록 한다.
+            const singleCardClass = photos.length === 1 ? ' full-width' : '';
             const cards = photos.map((p, i) => {
                 const commentHtml = p.comment ? `<div class="photo-log-comment">${escapeHtml(p.comment)}</div>` : '';
                 return `
-                    <div class="photo-log-card">
+                    <div class="photo-log-card${singleCardClass}">
                         <a href="${escapeHtml(p.photoUrl)}" target="_blank" rel="noopener">
                             <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="지적사항 사진">
                         </a>
@@ -1263,6 +1387,52 @@
                 </div>`;
         }
 
+        // 현장 전경(1장) + 안전보건팀 점검·교육 사진(여러 장)을 "현장 개요" 섹션 안에서
+        // 보여준다 — sh_check 지적사항 사진(점검 사진대지)과는 완전히 별개로 관리자가 직접
+        // 올리고 지운다. 점검 사진대지와 똑같은 카드 모양(.photo-log-card: 사진 위 + 캡션
+        // 아래, 2열 그리드)을 그대로 재사용해 인쇄 시 두 장이 여백을 감안해 나란히 크게
+        // 나오도록 한다(점검 사진대지의 인쇄용 그리드 규칙을 그대로 물려받음). 사진이 없는
+        // 칸은 클릭하면 바로 파일 선택창이 뜨는 점선 카드로 대체하고, 사진이 있는 카드는
+        // 우상단에 작은 삭제 버튼만 no-print로 붙인다.
+        function renderSitePhotoGrid(siteName, overviewPhoto, teamPhotos) {
+            const photos = teamPhotos || [];
+            const siteAttr = escapeHtml(siteName);
+            // 인쇄본 기준으로 실제 사진 카드가 몇 장인지(업로드 버튼 카드는 no-print라 제외)
+            // 세어서, 딱 1장뿐이면 그 카드가 두 칸을 다 차지하도록 한다.
+            const realPhotoCount = (overviewPhoto ? 1 : 0) + photos.length;
+            const singleCardClass = realPhotoCount === 1 ? ' full-width' : '';
+
+            const overviewCard = overviewPhoto ? `
+                <div class="photo-log-card${singleCardClass}">
+                    <a href="${escapeHtml(overviewPhoto)}" target="_blank" rel="noopener">
+                        <img src="${escapeHtml(overviewPhoto)}" class="photo-log-img" alt="${siteAttr} 현장 전경">
+                    </a>
+                    <div class="photo-log-caption"><div class="photo-log-site">현장 전경</div></div>
+                    <button type="button" class="site-photo-delete-btn no-print" data-role="overview-photo-delete" data-site="${siteAttr}">삭제</button>
+                </div>` : `
+                <label class="photo-log-card site-photo-add-card no-print">
+                    <span>+ 현장 전경 등록</span>
+                    <input type="file" accept="image/*" class="site-photo-input" data-role="overview-photo" data-site="${siteAttr}" hidden>
+                </label>`;
+
+            const teamCards = photos.map((p, i) => `
+                <div class="photo-log-card${singleCardClass}">
+                    <a href="${escapeHtml(p.url)}" target="_blank" rel="noopener">
+                        <img src="${escapeHtml(p.url)}" class="photo-log-img" alt="안전보건팀 점검·교육 사진">
+                    </a>
+                    <div class="photo-log-caption"><div class="photo-log-site">안전보건팀 점검 및 교육 사진</div></div>
+                    <button type="button" class="site-photo-delete-btn no-print" data-role="team-photo-delete" data-site="${siteAttr}" data-index="${i}">삭제</button>
+                </div>`).join('');
+
+            const addCard = `
+                <label class="photo-log-card site-photo-add-card no-print">
+                    <span>+ 안전보건팀 사진 추가</span>
+                    <input type="file" accept="image/*" multiple class="site-photo-input" data-role="team-photo" data-site="${siteAttr}" hidden>
+                </label>`;
+
+            return `<div class="photo-log-grid">${overviewCard}${teamCards}${addCard}</div>`;
+        }
+
         // 현장별 개요를 현장 하나당 인쇄 페이지 한 장으로 구성한다. 각 페이지는
         // 현장 개요 → 현장 목표(있는 경우) → 시정예방 지시(데이터 준비 전까지는 안내 문구만) →
         // 점검 사진대지(있는 경우) 순으로 배치된다. 현재 시스템에 실제로 저장된 정보(현장명·
@@ -1272,7 +1442,9 @@
         function renderSitePages(results, roster) {
             if (results.length === 0) return '';
             const goalsBySite = {};
+            const rosterBySite = {};
             (roster || []).forEach(r => {
+                rosterBySite[r.siteName] = r;
                 const hasAny = r.goals && r.goals.some(g => g && (typeof g === 'string' ? g.trim() : (g.title || g.detail)));
                 if (hasAny) goalsBySite[r.siteName] = r.goals;
             });
@@ -1296,6 +1468,9 @@
                 const goals = goalsBySite[r.siteName];
                 const goalHtml = goals ? renderSiteGoalRoadmap(r.siteName, goals) : '';
 
+                const rosterEntry = rosterBySite[r.siteName] || {};
+                const sitePhotoGridHtml = renderSitePhotoGrid(r.siteName, rosterEntry.overviewPhoto || '', rosterEntry.teamPhotos || []);
+
                 // shm_corrective(시정예방조치 요구서)와 동일한 로직으로 그 자리에서 생성한다 —
                 // 별도로 저장된 시정예방지시서 문서는 없고, 저장된 점검 데이터에서 매번 다시
                 // 추려내는 방식이라 shm_corrective를 직접 열었을 때와 항상 같은 내용이 나온다.
@@ -1307,10 +1482,11 @@
                 // 사진대지는 shm_corrective와 동일하게 위 시정예방 지시 목록과 같은 항목·같은
                 // 번호로 매칭한다(지적사항 목록 중 사진이 첨부된 항목만 추려 보여줌).
                 const photoItems = deficiencyLines.map((l, i) => ({ num: i + 1, ...l })).filter(l => l.photoUrl);
+                const photoSingleClass = photoItems.length === 1 ? ' full-width' : '';
                 const photoLogHtml = photoItems.length > 0 ? `
                     <div class="photo-log-grid">
                         ${photoItems.map(p => `
-                            <div class="photo-log-card">
+                            <div class="photo-log-card${photoSingleClass}">
                                 <a href="${escapeHtml(p.photoUrl)}" target="_blank" rel="noopener">
                                     <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="점검 사진 ${p.num}">
                                 </a>
@@ -1325,6 +1501,7 @@
                     <div class="site-page page-break-before-print">
                         <div class="section-title">${escapeHtml(r.siteName)} — 현장 개요</div>
                         ${overviewHtml}
+                        ${sitePhotoGridHtml}
 
                         ${goalHtml ? `<div class="section-title">현장 목표</div>${goalHtml}` : ''}
 
@@ -1452,14 +1629,30 @@
             // 현장별로 한 줄씩 표시(인쇄 시 여백 배분을 위해 쉼표로 이어붙이지 않음).
             const siteListItems = sorted.slice().reverse().map(r => `<li>${escapeHtml(r.siteName)} (${escapeHtml(r.grade)})</li>`).join('');
 
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+
             const area = document.getElementById('result-area');
             area.innerHTML = `
+                <div class="report-cover">
+                    <div class="report-cover-inner">
+                        <div class="report-cover-header">
+                            <img class="report-cover-logo" src="https://github.com/s7560k-dot/my-image/blob/main/remove_background.webp?raw=true" alt="남화토건주식회사" onerror="this.style.display='none'">
+                        </div>
+                        <div class="report-cover-body">
+                            <h2 class="report-cover-title" contenteditable="true">${escapeHtml(quarter)} 안전보건경영 점검</h2>
+                            <p class="report-cover-subtitle" contenteditable="true">자기규율예방체계 구축, 운영 현황 보고서</p>
+                        </div>
+                        <div class="report-cover-footer" contenteditable="true">담당. 신광배 &nbsp;|&nbsp; Date. ${todayStr} &nbsp;|&nbsp; Team. 안전보건팀</div>
+                    </div>
+                </div>
+
                 ${siteMap.pins.length > 0 ? `
-                <div class="section-title">${escapeHtml(year)}년 토목·건축공사 현황</div>
+                <div class="section-title page-break-before-print">${escapeHtml(year)}년 토목·건축공사 현황</div>
                 ${renderSiteMap(siteMap)}
                 ` : ''}
 
-                <div class="section-title${siteMap.pins.length > 0 ? ' page-break-before-print' : ''}">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
+                <div class="section-title page-break-before-print">핵심 지표 (${escapeHtml(year)}년 ${escapeHtml(quarter)})</div>
                 <div class="kpi-grid">
                     <div class="kpi-card"><div class="value">${stats.avgScore.toFixed(1)}</div><div class="label">전사 평균점수</div></div>
                     <div class="kpi-card grade-good"><div class="value">${stats.gradeCounts.양호}</div><div class="label">양호 현장</div></div>
@@ -1476,6 +1669,14 @@
                 <div class="section-title">PDCA 관리사이클 이행 수준 (10점 만점)</div>
                 <div class="chart-box"><canvas id="pdca-chart"></canvas></div>
                 <p class="note">※ 방침목표(종합)=Plan/Do/Check/Action 4개 축의 평균 / Plan(계획수립)=의견청취·비상대응·협력사관리 / Do(법령이행·책임자업무)=관리책임자 업무수행+법령이행 / Check(현장확인점검)=현장점검표 / Action(환류활동)=시스템 평가 및 개선 / 점선은 우리사 목표 기준(8점대)입니다.</p>
+
+                <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>분기 종합 총평</span>
+                    <div class="no-print" style="display:flex; gap:8px;">
+                        <button id="ai-exec-btn" class="btn btn-ai" style="padding:4px 10px; font-size:0.8em;">&#9881; AI 총평 생성</button>
+                    </div>
+                </div>
+                <div id="exec-summary-display" contenteditable="true" data-placeholder="[AI 총평 생성] 버튼을 누르거나 이 영역을 직접 클릭해 입력하세요."></div>
 
                 ${renderTeamPerformance(year, quarter)}
 
@@ -1494,14 +1695,6 @@
 
                 <div class="section-title">분기별 전사 평균점수 추이 (${escapeHtml(year)}년)</div>
                 <div class="chart-box"><canvas id="trend-chart"></canvas></div>
-
-                <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
-                    <span>분기 종합 총평</span>
-                    <div class="no-print" style="display:flex; gap:8px;">
-                        <button id="ai-exec-btn" class="btn btn-ai" style="padding:4px 10px; font-size:0.8em;">&#9881; AI 총평 생성</button>
-                    </div>
-                </div>
-                <div id="exec-summary-display" contenteditable="true" data-placeholder="[AI 총평 생성] 버튼을 누르거나 이 영역을 직접 클릭해 입력하세요."></div>
 
                 <div class="section-title">현장별 상세</div>
                 <table class="site-table">
@@ -1715,6 +1908,52 @@
 
         document.getElementById('search-btn').addEventListener('click', runSearch);
         document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+        // 현장 전경 / 안전보건팀 점검·교육 사진 업로드·삭제: renderSitePages()가 매 조회마다
+        // #result-area를 통째로 새로 그리므로, 개별 버튼에 매번 리스너를 다는 대신 컨테이너
+        // 하나에 위임(delegation)해서 재렌더링 후에도 계속 동작하도록 한다.
+        document.getElementById('result-area').addEventListener('change', async (e) => {
+            const input = e.target.closest('.site-photo-input');
+            if (!input || !input.files || input.files.length === 0) return;
+            const siteName = input.dataset.site;
+            const role = input.dataset.role;
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex';
+            try {
+                if (role === 'overview-photo') {
+                    await handleOverviewPhotoUpload(siteName, input.files[0]);
+                } else if (role === 'team-photo') {
+                    await handleTeamPhotosUpload(siteName, Array.from(input.files));
+                }
+            } catch (err) {
+                console.error('사진 업로드 실패:', err);
+                alert('사진 업로드에 실패했습니다: ' + err.message);
+            } finally {
+                overlay.style.display = 'none';
+            }
+        });
+
+        document.getElementById('result-area').addEventListener('click', async (e) => {
+            const overviewDeleteBtn = e.target.closest('[data-role="overview-photo-delete"]');
+            const teamDeleteBtn = e.target.closest('[data-role="team-photo-delete"]');
+            if (!overviewDeleteBtn && !teamDeleteBtn) return;
+            const confirmMsg = overviewDeleteBtn ? '현장 전경 사진을 삭제할까요?' : '이 사진을 삭제할까요?';
+            if (!confirm(confirmMsg)) return;
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex';
+            try {
+                if (overviewDeleteBtn) {
+                    await handleOverviewPhotoDelete(overviewDeleteBtn.dataset.site);
+                } else if (teamDeleteBtn) {
+                    await handleTeamPhotoDelete(teamDeleteBtn.dataset.site, parseInt(teamDeleteBtn.dataset.index, 10));
+                }
+            } catch (err) {
+                console.error('사진 삭제 실패:', err);
+                alert('사진 삭제에 실패했습니다: ' + err.message);
+            } finally {
+                overlay.style.display = 'none';
+            }
+        });
 
         // Chart.js 캔버스는 화면 폭 기준으로 렌더링된 크기를 그대로 유지하기 때문에, 인쇄 시(세로
         // A4로 폭이 좁아짐) 캔버스 자체를 그대로 인쇄에 쓰면 오른쪽이 잘리거나 다음 섹션과 겹쳐
