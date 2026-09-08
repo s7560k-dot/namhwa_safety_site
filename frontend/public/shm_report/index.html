@@ -833,17 +833,40 @@
             return String(name).replace(/[^\w가-힣]+/g, '_');
         }
 
-        function readFileAsDataURL(file) {
+        // sh_check가 지적사항 사진을 올릴 때 쓰는 것과 동일하게, 캔버스로 리사이즈+JPEG
+        // 압축한 뒤 업로드한다. 이 단계 없이 휴대폰 원본 사진(장당 수MB)을 그대로 올리면
+        // 캐시가 없을 때(다른 기기·시크릿창·첫 방문) 보고서 로딩이 눈에 띄게 느려진다 —
+        // sh_check는 800×800/70%를 쓰지만, 이 사진은 보고서에 크게(폭 전체~절반) 인쇄되므로
+        // 화질을 위해 조금 더 큰 1200×1200/78%로 압축한다.
+        function readAndCompressImage(file, maxSize, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) {
+                            if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+                        } else {
+                            if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+                    img.src = e.target.result;
+                };
                 reader.onerror = () => reject(reader.error || new Error('파일을 읽을 수 없습니다.'));
                 reader.readAsDataURL(file);
             });
         }
 
         async function uploadSitePhotoFile(siteName, file, kind) {
-            const dataUrl = await readFileAsDataURL(file);
+            const dataUrl = await readAndCompressImage(file, 1200, 0.78);
             const rand = Math.random().toString(36).slice(2, 8);
             const path = `sites/site_gallery/${sanitizeForStoragePath(siteName)}/${kind}_${Date.now()}_${rand}.jpg`;
             const storageRef = ref(storage, path);
@@ -1233,7 +1256,7 @@
                 return `
                     <div class="photo-log-card${singleCardClass}">
                         <a href="${escapeHtml(p.photoUrl)}" target="_blank" rel="noopener">
-                            <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="지적사항 사진">
+                            <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="지적사항 사진" loading="lazy">
                         </a>
                         <div class="photo-log-caption">
                             <div class="photo-log-no">사진 ${i + 1}</div>
@@ -1405,7 +1428,7 @@
             const overviewCard = overviewPhoto ? `
                 <div class="photo-log-card${singleCardClass}">
                     <a href="${escapeHtml(overviewPhoto)}" target="_blank" rel="noopener">
-                        <img src="${escapeHtml(overviewPhoto)}" class="photo-log-img" alt="${siteAttr} 현장 전경">
+                        <img src="${escapeHtml(overviewPhoto)}" class="photo-log-img" alt="${siteAttr} 현장 전경" loading="lazy">
                     </a>
                     <div class="photo-log-caption"><div class="photo-log-site">현장 전경</div></div>
                     <button type="button" class="site-photo-delete-btn no-print" data-role="overview-photo-delete" data-site="${siteAttr}">삭제</button>
@@ -1418,7 +1441,7 @@
             const teamCards = photos.map((p, i) => `
                 <div class="photo-log-card${singleCardClass}">
                     <a href="${escapeHtml(p.url)}" target="_blank" rel="noopener">
-                        <img src="${escapeHtml(p.url)}" class="photo-log-img" alt="안전보건팀 점검·교육 사진">
+                        <img src="${escapeHtml(p.url)}" class="photo-log-img" alt="안전보건팀 점검·교육 사진" loading="lazy">
                     </a>
                     <div class="photo-log-caption"><div class="photo-log-site">안전보건팀 점검 및 교육 사진</div></div>
                     <button type="button" class="site-photo-delete-btn no-print" data-role="team-photo-delete" data-site="${siteAttr}" data-index="${i}">삭제</button>
@@ -1488,7 +1511,7 @@
                         ${photoItems.map(p => `
                             <div class="photo-log-card${photoSingleClass}">
                                 <a href="${escapeHtml(p.photoUrl)}" target="_blank" rel="noopener">
-                                    <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="점검 사진 ${p.num}">
+                                    <img src="${escapeHtml(p.photoUrl)}" class="photo-log-img" alt="점검 사진 ${p.num}" loading="lazy">
                                 </a>
                                 <div class="photo-log-caption">
                                     <div class="photo-log-no">${p.num}.</div>
@@ -1603,15 +1626,22 @@
 
         window.runSearch = runSearch;
 
-        async function fetchTrend(year) {
+        // 4개 분기를 하나씩 순서대로(await ... 반복) 조회하면 느린 분기 하나가 전체를
+        // 4배로 늘려버리고, 이미 화면에 방금 띄운 분기(currentQuarter)도 다시 조회하는
+        // 낭비가 있었다. 현재 분기는 이미 계산해 둔 결과를 재사용하고, 나머지 3개 분기만
+        // Promise.all로 동시에 조회해 순서(1~4분기)는 그대로 유지한다.
+        async function fetchTrend(year, currentQuarter, currentResults) {
             const quarters = ['1분기', '2분기', '3분기', '4분기'];
+            const perQuarter = await Promise.all(quarters.map(q =>
+                q === currentQuarter ? Promise.resolve(currentResults) : computeSiteResults(year, q)
+            ));
             const trend = [];
-            for (const q of quarters) {
-                const results = await computeSiteResults(year, q);
-                if (results.length === 0) continue;
+            quarters.forEach((q, i) => {
+                const results = perQuarter[i];
+                if (!results || results.length === 0) return;
                 const stats = computeCompanyStats(results);
                 trend.push({ label: `${year} ${q}`, avgScore: stats.avgScore });
-            }
+            });
             return trend;
         }
 
@@ -1623,7 +1653,7 @@
             const hazardPhotos = collectHazardPhotos(hazard);
             const roster = await fetchSiteRoster();
             const siteMap = computeSiteMap(roster);
-            const trend = await fetchTrend(year);
+            const trend = await fetchTrend(year, quarter, results);
 
             const sorted = results.slice().sort((a, b) => a.score - b.score);
             // 현장별로 한 줄씩 표시(인쇄 시 여백 배분을 위해 쉼표로 이어붙이지 않음).
