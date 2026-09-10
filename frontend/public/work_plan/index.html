@@ -199,6 +199,17 @@
   .num-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px 13px; }
   @media (max-width: 620px) { .num-grid { grid-template-columns: repeat(2, 1fr); } }
   .num-grid .field.wide { grid-column: 1 / -1; }
+  .num-grid .field.calc-field > label::after {
+    content: "계산"; font-size: 9px; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); border-radius: 3px; padding: 0 4px; margin-left: 5px; vertical-align: 1px;
+  }
+  .num-grid .field.calc-field input { border-left: 3px solid var(--accent); }
+  .lift-note {
+    font-size: 11.5px; line-height: 1.5; color: var(--ink-muted);
+    background: var(--accent-soft); border: 1px solid var(--accent);
+    border-radius: 6px; padding: 8px 11px; margin: 2px 0 4px;
+  }
+  .lift-note b { color: var(--accent-ink); }
   .unit-row { display: flex; align-items: center; gap: 6px; }
   .unit-row input { min-width: 0; }
   .unit-row .u { font-size: 11px; color: var(--ink-faint); white-space: nowrap; }
@@ -1121,6 +1132,12 @@
     head.className = "subhead";
     head.innerHTML = '양중하중 · 지반 · 줄걸이 계산 검토표 <span class="tag field">이동식크레인</span>';
     panel.appendChild(head);
+    var note = document.createElement("div");
+    note.className = "lift-note";
+    note.innerHTML = '<b>계산</b> 표시가 붙은 칸에 숫자를 입력하면 총 인양하중 · 인양률 · 지반 접지압 · 슬링 장력과 <b>안전율</b>이 자동으로 계산됩니다. ' +
+      '기종·붐길이 등 <b>텍스트 제원은 계산에 쓰이지 않습니다.</b> ' +
+      '「해당 반경 정격하중」은 사용 크레인의 <b>정격하중표</b>에서 붐길이·작업반경에 해당하는 값을 읽어 직접 입력하세요(자동 산출 불가).';
+    panel.appendChild(note);
     var inner = document.createElement("div");
     inner.className = "liftpanel";
 
@@ -1138,7 +1155,7 @@
 
       g.fields.forEach(function (f) {
         var fd = document.createElement("div");
-        fd.className = "field" + (f.wide ? " wide" : "");
+        fd.className = "field" + (f.wide ? " wide" : "") + (f.calc ? " calc-field" : "");
         var lab = document.createElement("label");
         lab.textContent = f.label;
         fd.appendChild(lab);
@@ -1225,8 +1242,8 @@
       var cls = ratio <= 80 ? "ok" : (ratio <= limit ? "warn" : "bad");
       var msg = ratio <= 80 ? "적정 (≤80% 권장)" : (ratio <= limit ? "주의 — 기준(" + limit + "%) 이내이나 저감요인 재확인" : "부적합 — 기준(" + limit + "%) 초과, 장비 상향 필요");
       setOut("liftRatio", '인양률 = W / 정격하중 = ' + total.toFixed(2) + ' / ' + rated.toFixed(2) +
-        ' = <span class="val">' + ratio.toFixed(1) + '%</span> ' + verdict(cls, msg) +
-        '<span class="calc-note">정격하중표는 해당 붐길이·작업반경 기준값 사용. 경사·풍속·주행선회 시 20%씩 저감 적용.</span>');
+        ' = <span class="val">' + ratio.toFixed(1) + '%</span> · 안전율 <span class="val">' + (rated / total).toFixed(2) + '</span> ' + verdict(cls, msg) +
+        '<span class="calc-note">안전율 = 정격하중 ÷ 총 인양하중 (1.25 이상 = 인양률 80% 이하 권장). 정격하중표 값 사용, 경사·풍속·주행선회 시 20%씩 저감.</span>');
     } else {
       setOut("liftRatio", '인양률 ' + verdict("idle", "정격하중 입력"));
     }
@@ -1239,8 +1256,10 @@
       var cls2 = okG === null ? "idle" : (okG ? "ok" : "bad");
       var msg2 = okG === null ? "허용지지력 입력 시 판정" : (okG ? "적합 (접지압 ≤ 허용지지력)" : "부적합 — 깔판 확대 또는 지반 보강 필요");
       setOut("groundCheck", '접지압 = 반력 / 깔판면적 = ' + react.toFixed(0) + ' / ' + area.toFixed(2) +
-        ' = <span class="val">' + contact.toFixed(1) + '</span> kN/m² ' + verdict(cls2, msg2) +
-        '<span class="calc-note">지반조사 미실시 표준값: 자갈 300 / 모래·점토 100 kN/m². 되메우기·굴착부·슬래브 상부는 별도 검토.</span>');
+        ' = <span class="val">' + contact.toFixed(1) + '</span> kN/m²' +
+        (okG === null ? '' : ' · 안전율 <span class="val">' + (allow / contact).toFixed(2) + '</span>') +
+        ' ' + verdict(cls2, msg2) +
+        '<span class="calc-note">안전율 = 허용지지력 ÷ 접지압 (1.0 이상 필요, 통상 2 이상 권장). 지반조사 미실시 표준값: 자갈 300 / 모래·점토 100 kN/m².</span>');
     } else {
       setOut("groundCheck", '지반 지지력 ' + verdict("idle", "반력·깔판면적 입력"));
     }
@@ -1259,8 +1278,10 @@
         else { cls3 = "bad"; msg3 = "부적합 — 가닥 장력이 슬링 WLL 초과"; }
       } else { cls3 = "idle"; msg3 = "슬링 WLL 입력 시 판정"; }
       setOut("slingTension", '슬링 1가닥 장력 = W / (조각수 × cos(θ/2)) = ' + total.toFixed(2) + ' / (' + legs + ' × cos(' + (ang / 2) + '°)) = <span class="val">' +
-        (isFinite(tension) ? tension.toFixed(2) : "—") + '</span> ton ' + verdict(cls3, msg3) +
-        '<span class="calc-note">모든 하중이 각 가닥에 균등 분배된다고 가정. 편심·3점걸이는 별도 보정. 와이어로프 안전율 6 이상.</span>');
+        (isFinite(tension) ? tension.toFixed(2) : "—") + '</span> ton' +
+        (isFinite(wll) && wll > 0 && isFinite(tension) && tension > 0 ? ' · WLL 여유율 <span class="val">' + (wll / tension).toFixed(2) + '</span>' : '') +
+        ' ' + verdict(cls3, msg3) +
+        '<span class="calc-note">여유율 = 슬링 사용하중(WLL) ÷ 가닥 장력 (1.0 이상 필요). WLL 자체가 절단하중÷안전율(와이어 6·체인 5·벨트 7)로 산정된 값. 편심·3점걸이는 별도 보정.</span>');
     } else {
       setOut("slingTension", '슬링 장력 ' + verdict("idle", "조각수·각도 입력"));
     }
