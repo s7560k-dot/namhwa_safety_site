@@ -262,6 +262,52 @@
     border: 1px dashed var(--hairline-strong); border-radius: 6px; margin-top: 14px;
   }
 
+  /* 근거 → 별표 4 전문 */
+  .lawnote.linkable { cursor: pointer; }
+  .lawnote.linkable:hover { color: var(--ink-muted); }
+  .lawnote .open-law { color: var(--accent); font-weight: 700; white-space: nowrap; }
+  .lawnote.linkable:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .legal-chip[data-lawopen] { cursor: pointer; }
+  .legal-chip[data-lawopen]:hover { text-decoration: underline; }
+
+  .law-overlay {
+    position: fixed; inset: 0; background: rgba(10, 12, 16, .55); display: none;
+    align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 50; overflow-y: auto;
+  }
+  .law-overlay.open { display: flex; }
+  .law-sheet {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--hairline-strong);
+    border-radius: 10px; max-width: 780px; width: 100%; margin: auto;
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .5);
+  }
+  .law-sheet > header {
+    position: sticky; top: 0; background: var(--surface-2); border-bottom: 1px solid var(--hairline);
+    padding: 14px 18px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    border-radius: 10px 10px 0 0;
+  }
+  .law-sheet > header h3 { font-family: "Noto Serif KR", serif; font-size: 15px; margin: 0; font-weight: 700; }
+  .law-sheet > header p { margin: 3px 0 0; font-size: 11px; color: var(--ink-muted); }
+  .law-close {
+    font: inherit; font-size: 15px; line-height: 1; color: var(--ink-muted); background: transparent;
+    border: 1px solid var(--hairline-strong); border-radius: 6px; padding: 6px 10px; cursor: pointer; flex-shrink: 0;
+  }
+  .law-close:hover { color: var(--ink); border-color: var(--ink-muted); }
+  .law-body { padding: 16px 20px 24px; font-size: 12.5px; line-height: 1.65; }
+  .law-body .intro {
+    color: var(--ink-muted); font-size: 11.5px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--hairline); margin-bottom: 6px;
+  }
+  .law-art { padding: 12px 0; border-bottom: 1px solid var(--hairline); }
+  .law-art:last-child { border-bottom: 0; }
+  .law-art h4 { margin: 0 0 7px; font-size: 13px; font-weight: 700; color: var(--accent-ink); display: flex; gap: 7px; }
+  .law-art h4 .an { color: var(--accent); }
+  .law-art .row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; margin-top: 7px; }
+  .law-art .row .k { font-size: 11px; font-weight: 700; color: var(--ink-muted); padding-top: 1px; }
+  .law-art .items .li { margin: 3px 0; }
+  .law-art .items b { color: var(--accent); margin-right: 4px; }
+  .law-art .none { color: var(--ink-faint); }
+  @media (max-width: 560px) { .law-art .row { grid-template-columns: 1fr; gap: 2px; } }
+
   @media (max-width: 640px) {
     .wrap { padding: 20px 13px 150px; }
     .masthead h1 { font-size: 23px; }
@@ -298,6 +344,7 @@
       <p class="sub">산업안전보건법 제38조 · 안전보건규칙 제38조 및 별표 4 &nbsp;|&nbsp; 법정 기재사항 + 사고사례 기반 실무 검토항목</p>
     </div>
     <div class="tools">
+      <button class="ghost-btn" id="lawBtn" type="button">📖 별표 4 전문</button>
       <button class="ghost-btn" id="themeBtn" type="button">🌗 테마</button>
       <button class="ghost-btn" id="resetBtn" type="button">초기화</button>
     </div>
@@ -340,7 +387,7 @@
         <div class="field col-2"><label>기상 중지기준</label><input type="text" data-key="weather_stop" placeholder="예: 순간풍속 10m/s 이상(양중·조립·해체), 강우 15mm/h·일 50mm 이상, 결빙 시 중지" /></div>
       </div>
     </div>
-    <div class="lawnote">근거: 안전보건규칙 제38조제1항 — 사업주는 별표 4의 작업 시 사전조사 결과를 고려하여 별표 4의 구분에 따른 사항을 포함한 작업계획서를 작성하여야 한다.</div>
+    <div class="lawnote linkable" role="button" tabindex="0" data-lawopen>근거: 안전보건규칙 제38조제1항 — 사업주는 별표 4의 작업 시 사전조사 결과를 고려하여 별표 4의 구분에 따른 사항을 포함한 작업계획서를 작성하여야 한다. <span class="open-law">별표 4 전문 보기 ›</span></div>
   </section>
 
   <section class="block">
@@ -377,7 +424,7 @@
   </section>
 
   <section class="block">
-    <h2><span class="n">Ⅳ</span> 작업유형별 계획 <span class="legal-chip">규칙 별표 4 + 실무 검토</span></h2>
+    <h2><span class="n">Ⅳ</span> 작업유형별 계획 <span class="legal-chip" role="button" tabindex="0" data-lawopen>규칙 별표 4 + 실무 검토 · 전문 ›</span></h2>
     <div class="block-body">
       <p class="hint" style="margin:0 0 10px;">해당 작업을 모두 선택하세요. 선택 시 <strong>① 법정 사전조사·기재사항(별표 4)</strong>과 <strong>② 관련 사고사례 기반 실무 핵심 검토항목</strong>이 표시됩니다. 중량물 취급작업은 양중하중·지반·줄걸이 <strong>계산 검토표</strong>가 함께 나옵니다.</p>
       <div class="type-grid" id="typeGrid"></div>
@@ -434,6 +481,19 @@
     <span class="save" id="saveState"></span>
   </div>
   <button class="primary-btn" id="printBtn" type="button">인쇄 / PDF 저장</button>
+</div>
+
+<div class="law-overlay" id="lawOverlay" aria-hidden="true">
+  <div class="law-sheet" role="dialog" aria-modal="true" aria-labelledby="lawTitle">
+    <header>
+      <div>
+        <h3 id="lawTitle">산업안전보건기준에 관한 규칙 [별표 4]</h3>
+        <p>사전조사 및 작업계획서 내용 (제38조제1항 관련) · &lt;개정 2023. 11. 14.&gt;</p>
+      </div>
+      <button class="law-close" id="lawClose" type="button" aria-label="닫기">✕ 닫기</button>
+    </header>
+    <div class="law-body" id="lawBody"></div>
+  </div>
 </div>
 
 <script>
@@ -1200,6 +1260,55 @@
     var next = isDark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     try { localStorage.setItem("wp_theme", next); } catch (e) {}
+  });
+
+  /* ---------- 별표 4 전문 팝업 ---------- */
+  var lawOverlay = document.getElementById("lawOverlay");
+  var lawLastFocus = null;
+
+  function buildLawDoc() {
+    var host = document.getElementById("lawBody");
+    if (host.getAttribute("data-built")) return;
+    var marks = ["가", "나", "다", "라", "마", "바", "사", "아", "자", "차", "카", "타"];
+    var html =
+      '<p class="intro">사업주는 다음 각 호의 작업을 하는 경우 근로자의 위험을 방지하기 위하여 해당 작업, 작업장의 지형·지반 및 지층 상태 등에 대한 사전조사를 하고 그 결과를 기록·보존하여야 하며, 조사결과를 고려하여 아래 구분에 따른 사항을 포함한 작업계획서를 작성하고 그 계획에 따라 작업을 하도록 하여야 한다. 작성한 작업계획서의 내용은 해당 근로자에게 알려야 한다. (규칙 제38조제1항·제2항)</p>';
+    WORK_TYPES.forEach(function (wt) {
+      html += '<div class="law-art"><h4><span class="an">' + wt.id + '.</span><span>' + wt.name + '</span></h4>';
+      html += '<div class="row"><span class="k">사전조사 내용</span>' +
+        (wt.pre ? '<span>' + wt.pre[0] + '</span>' : '<span class="none">해당 없음</span>') + '</div>';
+      html += '<div class="row"><span class="k">작업계획서 내용</span><div class="items">' +
+        wt.legal.map(function (it, i) { return '<div class="li"><b>' + (marks[i] || (i + 1) + '') + '.</b>' + it[0] + '</div>'; }).join('') +
+        '</div></div>';
+      html += '</div>';
+    });
+    host.innerHTML = html;
+    host.setAttribute("data-built", "1");
+  }
+  function openLaw() {
+    buildLawDoc();
+    lawLastFocus = document.activeElement;
+    lawOverlay.classList.add("open");
+    lawOverlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    document.getElementById("lawClose").focus();
+  }
+  function closeLaw() {
+    lawOverlay.classList.remove("open");
+    lawOverlay.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (lawLastFocus && lawLastFocus.focus) lawLastFocus.focus();
+  }
+  document.querySelectorAll("[data-lawopen]").forEach(function (el) {
+    el.addEventListener("click", openLaw);
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openLaw(); }
+    });
+  });
+  document.getElementById("lawBtn").addEventListener("click", openLaw);
+  document.getElementById("lawClose").addEventListener("click", closeLaw);
+  lawOverlay.addEventListener("click", function (e) { if (e.target === lawOverlay) closeLaw(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && lawOverlay.classList.contains("open")) closeLaw();
   });
 
   /* ---------- 초기 렌더 ---------- */
