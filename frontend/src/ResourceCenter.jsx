@@ -457,6 +457,7 @@ const ResourceCenter = () => {
                                 { title: "AHA", sub: "Risk Assessment", icon: <FileText />, link: "/AHA/index.html" },
                                 { title: "PTW", sub: "Permit to Work", icon: <Lock />, link: "/PTW/index.html" },
                                 { title: "WSHCC", sub: "Council", icon: <BookOpen />, link: "/WSHCC/index.html" },
+                                { title: "작업계획서", sub: "Work Plan · 안전보건규칙 별표4", icon: <ClipboardCheck />, link: "/work_plan/index.html" },
                             ].map((item, index) => (
                                 <a
                                     href={item.link}
