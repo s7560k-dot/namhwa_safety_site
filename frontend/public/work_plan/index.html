@@ -346,6 +346,14 @@
     }
     textarea { min-height: 26px; line-height: 1.4; }
 
+    /* 셀 안내(예시) 텍스트는 인쇄 제외 */
+    input::placeholder, textarea::placeholder { color: transparent !important; opacity: 0 !important; }
+    input::-webkit-input-placeholder, textarea::-webkit-input-placeholder { color: transparent !important; opacity: 0 !important; }
+    input:-ms-input-placeholder, textarea:-ms-input-placeholder { color: transparent !important; }
+    select:has(option[value=""]:checked) { color: transparent !important; }
+    .calc-note { display: none !important; }
+    .calc-out.is-idle { display: none !important; }
+
     /* 표제부 */
     .masthead { padding-bottom: 6px; border-bottom-width: 1.5px; }
     .masthead h1 { font-size: 20pt; }
@@ -1187,7 +1195,9 @@
   }
   function setOut(name, html) {
     var el = document.querySelector('[data-out="' + name + '"]');
-    if (el) el.innerHTML = html;
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.toggle("is-idle", /verdict idle/.test(html));
   }
   function verdict(cls, txt) { return '<span class="verdict ' + cls + '">' + txt + "</span>"; }
 
