@@ -1,0 +1,796 @@
+[
+  {
+    "id": 1,
+    "name": "타워크레인을 설치·조립·해체하는 작업",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt1_legal_0",
+        "mark": "가",
+        "requirement": "타워크레인의 종류 및 형식"
+      },
+      {
+        "key": "wt1_legal_1",
+        "mark": "나",
+        "requirement": "설치·조립 및 해체 순서"
+      },
+      {
+        "key": "wt1_legal_2",
+        "mark": "다",
+        "requirement": "작업도구·장비·가설설비 및 방호설비"
+      },
+      {
+        "key": "wt1_legal_3",
+        "mark": "라",
+        "requirement": "작업인원의 구성 및 작업근로자의 역할 범위"
+      },
+      {
+        "key": "wt1_legal_4",
+        "mark": "마",
+        "requirement": "규칙 제142조에 따른 지지 방법"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt1_field_0",
+        "title": "기상조건 및 중지기준"
+      },
+      {
+        "key": "wt1_field_1",
+        "title": "텔레스코핑(마스트 인상) 절차"
+      },
+      {
+        "key": "wt1_field_2",
+        "title": "기초·지지 상태 검토"
+      },
+      {
+        "key": "wt1_field_3",
+        "title": "인양 부재 중량 대 크레인 능력"
+      },
+      {
+        "key": "wt1_field_4",
+        "title": "볼트·핀 체결관리 및 임시고정"
+      },
+      {
+        "key": "wt1_field_5",
+        "title": "하부 통제"
+      }
+    ],
+    "cases": [
+      "텔레스코핑(마스트 인상) 중 유압실린더·연결핀 결함 및 편하중으로 상부 붕괴",
+      "해체 시 볼트를 먼저 풀고 부재를 인양하다 균형 상실 → 부재 낙하로 하부 근로자 사망"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "차량계 하역운반기계등을 사용하는 작업 (도로상 화물자동차 주행작업 제외)",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt2_legal_0",
+        "mark": "가",
+        "requirement": "추락·낙하·전도·협착 및 붕괴 등의 위험 예방대책"
+      },
+      {
+        "key": "wt2_legal_1",
+        "mark": "나",
+        "requirement": "차량계 하역운반기계등의 운행경로 및 작업방법"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt2_field_0",
+        "title": "보행자·차량 분리"
+      },
+      {
+        "key": "wt2_field_1",
+        "title": "후진 시 유도"
+      },
+      {
+        "key": "wt2_field_2",
+        "title": "적재 안정"
+      },
+      {
+        "key": "wt2_field_3",
+        "title": "운전원 관리"
+      }
+    ],
+    "cases": [
+      "지게차 후진 중 후방 보행 근로자를 인지하지 못하고 충돌·협착",
+      "편하중·결박 불량으로 운반 중 화물이 낙하하여 인접 근로자 피해"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "차량계 건설기계를 사용하는 작업",
+    "lift": false,
+    "pre_field": {
+      "key": "wt3_pre_0",
+      "requirement": "해당 기계의 굴러 떨어짐, 지반 붕괴 등으로 인한 근로자의 위험을 방지하기 위한 작업장소의 지형 및 지반상태"
+    },
+    "legal_fields": [
+      {
+        "key": "wt3_legal_0",
+        "mark": "가",
+        "requirement": "사용하는 차량계 건설기계의 종류 및 성능"
+      },
+      {
+        "key": "wt3_legal_1",
+        "mark": "나",
+        "requirement": "차량계 건설기계의 운행경로"
+      },
+      {
+        "key": "wt3_legal_2",
+        "mark": "다",
+        "requirement": "차량계 건설기계에 의한 작업방법"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt3_field_0",
+        "title": "선회반경 출입통제"
+      },
+      {
+        "key": "wt3_field_1",
+        "title": "지반·주행로 안정"
+      },
+      {
+        "key": "wt3_field_2",
+        "title": "장비 상태·자격"
+      },
+      {
+        "key": "wt3_field_3",
+        "title": "승하차·정차"
+      }
+    ],
+    "cases": [
+      "굴착기 선회반경 내에서 작업하던 근로자가 버킷·차체에 협착(건설업 다발 재해)",
+      "성토부·법면 단부에서 굴착기·덤프트럭이 지반 침하로 전도"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "화학설비와 그 부속설비를 사용하는 작업",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt4_legal_0",
+        "mark": "가",
+        "requirement": "밸브·콕 등의 조작 (원재료 공급·제품 취출 시)"
+      },
+      {
+        "key": "wt4_legal_1",
+        "mark": "나",
+        "requirement": "냉각·가열·교반장치 및 압축장치의 조작"
+      },
+      {
+        "key": "wt4_legal_2",
+        "mark": "다",
+        "requirement": "계측장치 및 제어장치의 감시 및 조정"
+      },
+      {
+        "key": "wt4_legal_3",
+        "mark": "라",
+        "requirement": "안전밸브·긴급차단장치·방호장치·자동경보장치의 조정"
+      },
+      {
+        "key": "wt4_legal_4",
+        "mark": "마",
+        "requirement": "접합부(덮개판·플랜지·밸브·콕)에서 위험물 누출 여부 점검"
+      },
+      {
+        "key": "wt4_legal_5",
+        "mark": "바",
+        "requirement": "시료의 채취"
+      },
+      {
+        "key": "wt4_legal_6",
+        "mark": "사",
+        "requirement": "운전이 일시적·부분적으로 중단된 경우 또는 재개 시의 작업방법"
+      },
+      {
+        "key": "wt4_legal_7",
+        "mark": "아",
+        "requirement": "이상 상태 발생 시의 응급조치"
+      },
+      {
+        "key": "wt4_legal_8",
+        "mark": "자",
+        "requirement": "위험물 누출 시의 조치"
+      },
+      {
+        "key": "wt4_legal_9",
+        "mark": "차",
+        "requirement": "그 밖에 폭발·화재를 방지하기 위하여 필요한 조치"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt4_field_0",
+        "title": "에너지 차단·잠금·표지(LOTO)"
+      },
+      {
+        "key": "wt4_field_1",
+        "title": "잔압·잔류물 제거 및 퍼지 확인"
+      },
+      {
+        "key": "wt4_field_2",
+        "title": "밀폐공간 대응"
+      },
+      {
+        "key": "wt4_field_3",
+        "title": "소화·세척 설비 및 MSDS"
+      }
+    ],
+    "cases": [
+      "밸브 오조작·잔압 미제거 상태에서 배관 해체·세정 중 위험물 분출",
+      "질소 퍼지 후 탱크 내부 점검 진입 중 산소결핍 질식"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "전기작업 (대지전압 50V 초과 또는 전기에너지 250VA 초과)",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt5_legal_0",
+        "mark": "가",
+        "requirement": "전기작업의 목적 및 내용"
+      },
+      {
+        "key": "wt5_legal_1",
+        "mark": "나",
+        "requirement": "전기작업 근로자의 자격 및 적정 인원"
+      },
+      {
+        "key": "wt5_legal_2",
+        "mark": "다",
+        "requirement": "감전·아크 사고 방지 계획"
+      },
+      {
+        "key": "wt5_legal_3",
+        "mark": "라",
+        "requirement": "절연용 보호구·방호구, 활선작업용 기구·장치의 준비·점검·착용·사용"
+      },
+      {
+        "key": "wt5_legal_4",
+        "mark": "마",
+        "requirement": "점검·시운전을 위한 일시 운전, 작업 중단 등에 관한 사항"
+      },
+      {
+        "key": "wt5_legal_5",
+        "mark": "바",
+        "requirement": "전기작업장소에 접근할 수 있는 통로의 확보"
+      },
+      {
+        "key": "wt5_legal_6",
+        "mark": "사",
+        "requirement": "전원의 차단 및 전원 재투입의 순서"
+      },
+      {
+        "key": "wt5_legal_7",
+        "mark": "아",
+        "requirement": "그 밖에 전기작업의 위험성을 낮추기 위하여 필요하다고 판단하는 사항"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt5_field_0",
+        "title": "정전작업 5원칙 이행"
+      },
+      {
+        "key": "wt5_field_1",
+        "title": "활선·근접작업 이격"
+      },
+      {
+        "key": "wt5_field_2",
+        "title": "2인 1조·감시"
+      },
+      {
+        "key": "wt5_field_3",
+        "title": "복전 절차"
+      }
+    ],
+    "cases": [
+      "정전 여부를 확인하지 않고 활선에 접촉하여 감전",
+      "저압으로 오인하고 특고압 충전부에 접근 → 아크 섬광·폭발로 화상"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "굴착면의 높이가 2m 이상이 되는 지반의 굴착작업",
+    "lift": false,
+    "pre_field": {
+      "key": "wt6_pre_0",
+      "requirement": "① 형상·지질 및 지층의 상태  ② 균열·함수(含水)·용수 및 동결의 유무 또는 상태  ③ 매설물 등의 유무 또는 상태  ④ 지반의 지하수위 상태"
+    },
+    "legal_fields": [
+      {
+        "key": "wt6_legal_0",
+        "mark": "가",
+        "requirement": "굴착방법 및 순서, 토사등 반출 방법"
+      },
+      {
+        "key": "wt6_legal_1",
+        "mark": "나",
+        "requirement": "필요한 인원 및 장비 사용계획"
+      },
+      {
+        "key": "wt6_legal_2",
+        "mark": "다",
+        "requirement": "매설물 등에 대한 이설·보호대책"
+      },
+      {
+        "key": "wt6_legal_3",
+        "mark": "라",
+        "requirement": "사업장 내 연락방법 및 신호방법"
+      },
+      {
+        "key": "wt6_legal_4",
+        "mark": "마",
+        "requirement": "흙막이 지보공 설치방법 및 계측계획"
+      },
+      {
+        "key": "wt6_legal_5",
+        "mark": "바",
+        "requirement": "작업지휘자의 배치계획"
+      },
+      {
+        "key": "wt6_legal_6",
+        "mark": "사",
+        "requirement": "그 밖에 안전·보건에 관한 사항"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt6_field_0",
+        "title": "지하매설물 사전확인·방호"
+      },
+      {
+        "key": "wt6_field_1",
+        "title": "흙막이 구조·계측 관리"
+      },
+      {
+        "key": "wt6_field_2",
+        "title": "상부 하중·이격 관리"
+      },
+      {
+        "key": "wt6_field_3",
+        "title": "강우·용수 대책"
+      },
+      {
+        "key": "wt6_field_4",
+        "title": "출입·승강·질식"
+      }
+    ],
+    "cases": [
+      "흙막이 배면 과재하중·강우로 버팀보 좌굴 → 토사 붕괴로 굴착부 근로자 매몰",
+      "지하매설물(도시가스·전력·통신관) 위치 미확인 굴착 중 관로 손상 → 가스 누출·감전"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "터널굴착작업",
+    "lift": false,
+    "pre_field": {
+      "key": "wt7_pre_0",
+      "requirement": "보링(boring) 등 적절한 방법으로 낙반·출수(出水)·가스폭발 등으로 인한 위험을 방지하기 위해 지형·지질 및 지층상태를 조사"
+    },
+    "legal_fields": [
+      {
+        "key": "wt7_legal_0",
+        "mark": "가",
+        "requirement": "굴착의 방법"
+      },
+      {
+        "key": "wt7_legal_1",
+        "mark": "나",
+        "requirement": "터널지보공 및 복공의 시공방법과 용수의 처리방법"
+      },
+      {
+        "key": "wt7_legal_2",
+        "mark": "다",
+        "requirement": "환기 또는 조명시설을 설치할 때에는 그 방법"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt7_field_0",
+        "title": "막장 관찰·계측"
+      },
+      {
+        "key": "wt7_field_1",
+        "title": "가스·환기"
+      },
+      {
+        "key": "wt7_field_2",
+        "title": "부석·발파 관리"
+      },
+      {
+        "key": "wt7_field_3",
+        "title": "비상대응"
+      }
+    ],
+    "cases": [
+      "막장 관찰·조기 지보 미흡으로 천단부 부석 낙하·붕락",
+      "예기치 못한 용수·유해가스(메탄 등) 분출로 근로자 고립"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "교량(높이 5m 이상 또는 최대 지간 30m 이상)의 설치·해체 또는 변경 작업",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt8_legal_0",
+        "mark": "가",
+        "requirement": "작업 방법 및 순서"
+      },
+      {
+        "key": "wt8_legal_1",
+        "mark": "나",
+        "requirement": "부재의 낙하·전도 또는 붕괴를 방지하기 위한 방법"
+      },
+      {
+        "key": "wt8_legal_2",
+        "mark": "다",
+        "requirement": "작업에 종사하는 근로자의 추락 위험을 방지하기 위한 안전조치 방법"
+      },
+      {
+        "key": "wt8_legal_3",
+        "mark": "라",
+        "requirement": "가설 철골구조물 등의 설치·사용·해체 시 안전성 검토 방법"
+      },
+      {
+        "key": "wt8_legal_4",
+        "mark": "마",
+        "requirement": "사용하는 기계 등의 종류 및 성능, 작업방법"
+      },
+      {
+        "key": "wt8_legal_5",
+        "mark": "바",
+        "requirement": "작업지휘자 배치계획"
+      },
+      {
+        "key": "wt8_legal_6",
+        "mark": "사",
+        "requirement": "그 밖에 안전·보건에 관한 사항"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt8_field_0",
+        "title": "가설구조물 구조검토"
+      },
+      {
+        "key": "wt8_field_1",
+        "title": "부재 인양·거치"
+      },
+      {
+        "key": "wt8_field_2",
+        "title": "추락방지"
+      },
+      {
+        "key": "wt8_field_3",
+        "title": "하부 및 병행교통 방호"
+      }
+    ],
+    "cases": [
+      "가설벤트·동바리 좌굴로 상부 거더·콘크리트 붕괴",
+      "FCM 세그먼트 편타설·폼트래블러 이동 중 균형 상실로 전도"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "채석작업",
+    "lift": false,
+    "pre_field": {
+      "key": "wt9_pre_0",
+      "requirement": "지반의 붕괴·굴착기계의 굴러 떨어짐 등에 의한 위험을 방지하기 위한 해당 작업장의 지형·지질 및 지층의 상태"
+    },
+    "legal_fields": [
+      {
+        "key": "wt9_legal_0",
+        "mark": "가",
+        "requirement": "노천굴착과 갱내굴착의 구별 및 채석방법"
+      },
+      {
+        "key": "wt9_legal_1",
+        "mark": "나",
+        "requirement": "굴착면의 높이와 기울기"
+      },
+      {
+        "key": "wt9_legal_2",
+        "mark": "다",
+        "requirement": "굴착면 소단의 위치와 넓이"
+      },
+      {
+        "key": "wt9_legal_3",
+        "mark": "라",
+        "requirement": "갱내에서의 낙반 및 붕괴방지 방법"
+      },
+      {
+        "key": "wt9_legal_4",
+        "mark": "마",
+        "requirement": "발파방법"
+      },
+      {
+        "key": "wt9_legal_5",
+        "mark": "바",
+        "requirement": "암석의 분할방법"
+      },
+      {
+        "key": "wt9_legal_6",
+        "mark": "사",
+        "requirement": "암석의 가공장소"
+      },
+      {
+        "key": "wt9_legal_7",
+        "mark": "아",
+        "requirement": "사용하는 굴착기계·분할기계·적재기계·운반기계의 종류 및 성능"
+      },
+      {
+        "key": "wt9_legal_8",
+        "mark": "자",
+        "requirement": "토석 또는 암석의 적재 및 운반방법과 운반경로"
+      },
+      {
+        "key": "wt9_legal_9",
+        "mark": "차",
+        "requirement": "표토 또는 용수의 처리방법"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt9_field_0",
+        "title": "사면·부석 관리"
+      },
+      {
+        "key": "wt9_field_1",
+        "title": "발파 표준안전작업"
+      },
+      {
+        "key": "wt9_field_2",
+        "title": "운반·분진"
+      }
+    ],
+    "cases": [
+      "채석장 사면 상부 부석·절리면 붕괴로 하부 장비·근로자 매몰",
+      "발파 비산석 비래 및 불발공 처리 중 폭발"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "건물 등의 해체작업",
+    "lift": false,
+    "pre_field": {
+      "key": "wt10_pre_0",
+      "requirement": "해체 대상 건물 등의 구조, 주변 상황 등"
+    },
+    "legal_fields": [
+      {
+        "key": "wt10_legal_0",
+        "mark": "가",
+        "requirement": "해체의 방법 및 해체 순서 도면"
+      },
+      {
+        "key": "wt10_legal_1",
+        "mark": "나",
+        "requirement": "가설설비·방호설비·환기설비 및 살수·방화설비 등의 방법"
+      },
+      {
+        "key": "wt10_legal_2",
+        "mark": "다",
+        "requirement": "사업장 내 연락방법"
+      },
+      {
+        "key": "wt10_legal_3",
+        "mark": "라",
+        "requirement": "해체물의 처분계획"
+      },
+      {
+        "key": "wt10_legal_4",
+        "mark": "마",
+        "requirement": "해체작업용 기계·기구 등의 작업계획서"
+      },
+      {
+        "key": "wt10_legal_5",
+        "mark": "바",
+        "requirement": "해체작업용 화약류 등의 사용계획서"
+      },
+      {
+        "key": "wt10_legal_6",
+        "mark": "사",
+        "requirement": "그 밖에 안전·보건에 관한 사항"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt10_field_0",
+        "title": "해체 순서 준수 (변경 금지)"
+      },
+      {
+        "key": "wt10_field_1",
+        "title": "장비 재하·성토 구조검토"
+      },
+      {
+        "key": "wt10_field_2",
+        "title": "붕괴 영향범위 통제"
+      },
+      {
+        "key": "wt10_field_3",
+        "title": "인접 구조물 계측·방호"
+      },
+      {
+        "key": "wt10_field_4",
+        "title": "석면·지장물"
+      }
+    ],
+    "cases": [
+      "광주 학동 철거건물 붕괴(2021.6.9): 해체계획서와 달리 저층부터 굴착하고 장비 진입용 성토를 3층 높이로 쌓아 1층 슬래브가 하중을 견디지 못하고 붕괴 → 건물이 도로측으로 전도, 시내버스 매몰 9명 사망·8명 부상. 원인: 해체 순서 미준수·과도한 성토·구조검토 미흡·불법 재하도급",
+      "압쇄기 장착 굴착기 하중으로 잔여 슬래브 붕괴, 해체물 도로측 비산·낙하"
+    ]
+  },
+  {
+    "id": 11,
+    "name": "중량물의 취급작업",
+    "lift": true,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt11_legal_0",
+        "mark": "가",
+        "requirement": "추락 위험을 예방할 수 있는 안전대책"
+      },
+      {
+        "key": "wt11_legal_1",
+        "mark": "나",
+        "requirement": "낙하 위험을 예방할 수 있는 안전대책"
+      },
+      {
+        "key": "wt11_legal_2",
+        "mark": "다",
+        "requirement": "전도 위험을 예방할 수 있는 안전대책"
+      },
+      {
+        "key": "wt11_legal_3",
+        "mark": "라",
+        "requirement": "협착 위험을 예방할 수 있는 안전대책"
+      },
+      {
+        "key": "wt11_legal_4",
+        "mark": "마",
+        "requirement": "붕괴 위험을 예방할 수 있는 안전대책"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt11_field_0",
+        "title": "작업조건 검토"
+      },
+      {
+        "key": "wt11_field_1",
+        "title": "신호·통제 체계"
+      },
+      {
+        "key": "wt11_field_2",
+        "title": "작업계획도(평면·단면)"
+      }
+    ],
+    "cases": [
+      "이동식크레인으로 철근 다발을 인양하던 중 붐(지브)이 파단되어 하부 근로자가 철근 아래 협착",
+      "인양 중 줄걸이(체결) 불량으로 자재가 탈락 → 낙하물에 맞음",
+      "지반 지지력 부족·아웃트리거 깔판 미설치로 크레인이 전도되어 근로자가 크레인 하부에 협착",
+      "약 2.5t 앵글다발을 무게중심에서 벗어나게 슬링벨트로 걸어 선회 중 벨트가 파단되며 낙하"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "궤도와 그 밖의 관련 설비의 보수·점검작업",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt12_legal_0",
+        "mark": "가",
+        "requirement": "적절한 작업 인원"
+      },
+      {
+        "key": "wt12_legal_1",
+        "mark": "나",
+        "requirement": "작업량"
+      },
+      {
+        "key": "wt12_legal_2",
+        "mark": "다",
+        "requirement": "작업순서"
+      },
+      {
+        "key": "wt12_legal_3",
+        "mark": "라",
+        "requirement": "작업방법 및 위험요인에 대한 안전조치방법 등"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt12_field_0",
+        "title": "선로차단·서행 협의"
+      },
+      {
+        "key": "wt12_field_1",
+        "title": "열차감시·경보"
+      },
+      {
+        "key": "wt12_field_2",
+        "title": "대피·인접선 방호"
+      },
+      {
+        "key": "wt12_field_3",
+        "title": "전차선 감전 대책"
+      },
+      {
+        "key": "wt12_field_4",
+        "title": "개통 전 확인"
+      }
+    ],
+    "cases": [
+      "열차 접근을 인지하지 못한 상태로 선로 내 작업 중 열차와 접촉",
+      "전차선(가공전차선) 정전·접지 미확인 상태에서 접촉하여 감전"
+    ]
+  },
+  {
+    "id": 13,
+    "name": "입환작업(入換作業)",
+    "lift": false,
+    "pre_field": null,
+    "legal_fields": [
+      {
+        "key": "wt13_legal_0",
+        "mark": "가",
+        "requirement": "적절한 작업 인원"
+      },
+      {
+        "key": "wt13_legal_1",
+        "mark": "나",
+        "requirement": "작업량"
+      },
+      {
+        "key": "wt13_legal_2",
+        "mark": "다",
+        "requirement": "작업순서"
+      },
+      {
+        "key": "wt13_legal_3",
+        "mark": "라",
+        "requirement": "작업방법 및 위험요인에 대한 안전조치방법 등"
+      }
+    ],
+    "practical_fields": [
+      {
+        "key": "wt13_field_0",
+        "title": "신호 통일"
+      },
+      {
+        "key": "wt13_field_1",
+        "title": "연결·해방 안전"
+      },
+      {
+        "key": "wt13_field_2",
+        "title": "구름방지"
+      },
+      {
+        "key": "wt13_field_3",
+        "title": "속도·환경"
+      }
+    ],
+    "cases": [
+      "차량 사이로 진입하여 연결기를 조작하던 중 차량 이동으로 협착",
+      "구름방지 미조치로 유치 차량이 굴러 이동(일주)"
+    ]
+  }
+]

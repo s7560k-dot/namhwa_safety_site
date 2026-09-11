@@ -1,0 +1,302 @@
+[
+  {
+    "key": "wt11_lift_obj_name",
+    "label": "인양물 명칭",
+    "type": "text",
+    "unit": null,
+    "group": "A. 인양물",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_obj_w",
+    "label": "인양물 중량",
+    "type": "num",
+    "unit": "ton",
+    "group": "A. 인양물",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_obj_dim",
+    "label": "치수 (L×W×H)",
+    "type": "text",
+    "unit": null,
+    "group": "A. 인양물",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_obj_cg",
+    "label": "무게중심 / 편심",
+    "type": "text",
+    "unit": null,
+    "group": "A. 인양물",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_hook_w",
+    "label": "훅·훅블록 중량",
+    "type": "num",
+    "unit": "ton",
+    "group": "B. 부가하중 · 총 인양하중",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sling_w",
+    "label": "줄걸이·보조기구(샤클·스프레더바)",
+    "type": "num",
+    "unit": "ton",
+    "group": "B. 부가하중 · 총 인양하중",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_extra_w",
+    "label": "기타(자재 결로·잔재 등) 여유",
+    "type": "num",
+    "unit": "ton",
+    "group": "B. 부가하중 · 총 인양하중",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crane_model",
+    "label": "기종 / 모델 / 형식",
+    "type": "text",
+    "unit": null,
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crane_owner",
+    "label": "소유사 / 운전원 (면허)",
+    "type": "text",
+    "unit": null,
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crane_type",
+    "label": "형식",
+    "type": "select",
+    "unit": null,
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": false,
+    "options": [
+      "트럭·카고(85% 기준)",
+      "올터레인·러프테레인(85% 기준)",
+      "크롤러(75% 기준)"
+    ]
+  },
+  {
+    "key": "wt11_lift_boom_len",
+    "label": "붐(지브) 길이",
+    "type": "text",
+    "unit": null,
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_radius",
+    "label": "작업반경 (선회 후 최대)",
+    "type": "num",
+    "unit": "m",
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_outrigger",
+    "label": "아웃트리거 전개",
+    "type": "select",
+    "unit": null,
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": false,
+    "options": [
+      "최대(full) 전개",
+      "중간(mid) 전개",
+      "전개 불가 구간 있음"
+    ]
+  },
+  {
+    "key": "wt11_lift_rated_load",
+    "label": "해당 반경 정격하중 (정격하중표)",
+    "type": "num",
+    "unit": "ton",
+    "group": "C. 이동식크레인 제원",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_slope",
+    "label": "지반 경사",
+    "type": "text",
+    "unit": null,
+    "group": "D. 능력 감소요인 (해당 시 정격하중 저감·중지)",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_wind",
+    "label": "풍속",
+    "type": "text",
+    "unit": null,
+    "group": "D. 능력 감소요인 (해당 시 정격하중 저감·중지)",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_moving",
+    "label": "주행·선회 중 인양",
+    "type": "text",
+    "unit": null,
+    "group": "D. 능력 감소요인 (해당 시 정격하중 저감·중지)",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_ground_type",
+    "label": "지반 종류",
+    "type": "text",
+    "unit": null,
+    "group": "E. 지반 지지력 · 아웃트리거",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_ground_allow",
+    "label": "허용 지지력 (조사값 또는 표준값)",
+    "type": "num",
+    "unit": "kN/m²",
+    "group": "E. 지반 지지력 · 아웃트리거",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_og_reaction",
+    "label": "아웃트리거 1개 최대반력 (구조검토)",
+    "type": "num",
+    "unit": "kN",
+    "group": "E. 지반 지지력 · 아웃트리거",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_pad_size",
+    "label": "깔판(철판) 규격",
+    "type": "text",
+    "unit": null,
+    "group": "E. 지반 지지력 · 아웃트리거",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_pad_area",
+    "label": "깔판 접지면적",
+    "type": "num",
+    "unit": "m²",
+    "group": "E. 지반 지지력 · 아웃트리거",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sling_type",
+    "label": "슬링 종류",
+    "type": "select",
+    "unit": null,
+    "group": "F. 줄걸이(슬링) 검토",
+    "drives_calc": false,
+    "options": [
+      "와이어로프(안전율 6 이상)",
+      "체인슬링(안전율 5 이상)",
+      "라운드슬링·벨트(안전율 7 이상)"
+    ]
+  },
+  {
+    "key": "wt11_lift_sling_spec",
+    "label": "규격 (직경·폭)",
+    "type": "text",
+    "unit": null,
+    "group": "F. 줄걸이(슬링) 검토",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sling_wll",
+    "label": "슬링 1가닥 사용하중(WLL)",
+    "type": "num",
+    "unit": "ton",
+    "group": "F. 줄걸이(슬링) 검토",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sling_legs",
+    "label": "조각수 (걸이 가닥)",
+    "type": "num",
+    "unit": "가닥",
+    "group": "F. 줄걸이(슬링) 검토",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sling_angle",
+    "label": "걸이각도 θ (가닥 사이)",
+    "type": "num",
+    "unit": "°",
+    "group": "F. 줄걸이(슬링) 검토",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sling_edge",
+    "label": "모서리 보호 / 러그 점검",
+    "type": "text",
+    "unit": null,
+    "group": "F. 줄걸이(슬링) 검토",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sig_method",
+    "label": "신호방법",
+    "type": "text",
+    "unit": null,
+    "group": "G. 신호 · 통제",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_sig_name",
+    "label": "신호수 / 줄걸이 작업자",
+    "type": "text",
+    "unit": null,
+    "group": "G. 신호 · 통제",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_exclusion",
+    "label": "출입통제 구역",
+    "type": "text",
+    "unit": null,
+    "group": "G. 신호 · 통제",
+    "drives_calc": false,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_power_line",
+    "label": "가공전선 이격거리",
+    "type": "text",
+    "unit": null,
+    "group": "G. 신호 · 통제",
+    "drives_calc": false,
+    "options": null
+  }
+]
