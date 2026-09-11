@@ -691,6 +691,14 @@
         ["지반·주행로 안정", "주행로 지반 지지력·다짐, 굴착부·법면과 이격(가급적 굴착깊이 이상), 갓길 방호, 야간 조명, 유도자"],
         ["장비 상태·자격", "건설기계조종사 면허, 후방영상·경보·전조등, 헤드가드, 정기검사 유효기간"],
         ["승하차·정차", "승하차 시 버킷 지면 안착·시동정지, 경사면 정차 시 고임목, 전선·매설물 이격거리 유지"]
+      ],
+      subtypeLabel: "세부 기계 종류 (별표6) — 선택 시 해당 기계 고유 위험요소가 아래에 추가로 표시됩니다",
+      subtypes: [
+        { key: "general", label: "일반 건설기계 (도저·모터그레이더·로더·스크레이퍼·굴착기 등)" },
+        { key: "pile", label: "항타기 및 항발기" },
+        { key: "drill", label: "천공용 건설기계 (어스드릴·어스오거·크롤러드릴·점보드릴 등)" },
+        { key: "compact", label: "지반 다짐·압밀침하용 건설기계 (롤러류·샌드드레인머신 등)" },
+        { key: "crane_ex", label: "크레인형 굴착기계 (크램쉘·드래그라인)" }
       ]
     },
     {
@@ -981,6 +989,53 @@
     ]}
   ];
 
+  /* 차량계 건설기계(id 3) 세부 기계 종류별 추가 사고사례·실무 검토항목 */
+  var SUBTYPE_EXTRAS = {
+    pile: {
+      cases: [
+        "붐지지식(백스테이) 항타기의 백스테이 파단·전도로 리더 붕괴",
+        "드롭해머 권상 와이어로프 파단으로 해머 낙하",
+        "리더 수직도 불량 상태에서 항타 진행 중 편심 하중 발생 → 전도"
+      ],
+      practical: [
+        ["리더·백스테이 안정성", "리더 조립상태·백스테이(붐지지식) 고정상태 확인, 카운터웨이트 부착 상태 유지, 기초 지반 지지력 확인"],
+        ["드롭해머·권상장치 관리", "권상 와이어로프 손상(부식·꼬임·소선절단) 점검, 드롭해머 연결부(고정홀·샤클) 마모 확인, 경타 낙하고 관리기준(통상 2m 이하) 준수"],
+        ["수직도·직진도 관리", "항타 개시 전·중 리더 수직도를 각도기 등으로 확인·보정, 편심 발생 시 즉시 작업 중지 후 재조정"],
+        ["오거·과부하 관리", "상부·하부 오거 결합상태 점검, 운전석 암페어(부하)게이지로 과부하 여부 상시 확인"]
+      ]
+    },
+    drill: {
+      cases: [
+        "천공 중 케이싱 좌굴 또는 공벽 붕괴로 주변 지반 침하",
+        "오거 스크류 회전부 협착"
+      ],
+      practical: [
+        ["케이싱·공벽 관리", "케이싱 삽입·인발 시 좌굴 여부 확인, 안정액(벤토나이트 등) 관리로 공벽 붕괴 방지"],
+        ["회전체 접근금지", "오거 스크류·회전부 근접 작업 금지, 배토 처리·막힘 제거 시 반드시 회전 정지 후 접근"]
+      ]
+    },
+    compact: {
+      cases: [
+        "롤러 전복(비탈면·연약지반 다짐 중)",
+        "샌드드레인머신 등 고소 리더 장비의 전도"
+      ],
+      practical: [
+        ["다짐 구간 경사·지지력", "다짐 대상 구간의 경사·연약층 확인, 비탈면 다짐 시 전복 방지 이격거리 확보"],
+        ["리더형 장비 안정", "샌드·페이퍼·팩드레인머신 등 리더 장비는 항타기에 준해 리더 수직도·지지 상태 확인"]
+      ]
+    },
+    crane_ex: {
+      cases: [
+        "클램셸 버킷 낙하·개폐 오작동으로 협착",
+        "드래그라인 붐 전도"
+      ],
+      practical: [
+        ["버킷·와이어 점검", "클램셸 버킷 개폐 와이어·체인 마모 점검, 버킷 하부 출입금지"],
+        ["붐 각도·정격하중", "드래그라인·클램셸 붐 각도별 정격하중 준수, 아웃트리거·크롤러 접지 상태 확인"]
+      ]
+    }
+  };
+
   /* ---------- 상태 ---------- */
   var LS_KEY = "safety_work_plan_v2";
   var LS_FILES = "safety_work_plan_files_v2";
@@ -1052,6 +1107,8 @@
 
   function fkey(typeId, kind, idx) { return "wt" + typeId + "_" + kind + "_" + idx; }
   function liftKey(k) { return "wt11_lift_" + k; }
+  function subtypeKey(typeId) { return "wt" + typeId + "_subtype"; }
+  function extraKey(typeId, subKey, idx) { return "wt" + typeId + "_extra_" + subKey + "_" + idx; }
 
   function makeTextarea(key, ph) {
     var ta = document.createElement("textarea");
@@ -1081,12 +1138,35 @@
       var body = document.createElement("div");
       body.className = "wt-body";
 
-      /* 사고사례 콜아웃 */
-      if (wt.cases && wt.cases.length) {
+      /* 세부 기계 종류 선택 (해당 작업유형에 subtypes가 정의된 경우) */
+      var curSub = wt.subtypes ? (state.fields[subtypeKey(id)] || "") : "";
+      var subExtra = curSub && SUBTYPE_EXTRAS[curSub] ? SUBTYPE_EXTRAS[curSub] : null;
+      if (wt.subtypes) {
+        var subWrap = document.createElement("div");
+        subWrap.className = "field";
+        var subLab = document.createElement("label");
+        subLab.textContent = wt.subtypeLabel || "세부 기계 종류";
+        subWrap.appendChild(subLab);
+        var subSel = document.createElement("select");
+        subSel.innerHTML = wt.subtypes.map(function (s) {
+          return '<option value="' + s.key + '"' + (s.key === curSub ? " selected" : "") + ">" + s.label + "</option>";
+        }).join("");
+        subSel.addEventListener("change", function () {
+          state.fields[subtypeKey(id)] = subSel.value;
+          persist();
+          renderDynamic();
+        });
+        subWrap.appendChild(subSel);
+        body.appendChild(subWrap);
+      }
+
+      /* 사고사례 콜아웃 (기본 + 세부 기계 종류별 추가) */
+      var allCases = (wt.cases || []).concat(subExtra ? subExtra.cases : []);
+      if (allCases.length) {
         var co = document.createElement("div");
         co.className = "callout";
         co.innerHTML = '<div class="co-title">⚠ 관련 사고사례 — 아래 항목 작성 시 반드시 반영</div><ul>' +
-          wt.cases.map(function (c) { return "<li>" + c + "</li>"; }).join("") + "</ul>";
+          allCases.map(function (c) { return "<li>" + c + "</li>"; }).join("") + "</ul>";
         body.appendChild(co);
       }
 
@@ -1127,7 +1207,7 @@
       /* 양중 계산 패널 (id 11) */
       if (wt.lift) body.appendChild(buildLiftPanel());
 
-      /* 실무 핵심 검토항목 */
+      /* 실무 핵심 검토항목 (기본) */
       if (wt.practical && wt.practical.length) {
         var pWrap = document.createElement("div");
         var pHead = document.createElement("div");
@@ -1145,6 +1225,27 @@
           pWrap.appendChild(w);
         });
         body.appendChild(pWrap);
+      }
+
+      /* 실무 핵심 검토항목 (세부 기계 종류별 추가) */
+      if (subExtra && subExtra.practical && subExtra.practical.length) {
+        var curSubLabel = (wt.subtypes.find(function (s) { return s.key === curSub; }) || {}).label || curSub;
+        var epWrap = document.createElement("div");
+        var epHead = document.createElement("div");
+        epHead.className = "subhead";
+        epHead.innerHTML = curSubLabel + ' 고유 검토항목 <span class="tag field">사고사례 기반</span>';
+        epWrap.appendChild(epHead);
+        subExtra.practical.forEach(function (it, i) {
+          var w = document.createElement("div");
+          w.className = "legal-item";
+          var lab = document.createElement("div");
+          lab.className = "li-label";
+          lab.innerHTML = '<span class="mk">▸</span><span>' + it[0] + "</span>";
+          w.appendChild(lab);
+          w.appendChild(makeTextarea(extraKey(id, curSub, i), it[1]));
+          epWrap.appendChild(w);
+        });
+        body.appendChild(epWrap);
       }
 
       box.appendChild(body);
@@ -1360,6 +1461,11 @@
       if (wt.pre) tick(state.fields[fkey(id, "pre", 0)]);
       wt.legal.forEach(function (_, i) { tick(state.fields[fkey(id, "legal", i)]); });
       (wt.practical || []).forEach(function (_, i) { tick(state.fields[fkey(id, "field", i)]); });
+      if (wt.subtypes) {
+        var curSubProg = state.fields[subtypeKey(id)] || "";
+        var extraProg = curSubProg && SUBTYPE_EXTRAS[curSubProg] ? SUBTYPE_EXTRAS[curSubProg] : null;
+        if (extraProg) extraProg.practical.forEach(function (_, i) { tick(state.fields[extraKey(id, curSubProg, i)]); });
+      }
       if (wt.lift) {
         var isCrawlerProg = (state.fields[liftKey("crane_type")] || "").indexOf("크롤러") > -1;
         var groundProgKeys = isCrawlerProg

@@ -6,7 +6,8 @@
     "unit": null,
     "group": "A. 인양물",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_obj_w",
@@ -15,7 +16,8 @@
     "unit": "ton",
     "group": "A. 인양물",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_obj_dim",
@@ -24,7 +26,8 @@
     "unit": null,
     "group": "A. 인양물",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_obj_cg",
@@ -33,7 +36,8 @@
     "unit": null,
     "group": "A. 인양물",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_hook_w",
@@ -42,7 +46,8 @@
     "unit": "ton",
     "group": "B. 부가하중 · 총 인양하중",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sling_w",
@@ -51,7 +56,8 @@
     "unit": "ton",
     "group": "B. 부가하중 · 총 인양하중",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_extra_w",
@@ -60,7 +66,8 @@
     "unit": "ton",
     "group": "B. 부가하중 · 총 인양하중",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_crane_model",
@@ -69,7 +76,8 @@
     "unit": null,
     "group": "C. 이동식크레인 제원",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_crane_owner",
@@ -78,7 +86,8 @@
     "unit": null,
     "group": "C. 이동식크레인 제원",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_crane_type",
@@ -91,7 +100,8 @@
       "트럭·카고(85% 기준)",
       "올터레인·러프테레인(85% 기준)",
       "크롤러(75% 기준)"
-    ]
+    ],
+    "variant": null
   },
   {
     "key": "wt11_lift_boom_len",
@@ -100,7 +110,8 @@
     "unit": null,
     "group": "C. 이동식크레인 제원",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_radius",
@@ -109,7 +120,8 @@
     "unit": "m",
     "group": "C. 이동식크레인 제원",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_outrigger",
@@ -122,7 +134,8 @@
       "최대(full) 전개",
       "중간(mid) 전개",
       "전개 불가 구간 있음"
-    ]
+    ],
+    "variant": null
   },
   {
     "key": "wt11_lift_rated_load",
@@ -131,7 +144,8 @@
     "unit": "ton",
     "group": "C. 이동식크레인 제원",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_slope",
@@ -140,7 +154,8 @@
     "unit": null,
     "group": "D. 능력 감소요인 (해당 시 정격하중 저감·중지)",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_wind",
@@ -149,7 +164,8 @@
     "unit": null,
     "group": "D. 능력 감소요인 (해당 시 정격하중 저감·중지)",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_moving",
@@ -158,7 +174,8 @@
     "unit": null,
     "group": "D. 능력 감소요인 (해당 시 정격하중 저감·중지)",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_ground_type",
@@ -167,7 +184,8 @@
     "unit": null,
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_ground_allow",
@@ -176,7 +194,8 @@
     "unit": "kN/m²",
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_og_reaction",
@@ -185,7 +204,8 @@
     "unit": "kN",
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": "outrigger"
   },
   {
     "key": "wt11_lift_pad_size",
@@ -194,7 +214,8 @@
     "unit": null,
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": "outrigger"
   },
   {
     "key": "wt11_lift_pad_area",
@@ -203,7 +224,8 @@
     "unit": "m²",
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": "outrigger"
   },
   {
     "key": "wt11_lift_crawler_weight",
@@ -212,7 +234,8 @@
     "unit": "ton",
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": "crawler"
   },
   {
     "key": "wt11_lift_crawler_track_w",
@@ -221,7 +244,8 @@
     "unit": "mm",
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": "crawler"
   },
   {
     "key": "wt11_lift_crawler_track_l",
@@ -230,7 +254,8 @@
     "unit": "mm",
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": "crawler"
   },
   {
     "key": "wt11_lift_crawler_pressure_spec",
@@ -239,7 +264,8 @@
     "unit": null,
     "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": "crawler"
   },
   {
     "key": "wt11_lift_sling_type",
@@ -252,7 +278,8 @@
       "와이어로프(안전율 6 이상)",
       "체인슬링(안전율 5 이상)",
       "라운드슬링·벨트(안전율 7 이상)"
-    ]
+    ],
+    "variant": null
   },
   {
     "key": "wt11_lift_sling_spec",
@@ -261,7 +288,8 @@
     "unit": null,
     "group": "F. 줄걸이(슬링) 검토",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sling_wll",
@@ -270,7 +298,8 @@
     "unit": "ton",
     "group": "F. 줄걸이(슬링) 검토",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sling_legs",
@@ -279,7 +308,8 @@
     "unit": "가닥",
     "group": "F. 줄걸이(슬링) 검토",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sling_angle",
@@ -288,7 +318,8 @@
     "unit": "°",
     "group": "F. 줄걸이(슬링) 검토",
     "drives_calc": true,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sling_edge",
@@ -297,7 +328,8 @@
     "unit": null,
     "group": "F. 줄걸이(슬링) 검토",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sig_method",
@@ -306,7 +338,8 @@
     "unit": null,
     "group": "G. 신호 · 통제",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_sig_name",
@@ -315,7 +348,8 @@
     "unit": null,
     "group": "G. 신호 · 통제",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_exclusion",
@@ -324,7 +358,8 @@
     "unit": null,
     "group": "G. 신호 · 통제",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   },
   {
     "key": "wt11_lift_power_line",
@@ -333,6 +368,7 @@
     "unit": null,
     "group": "G. 신호 · 통제",
     "drives_calc": false,
-    "options": null
+    "options": null,
+    "variant": null
   }
 ]
