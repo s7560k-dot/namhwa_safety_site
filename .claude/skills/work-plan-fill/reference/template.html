@@ -954,12 +954,16 @@
       { k: "wind", label: "풍속", type: "text", ph: "예: 순간풍속 __ m/s (10m/s 이상 작업중지, 5~10 저감 검토)" },
       { k: "moving", label: "주행·선회 중 인양", type: "text", ph: "해당 시 정격하중 20% 저감" }
     ]},
-    { title: "E. 지반 지지력 · 아웃트리거", fields: [
+    { title: "E. 지반 지지력 (아웃트리거 · 크롤러)", fields: [
       { k: "ground_type", label: "지반 종류", type: "text", ph: "예: 잡석다짐 / 모래 / 되메우기 / 슬래브 상부" },
       { k: "ground_allow", label: "허용 지지력 (조사값 또는 표준값)", type: "num", u: "kN/m²", ph: "자갈300 / 모래·점토100", calc: true },
-      { k: "og_reaction", label: "아웃트리거 1개 최대반력 (구조검토)", type: "num", u: "kN", ph: "0", calc: true },
-      { k: "pad_size", label: "깔판(철판) 규격", type: "text", ph: "예: 1.0 × 1.0 m × t20 / 2매 겹침" },
-      { k: "pad_area", label: "깔판 접지면적", type: "num", u: "m²", ph: "예: 1.0", calc: true }
+      { k: "og_reaction", label: "아웃트리거 1개 최대반력 (구조검토)", type: "num", u: "kN", ph: "0", calc: true, variant: "outrigger" },
+      { k: "pad_size", label: "깔판(철판) 규격", type: "text", ph: "예: 1.0 × 1.0 m × t20 / 2매 겹침", variant: "outrigger" },
+      { k: "pad_area", label: "깔판 접지면적", type: "num", u: "m²", ph: "예: 1.0", calc: true, variant: "outrigger" },
+      { k: "crawler_weight", label: "장비 총중량 (자체중량+카운터웨이트)", type: "num", u: "ton", ph: "예: 41.58", calc: true, variant: "crawler" },
+      { k: "crawler_track_w", label: "크롤러 슈 폭", type: "num", u: "mm", ph: "예: 914", calc: true, variant: "crawler" },
+      { k: "crawler_track_l", label: "크롤러 접지장(전장)", type: "num", u: "mm", ph: "예: 6280", calc: true, variant: "crawler" },
+      { k: "crawler_pressure_spec", label: "제조사 제공 접지압 (참고, 무부하 기준)", type: "text", ph: "예: 74.2 kPa (기본붐)", variant: "crawler" }
     ], out: "groundCheck" },
     { title: "F. 줄걸이(슬링) 검토", fields: [
       { k: "sling_type", label: "슬링 종류", type: "select", opts: ["와이어로프(안전율 6 이상)", "체인슬링(안전율 5 이상)", "라운드슬링·벨트(안전율 7 이상)"] },
@@ -1182,6 +1186,7 @@
       g.fields.forEach(function (f) {
         var fd = document.createElement("div");
         fd.className = "field" + (f.wide ? " wide" : "") + (f.calc ? " calc-field" : "");
+        if (f.variant) fd.setAttribute("data-variant", f.variant);
         var lab = document.createElement("label");
         lab.textContent = f.label;
         fd.appendChild(lab);
@@ -1213,6 +1218,9 @@
         }
         input.addEventListener("input", function () { state.fields[key] = input.value; persist(); recalcLift(); updateProgress(); });
         input.addEventListener("change", function () { state.fields[key] = input.value; persist(); recalcLift(); updateProgress(); });
+        if (f.k === "crane_type") {
+          input.addEventListener("change", function () { updateGroundVariant(panel); });
+        }
         grid.appendChild(fd);
       });
 
@@ -1229,7 +1237,15 @@
     });
 
     panel.appendChild(inner);
+    updateGroundVariant(panel);
     return panel;
+  }
+
+  /* 지반 지지력: 아웃트리거식 ↔ 크롤러식 필드 전환 */
+  function updateGroundVariant(root) {
+    var isCrawler = (state.fields[liftKey("crane_type")] || "").indexOf("크롤러") > -1;
+    root.querySelectorAll('[data-variant="outrigger"]').forEach(function (el) { el.style.display = isCrawler ? "none" : ""; });
+    root.querySelectorAll('[data-variant="crawler"]').forEach(function (el) { el.style.display = isCrawler ? "" : "none"; });
   }
 
   function num(k) {
@@ -1274,20 +1290,41 @@
       setOut("liftRatio", '인양률 ' + verdict("idle", "정격하중 입력"));
     }
 
-    /* 지반 지지력 */
-    var allow = num("ground_allow"), react = num("og_reaction"), area = num("pad_area");
-    if (isFinite(react) && react > 0 && isFinite(area) && area > 0) {
-      var contact = react / area; // kN/m²
-      var okG = isFinite(allow) && allow > 0 ? contact <= allow : null;
-      var cls2 = okG === null ? "idle" : (okG ? "ok" : "bad");
-      var msg2 = okG === null ? "허용지지력 입력 시 판정" : (okG ? "적합 (접지압 ≤ 허용지지력)" : "부적합 — 깔판 확대 또는 지반 보강 필요");
-      setOut("groundCheck", '접지압 = 반력 / 깔판면적 = ' + react.toFixed(0) + ' / ' + area.toFixed(2) +
-        ' = <span class="val">' + contact.toFixed(1) + '</span> kN/m²' +
-        (okG === null ? '' : ' · 안전율 <span class="val">' + (allow / contact).toFixed(2) + '</span>') +
-        ' ' + verdict(cls2, msg2) +
-        '<span class="calc-note">안전율 = 허용지지력 ÷ 접지압 (1.0 이상 필요, 통상 2 이상 권장). 지반조사 미실시 표준값: 자갈 300 / 모래·점토 100 kN/m².</span>');
+    /* 지반 지지력 — 아웃트리거식 / 크롤러식 분기 */
+    var allow = num("ground_allow");
+    var isCrawlerG = typeStr.indexOf("크롤러") > -1;
+    if (isCrawlerG) {
+      var cWeight = num("crawler_weight"), trackW = num("crawler_track_w"), trackL = num("crawler_track_l");
+      if (haveTotal && isFinite(cWeight) && cWeight > 0 && isFinite(trackW) && trackW > 0 && isFinite(trackL) && trackL > 0) {
+        var areaM2 = (trackW / 1000) * (trackL / 1000) * 2; // 크롤러 2개 트랙
+        var loadKN = (cWeight + total) * 9.80665; // ton → kN
+        var contactC = loadKN / areaM2;
+        var okC = isFinite(allow) && allow > 0 ? contactC <= allow : null;
+        var clsC = okC === null ? "idle" : (okC ? "ok" : "bad");
+        var msgC = okC === null ? "허용지지력 입력 시 판정" : (okC ? "적합 (접지압 ≤ 허용지지력)" : "부적합 — 지반 보강 또는 깔판(매트) 필요");
+        setOut("groundCheck", '접지압(크롤러) = (장비중량+인양하중)×9.80665 ÷ (슈폭×접지장×2) = (' + cWeight.toFixed(1) + '+' + total.toFixed(2) + ')×9.80665 / ' + areaM2.toFixed(2) +
+          ' = <span class="val">' + contactC.toFixed(1) + '</span> kN/m²' +
+          (okC === null ? '' : ' · 안전율 <span class="val">' + (allow / contactC).toFixed(2) + '</span>') +
+          ' ' + verdict(clsC, msgC) +
+          '<span class="calc-note">크롤러는 아웃트리거 대신 2개 트랙으로 하중을 분산. 제조사 제공 접지압(스펙시트)은 대개 무부하 기준이라 실제 부하 시 값과 다름 — 이 계산값(부하 포함)으로 판정.</span>');
+      } else {
+        setOut("groundCheck", '크롤러 접지압 ' + verdict("idle", "장비중량·슈폭·접지장 입력"));
+      }
     } else {
-      setOut("groundCheck", '지반 지지력 ' + verdict("idle", "반력·깔판면적 입력"));
+      var react = num("og_reaction"), area = num("pad_area");
+      if (isFinite(react) && react > 0 && isFinite(area) && area > 0) {
+        var contact = react / area; // kN/m²
+        var okG = isFinite(allow) && allow > 0 ? contact <= allow : null;
+        var cls2 = okG === null ? "idle" : (okG ? "ok" : "bad");
+        var msg2 = okG === null ? "허용지지력 입력 시 판정" : (okG ? "적합 (접지압 ≤ 허용지지력)" : "부적합 — 깔판 확대 또는 지반 보강 필요");
+        setOut("groundCheck", '접지압(아웃트리거) = 반력 / 깔판면적 = ' + react.toFixed(0) + ' / ' + area.toFixed(2) +
+          ' = <span class="val">' + contact.toFixed(1) + '</span> kN/m²' +
+          (okG === null ? '' : ' · 안전율 <span class="val">' + (allow / contact).toFixed(2) + '</span>') +
+          ' ' + verdict(cls2, msg2) +
+          '<span class="calc-note">안전율 = 허용지지력 ÷ 접지압 (1.0 이상 필요, 통상 2 이상 권장). 지반조사 미실시 표준값: 자갈 300 / 모래·점토 100 kN/m².</span>');
+      } else {
+        setOut("groundCheck", '지반 지지력 ' + verdict("idle", "반력·깔판면적 입력"));
+      }
     }
 
     /* 슬링 장력 */
@@ -1324,9 +1361,13 @@
       wt.legal.forEach(function (_, i) { tick(state.fields[fkey(id, "legal", i)]); });
       (wt.practical || []).forEach(function (_, i) { tick(state.fields[fkey(id, "field", i)]); });
       if (wt.lift) {
-        ["obj_name", "obj_w", "hook_w", "sling_w", "crane_model", "radius", "rated_load",
-         "ground_allow", "og_reaction", "pad_area", "sling_type", "sling_wll", "sling_legs",
-         "sling_angle", "sig_method", "sig_name", "exclusion"].forEach(function (k) { tick(state.fields[liftKey(k)]); });
+        var isCrawlerProg = (state.fields[liftKey("crane_type")] || "").indexOf("크롤러") > -1;
+        var groundProgKeys = isCrawlerProg
+          ? ["crawler_weight", "crawler_track_w", "crawler_track_l"]
+          : ["og_reaction", "pad_area"];
+        ["obj_name", "obj_w", "hook_w", "sling_w", "crane_model", "radius", "rated_load", "ground_allow",
+         "sling_type", "sling_wll", "sling_legs", "sling_angle", "sig_method", "sig_name", "exclusion"]
+          .concat(groundProgKeys).forEach(function (k) { tick(state.fields[liftKey(k)]); });
       }
     });
     var pct = total ? Math.round((filled / total) * 100) : 0;

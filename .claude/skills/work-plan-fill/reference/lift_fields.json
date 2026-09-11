@@ -165,7 +165,7 @@
     "label": "지반 종류",
     "type": "text",
     "unit": null,
-    "group": "E. 지반 지지력 · 아웃트리거",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": false,
     "options": null
   },
@@ -174,7 +174,7 @@
     "label": "허용 지지력 (조사값 또는 표준값)",
     "type": "num",
     "unit": "kN/m²",
-    "group": "E. 지반 지지력 · 아웃트리거",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
     "options": null
   },
@@ -183,7 +183,7 @@
     "label": "아웃트리거 1개 최대반력 (구조검토)",
     "type": "num",
     "unit": "kN",
-    "group": "E. 지반 지지력 · 아웃트리거",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
     "options": null
   },
@@ -192,7 +192,7 @@
     "label": "깔판(철판) 규격",
     "type": "text",
     "unit": null,
-    "group": "E. 지반 지지력 · 아웃트리거",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": false,
     "options": null
   },
@@ -201,8 +201,44 @@
     "label": "깔판 접지면적",
     "type": "num",
     "unit": "m²",
-    "group": "E. 지반 지지력 · 아웃트리거",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
     "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crawler_weight",
+    "label": "장비 총중량 (자체중량+카운터웨이트)",
+    "type": "num",
+    "unit": "ton",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crawler_track_w",
+    "label": "크롤러 슈 폭",
+    "type": "num",
+    "unit": "mm",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crawler_track_l",
+    "label": "크롤러 접지장(전장)",
+    "type": "num",
+    "unit": "mm",
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
+    "drives_calc": true,
+    "options": null
+  },
+  {
+    "key": "wt11_lift_crawler_pressure_spec",
+    "label": "제조사 제공 접지압 (참고, 무부하 기준)",
+    "type": "text",
+    "unit": null,
+    "group": "E. 지반 지지력 (아웃트리거 · 크롤러)",
+    "drives_calc": false,
     "options": null
   },
   {
