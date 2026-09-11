@@ -34,6 +34,8 @@
     --danger-soft: #f6e0dd;
     --focus: #2f8f76;
     --good: #1f7a4d;
+    --field-bg: #edeff3;
+    --field-ink: #16295c;
     --shadow: 0 1px 2px rgba(20, 22, 28, .04), 0 10px 28px -14px rgba(20, 22, 28, .14);
     --radius: 7px;
   }
@@ -48,6 +50,7 @@
       --warn: #d8a94e; --warn-soft: #3a3018;
       --danger: #e08079; --danger-soft: #3c211f;
       --focus: #54c0a3; --good: #56b98a;
+      --field-bg: #262b33; --field-ink: #cdd9f0;
       --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px -16px rgba(0, 0, 0, .6);
     }
   }
@@ -60,6 +63,7 @@
     --warn: #d8a94e; --warn-soft: #3a3018;
     --danger: #e08079; --danger-soft: #3c211f;
     --focus: #54c0a3; --good: #56b98a;
+    --field-bg: #262b33; --field-ink: #cdd9f0;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px -16px rgba(0, 0, 0, .6);
   }
 
@@ -101,12 +105,12 @@
   .approval .cell .sign { height: 62px; display: flex; align-items: center; justify-content: center; }
   .approval .cell input {
     border: 0; background: transparent; text-align: center; width: 100%; height: 100%;
-    font-family: "Noto Serif KR", serif; font-size: 15px; color: var(--ink);
+    font-family: "Noto Serif KR", serif; font-size: 15px; color: var(--field-ink);
   }
   .approval .cell input:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
   .approval .cell .datef {
-    border-top: 1px solid var(--hairline); font-family: "Noto Sans KR", sans-serif;
-    font-size: 11.5px; height: 26px; color: var(--ink-muted);
+    border-top: 1px solid var(--hairline); border-radius: 0; font-family: "Noto Sans KR", sans-serif;
+    font-size: 11.5px; height: 26px; color: var(--ink-muted); background: transparent;
   }
 
   section.block {
@@ -132,11 +136,19 @@
   .field > label .req { color: var(--required); margin-left: 3px; }
 
   input[type="text"], input[type="date"], input[type="time"], input[type="number"], textarea, select {
-    font: inherit; font-size: 13px; color: var(--ink); background: var(--surface);
+    font: inherit; font-size: 13px; font-weight: 500; color: var(--field-ink); background: var(--field-bg);
     border: 1px solid var(--hairline-strong); border-radius: 5px; padding: 8px 10px; width: 100%;
     transition: border-color .12s;
   }
   textarea { resize: vertical; min-height: 60px; line-height: 1.55; }
+  /* 인쇄용 textarea 미러 — 행이 늘어도 전체 내용 출력 */
+  .ta-print {
+    display: none;
+    font: inherit; font-size: 13px; font-weight: 500; line-height: 1.5;
+    color: var(--field-ink); background: var(--field-bg);
+    border: 1px solid var(--hairline-strong); border-radius: 5px; padding: 8px 10px;
+    white-space: pre-wrap; overflow-wrap: anywhere; min-height: 34px;
+  }
   input:focus, textarea:focus, select:focus {
     outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px var(--accent-soft);
   }
@@ -352,6 +364,7 @@
       --hairline: #9a9a9a; --hairline-strong: #5f5f5f; --accent: #0c5c49; --accent-ink: #0c5c49; --accent-soft: #fff;
       --required: #7a3612; --required-soft: #fff; --warn: #6b4a0c; --warn-soft: #fff;
       --danger: #7a201a; --danger-soft: #fff; --shadow: none;
+      --field-bg: #eceef2; --field-ink: #16295c;
     }
     @page { size: A4 portrait; margin: 25mm 10mm 10mm 10mm; }
 
@@ -365,17 +378,24 @@
     .tools, .actionbar, .dropzone, .ghost-btn, .file-meta .rm,
     .empty-note, .law-overlay, .hint, .type-grid, .eg, .lift-note { display: none !important; }
 
-    /* 입력요소: 글자 크기는 본문에 맞추고, 내용이 모두 보이도록 */
+    /* 입력요소: 글자 크기는 본문에 맞추고, 배경 연회색 + 진청색 글자 */
     input[type="text"], input[type="date"], input[type="time"], input[type="number"], textarea, select {
       font-size: 10pt; padding: 3px 5px; border-radius: 0; border-color: #8f8f8f !important;
-      box-shadow: none !important; height: auto !important; overflow: visible !important;
+      box-shadow: none !important;
+      background: var(--field-bg) !important; color: var(--field-ink) !important;
     }
-    textarea { min-height: 26px; line-height: 1.4; }
+    /* textarea는 인쇄 시 미러(div)로 대체 → 행이 늘어도 전체 출력 */
+    textarea { display: none !important; }
+    .ta-print {
+      display: block !important;
+      font-size: 10pt; line-height: 1.4; padding: 3px 5px; border-radius: 0;
+      border: 1px solid #8f8f8f;
+      background: var(--field-bg) !important; color: var(--field-ink) !important;
+    }
 
     /* 셀 안내(예시) 텍스트는 인쇄 제외 */
-    input::placeholder, textarea::placeholder { color: transparent !important; opacity: 0 !important; }
-    input::-webkit-input-placeholder, textarea::-webkit-input-placeholder { color: transparent !important; opacity: 0 !important; }
-    input:-ms-input-placeholder, textarea:-ms-input-placeholder { color: transparent !important; }
+    input::placeholder { color: transparent !important; opacity: 0 !important; }
+    input::-webkit-input-placeholder { color: transparent !important; opacity: 0 !important; }
     select:has(option[value=""]:checked) { color: transparent !important; }
     .calc-note { display: none !important; }
     .calc-out.is-idle { display: none !important; }
@@ -1408,20 +1428,21 @@
     });
   }
 
-  /* ---------- 인쇄: textarea를 내용 높이에 맞춰 공백 제거 ---------- */
-  function fitTextareasForPrint(on) {
+  /* ---------- 인쇄: textarea를 미러(div)로 대체해 행이 늘어도 전체 출력 ---------- */
+  function syncPrintMirrors() {
     document.querySelectorAll("textarea").forEach(function (t) {
-      if (on) {
-        t.setAttribute("data-ph", t.style.height || "");
-        t.style.height = "auto";
-        t.style.height = Math.max(t.scrollHeight, 30) + "px";
-      } else {
-        t.style.height = t.getAttribute("data-ph") || "";
+      var m = t.__mirror;
+      if (!m) {
+        m = document.createElement("div");
+        m.className = "ta-print";
+        m.setAttribute("aria-hidden", "true");
+        t.__mirror = m;
+        t.insertAdjacentElement("afterend", m);
       }
+      m.textContent = t.value || " ";
     });
   }
-  window.addEventListener("beforeprint", function () { fitTextareasForPrint(true); });
-  window.addEventListener("afterprint", function () { fitTextareasForPrint(false); });
+  window.addEventListener("beforeprint", syncPrintMirrors);
 
   /* ---------- 버튼 ---------- */
   document.getElementById("printBtn").addEventListener("click", function () { window.print(); });
