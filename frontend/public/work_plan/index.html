@@ -143,6 +143,21 @@
   input::placeholder, textarea::placeholder { color: var(--ink-faint); }
   .hint { font-size: 11px; color: var(--ink-faint); margin-top: 1px; }
 
+  /* 셀별 예시(가이드) — 드래그로 선택·복사 가능 */
+  .eg { display: flex; align-items: baseline; gap: 7px; margin-top: 3px; font-size: 11px; line-height: 1.45; }
+  .eg-text {
+    color: var(--ink-faint); flex: 1; min-width: 0;
+    user-select: text; -webkit-user-select: text; cursor: text;
+  }
+  .eg-text::before { content: "예시 "; color: var(--accent); font-weight: 700; }
+  .eg-fill {
+    font: inherit; font-size: 10px; font-weight: 600; color: var(--accent); background: transparent;
+    border: 1px solid var(--hairline-strong); border-radius: 4px; padding: 1px 7px; cursor: pointer;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .eg-fill:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .eg-fill:active { transform: translateY(1px); }
+
   .type-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .type-opt {
     display: flex; gap: 9px; align-items: flex-start; border: 1px solid var(--hairline-strong);
@@ -348,7 +363,7 @@
     .wrap { max-width: none; margin: 0; padding: 0; }
 
     .tools, .actionbar, .dropzone, .ghost-btn, .file-meta .rm,
-    .empty-note, .law-overlay, .hint, .type-grid { display: none !important; }
+    .empty-note, .law-overlay, .hint, .type-grid, .eg, .lift-note { display: none !important; }
 
     /* 입력요소: 글자 크기는 본문에 맞추고, 내용이 모두 보이도록 */
     input[type="text"], input[type="date"], input[type="time"], input[type="number"], textarea, select {
@@ -1121,6 +1136,7 @@
       box.appendChild(body);
       host.appendChild(box);
     });
+    addExampleHints(host);
     recalcLift();
     updateProgress();
   }
@@ -1359,6 +1375,39 @@
     });
   }
 
+  /* ---------- 셀별 예시문구를 선택·복사 가능한 텍스트로 노출 ---------- */
+  function addExampleHints(root) {
+    (root || document).querySelectorAll("input[placeholder], textarea[placeholder]").forEach(function (el) {
+      if (el.dataset.egDone) return;
+      if (el.type === "date" || el.type === "time" || el.type === "file") return;
+      if (el.closest(".approval") || el.closest(".file-meta")) return;
+      var ph = el.getAttribute("placeholder");
+      if (!ph || !ph.trim()) return;
+      el.dataset.egDone = "1";
+      el.removeAttribute("placeholder");
+
+      var eg = document.createElement("div");
+      eg.className = "eg";
+      var span = document.createElement("span");
+      span.className = "eg-text";
+      span.textContent = ph.replace(/^\s*예\s*[:：]\s*/, "");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "eg-fill";
+      btn.textContent = "채우기";
+      btn.addEventListener("click", function () {
+        el.value = ph.replace(/^\s*예\s*[:：]\s*/, "");
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        el.focus();
+      });
+      eg.appendChild(span);
+      eg.appendChild(btn);
+      var anchor = el.closest(".unit-row") || el;
+      anchor.insertAdjacentElement("afterend", eg);
+    });
+  }
+
   /* ---------- 인쇄: textarea를 내용 높이에 맞춰 공백 제거 ---------- */
   function fitTextareasForPrint(on) {
     document.querySelectorAll("textarea").forEach(function (t) {
@@ -1444,6 +1493,7 @@
   hydrateStaticFields();
   renderDynamic();
   renderFiles();
+  addExampleHints();
   updateProgress();
 </script>
 </body>
