@@ -39,3 +39,31 @@ export function reconcileLedger(
         suspiciousOverageAmount: Math.max(executedTotal - allocated, 0),
     };
 }
+
+export interface DatedAmount {
+    date: string;
+    amount: number;
+}
+
+/**
+ * 계상액을 초과시킨 "건수"를 센다 (F11 감사 준비도 산식용).
+ * 일자 오름차순으로 누적 집행액을 쌓아가다가, 누적액이 계상액을 처음 넘어선 시점부터의
+ * 지출 건수를 목적 외 의심 건수로 본다.
+ * @param allocated 계상액
+ * @param expenses 일자(date)를 가진 지출 목록 (정렬되지 않아도 됨)
+ */
+export function countOverageExpenses(allocated: number, expenses: readonly DatedAmount[]): number {
+    // 1. 계획: 일자순 정렬 → 누적합 → 누적합이 계상액을 넘은 이후의 건수를 카운트.
+    // 2. 검증: 초과가 없을 때 0건, 초과 시작 건부터 이후 전부 포함되는지 테스트에서 확인.
+    // 3. 구현:
+    const sorted = [...expenses].sort((a, b) => (a.date < b.date ? -1 : 1));
+    let cumulative = 0;
+    let overageCount = 0;
+    for (const expense of sorted) {
+        cumulative += expense.amount;
+        if (cumulative > allocated) {
+            overageCount += 1;
+        }
+    }
+    return overageCount;
+}

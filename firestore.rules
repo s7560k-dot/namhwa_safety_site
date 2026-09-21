@@ -42,7 +42,8 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // 집행(Expense) 원장: 승인된 사용자가 등록 가능. 수정/삭제는 금지 — 정정은 새 문서 추가로만 한다(감사 추적).
+    // 집행(Expense) 원장: 승인된 사용자가 등록 가능. 내용 수정/삭제는 금지 — 정정은 새 문서 추가로만 한다(감사 추적).
+    // 예외적으로 evidenceConfirmed 필드만 관리자가 변경할 수 있다 (F4 기성 처리용 증빙 확인 플래그).
     match /safetyBudget_expenses/{docId} {
       allow read: if isApproved();
       allow create: if isApproved()
@@ -51,7 +52,9 @@ service cloud.firestore {
         && request.resource.data.projectId is string
         && request.resource.data.eligibility.status == 'APPROVED'
         && request.resource.data.createdBy == request.auth.token.email;
-      allow update, delete: if false;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['evidenceConfirmed']);
+      allow delete: if false;
     }
 
     // 안전 플러스 지출: 산안비 원장과 별도. 동일한 등록/불변 정책을 적용한다.

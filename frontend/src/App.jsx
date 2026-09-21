@@ -16,6 +16,9 @@ import HiringDashboard from './components/hiring/HiringDashboard';
 import AdvancedHiringDashboard from './components/hiring_advanced/AdvancedHiringDashboard';
 import WbsGeneratorPage from './WbsGeneratorPage';
 import SafetyBudgetPage from './features/safetyBudget/pages/SafetyBudgetPage';
+import SubcontractorDashboardPage from './features/safetyBudget/pages/SubcontractorDashboardPage';
+import SettlementSimulationPage from './features/safetyBudget/pages/SettlementSimulationPage';
+import AuditReadinessPage from './features/safetyBudget/pages/AuditReadinessPage';
 
 import { AuthProvider } from './context/AuthContext';
 import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
@@ -88,6 +91,21 @@ function App() {
           <Route path="/safety-budget/:siteId" element={
             <ApprovedRoute>
               <SafetyBudgetPage />
+            </ApprovedRoute>
+          } />
+          <Route path="/safety-budget/:siteId/subcontractors" element={
+            <ApprovedRoute>
+              <SubcontractorDashboardPage />
+            </ApprovedRoute>
+          } />
+          <Route path="/safety-budget/:siteId/settlement" element={
+            <ApprovedRoute>
+              <SettlementSimulationPage />
+            </ApprovedRoute>
+          } />
+          <Route path="/safety-budget/:siteId/audit" element={
+            <ApprovedRoute>
+              <AuditReadinessPage />
             </ApprovedRoute>
           } />
           {/* Fallback route */}

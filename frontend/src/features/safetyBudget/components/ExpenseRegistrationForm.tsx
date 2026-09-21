@@ -18,6 +18,8 @@ export function ExpenseRegistrationForm({ projectId, subcontractors, onSubmit, i
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [subcontractorId, setSubcontractorId] = useState('');
     const [evidenceUrl, setEvidenceUrl] = useState('');
+    const [ptwId, setPtwId] = useState('');
+    const [tbmId, setTbmId] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,9 +33,13 @@ export function ExpenseRegistrationForm({ projectId, subcontractors, onSubmit, i
             itemCode,
             subcontractorId: subcontractorId || undefined,
             evidenceUrl: evidenceUrl || undefined,
+            ptwId: ptwId || undefined,
+            tbmId: tbmId || undefined,
         });
         setAmount('');
         setEvidenceUrl('');
+        setPtwId('');
+        setTbmId('');
     };
 
     return (
@@ -104,6 +110,27 @@ export function ExpenseRegistrationForm({ projectId, subcontractors, onSubmit, i
                     placeholder="https://..."
                     className="w-full border border-slate-200 rounded-xl px-4 py-3"
                 />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">PTW ID (선택)</label>
+                    <input
+                        type="text"
+                        value={ptwId}
+                        onChange={(e) => setPtwId(e.target.value)}
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">TBM ID (선택)</label>
+                    <input
+                        type="text"
+                        value={tbmId}
+                        onChange={(e) => setTbmId(e.target.value)}
+                        className="w-full border border-slate-200 rounded-xl px-4 py-3"
+                    />
+                </div>
             </div>
 
             <button

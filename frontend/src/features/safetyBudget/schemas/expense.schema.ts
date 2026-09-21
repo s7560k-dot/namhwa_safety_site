@@ -22,6 +22,8 @@ export const ExpenseSchema = z.object({
     tbmId: z.string().min(1).optional(),
     /** 정정 기록: 기존 지출을 수정하는 대신 이 필드로 원본 id를 참조하는 새 문서를 추가한다 (감사 추적). */
     correctionOfExpenseId: z.string().min(1).optional(),
+    /** 기성 처리를 위한 증빙 확인 완료 여부. 관리자만 변경 가능 (F4). 미설정 시 false로 간주. */
+    evidenceConfirmed: z.boolean().optional().default(false),
     createdAt: z.string().datetime().optional(),
     createdBy: z.string().min(1).optional(),
 });
@@ -33,5 +35,6 @@ export const ExpenseInputSchema = ExpenseSchema.omit({
     id: true,
     eligibility: true,
     createdAt: true,
+    evidenceConfirmed: true,
 });
 export type ExpenseInput = z.infer<typeof ExpenseInputSchema>;

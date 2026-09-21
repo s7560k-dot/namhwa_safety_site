@@ -3,7 +3,7 @@ import { getProject } from '../services/projectService';
 import { listWorkPackages } from '../services/workPackageService';
 import { listBudgetItems } from '../services/budgetItemService';
 import { listSubcontractors } from '../services/subcontractorService';
-import { listExpenses, addExpense } from '../services/expenseService';
+import { listExpenses, addExpense, setExpenseEvidenceConfirmed } from '../services/expenseService';
 import { listSafetyPlusExpenses, addSafetyPlusExpense } from '../services/safetyPlusExpenseService';
 import type { ExpenseInput } from '../schemas/expense.schema';
 import type { SafetyPlusExpenseInput } from '../schemas/safetyPlusExpense.schema';
@@ -53,6 +53,18 @@ export function useAddExpense(projectId: string, createdBy: string) {
             if (result.status === 'APPROVED') {
                 queryClient.invalidateQueries({ queryKey: queryKeys.expenses(projectId) });
             }
+        },
+    });
+}
+
+/** 기성 처리를 위한 증빙 확인 플래그 변경 뮤테이션 (F4, 관리자 전용). */
+export function useSetExpenseEvidenceConfirmed(projectId: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ expenseId, confirmed }: { expenseId: string; confirmed: boolean }) =>
+            setExpenseEvidenceConfirmed(expenseId, confirmed),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.expenses(projectId) });
         },
     });
 }

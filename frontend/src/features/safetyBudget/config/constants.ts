@@ -56,3 +56,27 @@ export const DEFAULT_S_CURVE_SHAPE = {
 
 /** 위험 가중치 합계 검증 시 허용 오차 (부동소수점 오차 보정용). */
 export const RISK_WEIGHT_SUM_TOLERANCE = 0.001;
+
+/**
+ * 감사 준비도 점수(F11) 가중치. 법적 근거가 있는 수치가 아니라 운영상 판단 기준이며,
+ * 화면에는 이 가중치와 산식을 함께 표시해 근거를 투명하게 드러낸다.
+ */
+export const AUDIT_READINESS_WEIGHTS = {
+    documentation: 0.25, // PTW/TBM 연결 비율
+    evidenceAttachment: 0.25, // 증빙 링크 첨부율
+    suspiciousCount: 0.25, // 목적 외 의심 건수 (적을수록 고득점)
+    deviationControl: 0.25, // S-곡선 편차 관리 (작을수록 고득점)
+} as const;
+
+/** 목적 외 의심 1건당 감점 점수 (0~100 만점 기준). */
+export const SUSPICIOUS_EXPENSE_PENALTY_PER_CASE = 20;
+
+/** 편차 1%p당 감점 점수 (0~100 만점 기준). */
+export const DEVIATION_PENALTY_PER_PERCENT_POINT = 5;
+
+/** ResourceCenter.jsx의 현장 목록과 동일한 siteId를 사용한다 (진행 현장이 늘어나면 두 곳 모두 갱신 필요). */
+export const SITE_OPTIONS = [
+    { id: 'siteA', label: '대광 새마을금고 골프연습장' },
+    { id: 'siteB', label: '수원 노유자시설 신축공사' },
+    { id: 'siteC', label: '평택 세탁소 시설 신축공사' },
+] as const;

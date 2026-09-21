@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../firebase-modular';
 import { COLLECTIONS } from './collections';
 import { ExpenseSchema, ExpenseInputSchema } from '../schemas/expense.schema';
@@ -65,4 +65,13 @@ export async function addExpense(input: ExpenseInput, createdBy: string): Promis
 
     const docRef = await addDoc(collection(db, COLLECTIONS.EXPENSES), expenseToSave);
     return { status: 'APPROVED', id: docRef.id };
+}
+
+/**
+ * 기성 처리를 위한 증빙 확인 상태를 변경한다 (F4). 관리자만 호출 가능 — Firestore Rules에서도 강제한다.
+ * @param expenseId 집행 문서 id
+ * @param confirmed 증빙 확인 완료 여부
+ */
+export async function setExpenseEvidenceConfirmed(expenseId: string, confirmed: boolean): Promise<void> {
+    await updateDoc(doc(db, COLLECTIONS.EXPENSES, expenseId), { evidenceConfirmed: confirmed });
 }

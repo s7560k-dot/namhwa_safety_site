@@ -13,5 +13,13 @@ export const HEADQUARTERS_USAGE_CAP_RATIO: number | undefined = undefined; // TO
 /** 스마트 안전장비 구입·임대비 인정 한도 비율 (%). TODO(고시 확인 필요, 자료마다 표기 상이). */
 export const SMART_EQUIPMENT_RECOGNITION_CAP_RATIO: number | undefined = undefined; // TODO(고시 확인 필요)
 
-/** 공공발주 반환·감액형 정산 규칙의 세부 비율. TODO(고시/계약조건 확인 필요). */
-export const PUBLIC_SETTLEMENT_RULE_RATES: unknown = undefined; // TODO(고시 확인 필요)
+export interface SettlementRefundRule {
+    /** 미집행 잔액 중 발주자에게 반환/감액해야 하는 비율 (0~100, %). */
+    refundRatioOfUnexecuted: number;
+}
+
+/** 공공발주 반환·감액형 정산 규칙. TODO(고시·계약조건 확인 필요). */
+export const PUBLIC_SETTLEMENT_RULE: SettlementRefundRule | undefined = undefined; // TODO(고시 확인 필요)
+
+/** 민간 계약형 정산 규칙. 계약서상 사후정산 조항에 따라 값이 달라지므로 프로젝트별 확인 필요. TODO(계약조건 확인 필요). */
+export const PRIVATE_SETTLEMENT_RULE: SettlementRefundRule | undefined = undefined; // TODO(계약조건 확인 필요)

@@ -1,4 +1,5 @@
 import { BUDGET_ITEM_CODE_LABELS } from '../config/constants';
+import { hasWeakEvidence } from '../domain/evidence';
 import type { Expense } from '../schemas/expense.schema';
 
 export function ExpenseListTable({ expenses }: { expenses: Expense[] }) {
@@ -14,6 +15,7 @@ export function ExpenseListTable({ expenses }: { expenses: Expense[] }) {
                         <th className="py-3 pr-4">일자</th>
                         <th className="py-3 pr-4">비목</th>
                         <th className="py-3 pr-4">금액</th>
+                        <th className="py-3 pr-4">PTW/TBM</th>
                         <th className="py-3 pr-4">증빙</th>
                     </tr>
                 </thead>
@@ -25,19 +27,29 @@ export function ExpenseListTable({ expenses }: { expenses: Expense[] }) {
                                 {BUDGET_ITEM_CODE_LABELS[expense.itemCode]}
                             </td>
                             <td className="py-3 pr-4 font-bold text-slate-900">{expense.amount.toLocaleString()}원</td>
+                            <td className="py-3 pr-4 text-xs text-slate-500">
+                                {expense.ptwId || expense.tbmId
+                                    ? [expense.ptwId && `PTW ${expense.ptwId}`, expense.tbmId && `TBM ${expense.tbmId}`]
+                                          .filter(Boolean)
+                                          .join(' · ')
+                                    : '-'}
+                            </td>
                             <td className="py-3 pr-4">
-                                {expense.evidenceUrl ? (
-                                    <a
-                                        href={expense.evidenceUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-red-600 hover:underline"
-                                    >
-                                        보기
-                                    </a>
-                                ) : (
-                                    <span className="text-amber-600 text-xs font-bold">증빙 약함</span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {expense.evidenceUrl && (
+                                        <a
+                                            href={expense.evidenceUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-red-600 hover:underline"
+                                        >
+                                            보기
+                                        </a>
+                                    )}
+                                    {hasWeakEvidence(expense) && (
+                                        <span className="text-amber-600 text-xs font-bold">증빙 약함</span>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ))}
