@@ -7,7 +7,7 @@ function formatWon(amount: number): string {
 export function LedgerReconciliationCard({ result }: { result: LedgerReconciliationResult }) {
     return (
         <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
-            <h3 className="text-xl font-black text-slate-900 mb-6">이중 원장 대사</h3>
+            <h3 className="text-xl font-black text-slate-900 mb-6">산안비 예산, 집행 현황</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">계상액</p>
