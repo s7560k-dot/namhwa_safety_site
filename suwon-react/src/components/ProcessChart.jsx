@@ -29,9 +29,9 @@ const PrepCell = ({ value, onBlurSave }) => {
 };
 
 /**
- * @param {{ tags: string[], rowIndex: number, month: number, onClick: () => void }} props
+ * @param {{ tags: string[], month: number, onClick: () => void }} props
  */
-const TagCell = ({ tags, rowIndex, month, onClick }) => (
+const TagCell = ({ tags, month, onClick }) => (
   <div
     className="cell tag-container clickable-cell"
     onClick={onClick}

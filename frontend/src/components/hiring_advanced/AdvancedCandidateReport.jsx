@@ -13,7 +13,7 @@ import { jsPDF } from 'jspdf';
 
 const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
   const [copied, setCopied] = useState(false);
-  const { evaluationData, feedback, interviewerName } = reportData;
+  const { feedback, interviewerName } = reportData;
 
   const emailHtml = `
 <div style="max-width: 650px; margin: 0; border: 1px solid #E0E0E0; border-radius: 8px; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; overflow: hidden; background-color: #ffffff;">
@@ -129,7 +129,7 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
 
       const result = await model.generateContent(prompt);
       setAiSummary(result.response.text());
-    } catch (error) {
+    } catch {
       setAiSummary('AI 분석 생성 실패');
     } finally {
       setIsGeneratingAi(false);

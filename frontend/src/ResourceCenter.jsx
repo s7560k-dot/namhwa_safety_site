@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { auth, db, Timestamp } from './firebase';
 import { useAuth } from './context/AuthContext';
 import Footer from './components/Footer';
@@ -21,7 +21,8 @@ import {
     LogOut,
     Box,
     Database,
-    Wallet
+    Wallet,
+    BarChart3
 } from 'lucide-react';
 
 // CI 규정집 색상 (R127 G0 B0)
@@ -75,7 +76,6 @@ const ResourceCenter = () => {
     const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
     const { user, isAdmin } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
-    const location = useLocation();
 
     // Background Image URL (Local Asset per user request)
     const BG_IMAGE_URL = "/night_view.jpg";
@@ -448,13 +448,17 @@ const ResourceCenter = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
                                 { title: "SHM SYSTEM", sub: "Web System", icon: <Shield />, link: "/shm_system/index.html" },
+                                { title: "SHM SYSTEM (수정안)", sub: "중처법·산안법 보강 비교용", icon: <Shield />, link: "/shm_system_v2/index.html" },
+                                { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
+                                { title: "SHM RESULT", sub: "종합결과표", icon: <LayoutDashboard />, link: "/shm_result/index.html" },
+                                { title: "SHM REPORT", sub: "전사 분기 보고서", icon: <BarChart3 />, link: "/shm_report/index.html" },
                                 { title: "PRE CHECK", sub: "Checklist", icon: <CheckSquare />, link: "/pre_check/index.html" },
                                 { title: "DAILY ARCH", sub: "Architecture", icon: <ClipboardCheck />, link: "/daily_arch/index.html" },
                                 { title: "DAILY CE", sub: "Civil Eng.", icon: <ClipboardCheck />, link: "/daily_ce/index.html" },
-                                { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
                                 { title: "AHA", sub: "Risk Assessment", icon: <FileText />, link: "/AHA/index.html" },
                                 { title: "PTW", sub: "Permit to Work", icon: <Lock />, link: "/PTW/index.html" },
                                 { title: "WSHCC", sub: "Council", icon: <BookOpen />, link: "/WSHCC/index.html" },
+                                { title: "작업계획서", sub: "Work Plan · 안전보건규칙 별표4", icon: <ClipboardCheck />, link: "/work_plan/index.html" },
                             ].map((item, index) => (
                                 <a
                                     href={item.link}

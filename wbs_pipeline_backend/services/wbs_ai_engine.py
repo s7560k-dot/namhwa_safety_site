@@ -1,7 +1,11 @@
 import os
 import json
-import google.generativeai as genai
 from typing import Dict, Any, List
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 
 # 1. 계획 -> 2. 검증 -> 3. 구현
 # 1. 계획:
@@ -14,7 +18,7 @@ from typing import Dict, Any, List
 # 환경 변수에서 API 키 로드
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
-if GEMINI_API_KEY:
+if GEMINI_API_KEY and genai:
     genai.configure(api_key=GEMINI_API_KEY)
 
 # Mock DB 로드

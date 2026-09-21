@@ -132,15 +132,15 @@
         @media print {
             @page {
                 size: landscape;
-                margin: 0;
-                /* 브라우저 기본 머리글(날짜) 및 바닥글(URL) 제거 */
+                /* 여백: 상단 25mm(상단 여유 확보) / 하단·좌·우 10mm */
+                margin: 25mm 10mm 10mm 10mm !important;
             }
 
             body {
                 font-size: 11pt;
                 /* 가독성을 높이기 위해 폰트 크기 확대 */
-                margin: 10mm;
-                /* 컨텐츠가 잘리지 않도록 본문에 여백 추가 */
+                margin: 0 !important;
+                /* 여백은 @page에서 일괄 처리 (본문 자체 margin과 중복 적용 방지) */
                 padding: 0;
                 background-color: white;
                 -webkit-print-color-adjust: exact;
@@ -258,9 +258,9 @@
             <div class="flex justify-between items-end mb-8 border-b pb-1">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">현장 안전보건 관리 점검표</h1>
-                    <div class="flex items-center mt-2 text-gray-600">
+                    <div class="flex items-center mt-2 text-gray-600 flex-wrap gap-y-2">
                         <p class="text-gray-500 mr-4">안전보건팀</p>
-                        <div class="flex items-center space-x-1 text-sm">
+                        <div class="flex items-center space-x-1 text-sm mr-4">
                             <input type="text" id="year"
                                 class="w-16 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500"
                                 placeholder="YYYY">
@@ -274,6 +274,28 @@
                                 placeholder="DD">
                             <span>일</span>
                         </div>
+                        <div class="flex items-center space-x-1 text-sm mr-4">
+                            <span class="text-gray-500">현장명</span>
+                            <select id="site-name-select"
+                                class="w-40 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500 bg-white">
+                                <option value="">불러오는 중...</option>
+                            </select>
+                            <input type="text" id="site-name-new-input" placeholder="새 현장명 입력"
+                                class="w-32 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500"
+                                style="display:none;">
+                        </div>
+                        <div class="flex items-center space-x-1 text-sm">
+                            <span class="text-gray-500">분기</span>
+                            <input type="text" id="quarter-input" value="1분기"
+                                class="w-16 p-1 border-b-2 text-center focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3 no-print">
+                        <button id="save-server-btn"
+                            class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm">서버에
+                            저장</button>
+                        <button id="load-server-btn"
+                            class="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition text-sm">불러오기</button>
                     </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
@@ -372,7 +394,7 @@
                         <div class="flex gap-2">
                             <input type="number" id="bonus-improvement" min="0" max="10" step="0.5" value="0"
                                 onchange="calculateScore()" class="w-20 p-2 border rounded-lg text-center font-bold">
-                            <input type="text" placeholder="개선 노력 상세 내용 (사진 증빙 등)"
+                            <input type="text" id="bonus-improvement-detail" placeholder="개선 노력 상세 내용 (사진 증빙 등)"
                                 class="flex-1 p-2 border rounded-lg text-sm">
                         </div>
                     </div>
@@ -383,7 +405,7 @@
                         <div class="flex gap-2">
                             <input type="number" id="bonus-idea" min="0" max="10" step="0.5" value="0"
                                 onchange="calculateScore()" class="w-20 p-2 border rounded-lg text-center font-bold">
-                            <input type="text" placeholder="혁신적 장비 도입 또는 우수 사례"
+                            <input type="text" id="bonus-idea-detail" placeholder="혁신적 장비 도입 또는 우수 사례"
                                 class="flex-1 p-2 border rounded-lg text-sm">
                         </div>
                     </div>
@@ -415,7 +437,7 @@
                             class="w-1/3 sm:w-auto text-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition">사진
                             대지 출력</button>
                         <button onclick="resetAllPhotos()"
-                            class="w-1/3 sm:w-auto bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition">초기화</button>
+                            class="w-1/3 sm:w-auto bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition">현장 초기화</button>
                         <button onclick="window.print()"
                             class="w-1/3 sm:w-auto bg-gray-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-800 transition">인쇄</button>
                     </div>
@@ -513,7 +535,7 @@
                 class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition shadow-md cursor-pointer inline-block">
                 사진 촬영 및 선택
             </label>
-            <input type="file" id="photo-input" accept="image/*" capture="camera" class="hidden">
+            <input type="file" id="photo-input" accept="image/*" class="hidden">
 
             <div id="preview-container"
                 class="mt-6 min-h-[200px] bg-gray-100 rounded-lg flex items-center justify-center">
@@ -609,9 +631,23 @@
             document.getElementById('year').value = today.getFullYear();
             document.getElementById('month').value = String(today.getMonth() + 1).padStart(2, '0');
             document.getElementById('day').value = String(today.getDate()).padStart(2, '0');
+            document.getElementById('quarter-input').value = `${Math.ceil((today.getMonth() + 1) / 3)}분기`;
             generateTable();
+
+            // 평가자 의견 textarea가 고정 2행 높이라 긴 코멘트가 잘려 보이던 문제 수정:
+            // 입력에 따라 내용 전체가 보이도록 자동으로 높이를 늘림
+            // (loadAllPhotos()보다 먼저 등록해, 사진 로딩 중 오류가 나더라도 리스너는 항상 붙도록 함)
+            document.getElementById('checklist-body').addEventListener('input', (e) => {
+                if (e.target.tagName === 'TEXTAREA') autoGrowTextarea(e.target);
+            });
+
             loadAllPhotos();
         });
+
+        function autoGrowTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
 
         const scoreIdKeys = { '0.5': 's0_5', '0.3': 's0_3', '0.0': 's0_0', '-0.1': 'm0_1', '-0.3': 'm0_3' };
 
@@ -647,7 +683,7 @@
                             htmlBody += `<td class="border border-gray-300 p-1 text-center ${isNA ? 'bg-gray-50' : ''}"><input type="radio" name="rating-${itemIndex}" data-score="${score}" onchange="calculateScore()" class="real-radio form-radio h-4 w-4 text-blue-600 cursor-pointer mx-auto"><span class="print-radio-mark hidden"></span></td>`;
                         });
 
-                        htmlBody += `<td class="border border-gray-300"><textarea rows="2" class="w-full p-1 border-0 rounded-md focus:ring-2 focus:ring-blue-500 outline-none resize-y"></textarea></td>`;
+                        htmlBody += `<td class="border border-gray-300"><textarea rows="2" class="w-full p-1 border-0 rounded-md focus:ring-2 focus:ring-blue-500 outline-none resize-y overflow-hidden"></textarea></td>`;
                         htmlBody += `<td class="border border-gray-300 p-2 align-top">
                             <button onclick="openPhotoModal(${itemIndex})" class="bg-gray-200 text-gray-700 text-xs py-1 px-2 rounded hover:bg-gray-300 no-print">사진 추가</button>
                             <div id="photo-container-${itemIndex}" class="mt-2"></div>
@@ -769,8 +805,9 @@
         function savePhoto() {
             if (imageDataUrl && currentItemIndex !== null) {
                 try {
-                    // Save photo data
+                    // Save photo data (새 사진이므로 이전 업로드 캐시는 무효화)
                     localStorage.setItem('photo_' + currentItemIndex, imageDataUrl);
+                    localStorage.removeItem('photo_url_' + currentItemIndex);
 
                     // Find corresponding checklist item info
                     const row = document.querySelector(`tr[data-item-index="${currentItemIndex}"]`);
@@ -801,6 +838,7 @@
             localStorage.removeItem('photo_' + index);
             localStorage.removeItem('photo_info_' + index);
             localStorage.removeItem('photo_comment_' + index);
+            localStorage.removeItem('photo_url_' + index);
             loadSinglePhoto(index); // Re-render the container (it will be empty)
         }
 
@@ -845,15 +883,60 @@
             }
         }
 
+        // 사진·체크결과·지적건수·코멘트·가점항목을 모두 지운다(확인창 없이 즉시 실행).
+        // 이전 현장의 입력이 새 현장 평가에 섞여 들어가지 않도록 하기 위한 공용 초기화 로직.
+        // (예전에는 사진만 지웠는데, 그 상태로 새 현장을 이어서 입력하면 라디오 선택·코멘트·
+        //  지적건수가 이전 현장 값 그대로 남아 있어 실질적으로 "새 현장 평가"가 되지 않았다.)
+        function clearAllInputs() {
+            const totalItems = checklistData.reduce((acc, val) => acc + val.count, 0);
+            for (let i = 0; i < totalItems; i++) {
+                localStorage.removeItem('photo_' + i);
+                localStorage.removeItem('photo_info_' + i);
+                localStorage.removeItem('photo_comment_' + i);
+                localStorage.removeItem('photo_url_' + i);
+            }
+            loadAllPhotos(); // 사진 썸네일 갱신
+
+            document.querySelectorAll('#checklist-body tr.item-row').forEach(row => {
+                row.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; });
+                const numInput = row.querySelector('input[type="number"]');
+                if (numInput) numInput.value = '';
+                const textarea = row.querySelector('textarea');
+                if (textarea) { textarea.value = ''; autoGrowTextarea(textarea); }
+            });
+
+            const bonusImprovement = document.getElementById('bonus-improvement');
+            const bonusImprovementDetail = document.getElementById('bonus-improvement-detail');
+            const bonusIdea = document.getElementById('bonus-idea');
+            const bonusIdeaDetail = document.getElementById('bonus-idea-detail');
+            if (bonusImprovement) bonusImprovement.value = '0';
+            if (bonusImprovementDetail) bonusImprovementDetail.value = '';
+            if (bonusIdea) bonusIdea.value = '0';
+            if (bonusIdeaDetail) bonusIdeaDetail.value = '';
+
+            // 현장명/날짜도 "새 현장 점검"에 맞게 오늘 날짜·현재 분기로 초기화
+            // (불러오기 직후 호출될 때는 곧바로 로드된 데이터로 다시 덮어써지므로 무해함)
+            const siteSelectEl = document.getElementById('site-name-select');
+            const siteNewInputEl = document.getElementById('site-name-new-input');
+            if (siteSelectEl) siteSelectEl.value = '';
+            if (siteNewInputEl) { siteNewInputEl.value = ''; siteNewInputEl.style.display = 'none'; }
+            const today = new Date();
+            const yearEl = document.getElementById('year');
+            const monthEl = document.getElementById('month');
+            const dayEl = document.getElementById('day');
+            const quarterEl = document.getElementById('quarter-input');
+            if (yearEl) yearEl.value = today.getFullYear();
+            if (monthEl) monthEl.value = String(today.getMonth() + 1).padStart(2, '0');
+            if (dayEl) dayEl.value = String(today.getDate()).padStart(2, '0');
+            if (quarterEl) quarterEl.value = `${Math.ceil((today.getMonth() + 1) / 3)}분기`;
+
+            calculateScore();
+        }
+
+        // "초기화" 버튼 클릭 시: 확인창을 거쳐 clearAllInputs() 실행
         function resetAllPhotos() {
-            if (confirm('정말로 모든 사진을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-                const totalItems = checklistData.reduce((acc, val) => acc + val.count, 0);
-                for (let i = 0; i < totalItems; i++) {
-                    localStorage.removeItem('photo_' + i);
-                    localStorage.removeItem('photo_info_' + i);
-                    localStorage.removeItem('photo_comment_' + i);
-                }
-                loadAllPhotos(); // Refresh UI
+            if (confirm('현재 입력된 모든 점검 내용(사진, 체크 결과, 코멘트, 지적건수, 가점항목)을 삭제하고 새 현장 점검을 시작하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                clearAllInputs();
             }
         }
 
@@ -964,7 +1047,12 @@
             const formulaEl = document.getElementById('score-formula');
             
             totalScoreEl.textContent = finalScore.toFixed(2);
-            
+            totalScoreEl.dataset.baseScore = baseScore.toFixed(2);
+            totalScoreEl.dataset.weightedSum = grandTotalWeightedScore.toFixed(2);
+            totalScoreEl.dataset.maxWeightedSum = grandTotalMaxPossibleWeightedScore.toFixed(2);
+            totalScoreEl.dataset.kFactor = kFactor.toFixed(2);
+            totalScoreEl.dataset.issueCount = grandTotalIssueCount;
+
             // 상세 계산식 텍스트 생성
             if (grandTotalMaxPossibleWeightedScore > 0) {
                 const totalBonus = bonusImprovement + bonusIdea;
@@ -1129,6 +1217,351 @@
             </button>
         </div>
     </div>
+
+    <!-- 저장된 점검표 불러오기 Modal -->
+    <div id="server-load-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl shadow-lg max-w-xl w-full max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h2 class="text-lg font-bold text-gray-900">저장된 현장 점검표 불러오기</h2>
+                <button id="close-load-modal-btn" class="text-2xl leading-none text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <p class="px-6 pt-4 text-xs text-gray-400">최근 저장된 30건까지 표시됩니다. 더 예전 기록이 필요하면 안전보건팀에 문의해주세요.</p>
+            <div id="load-list-content" class="p-6 overflow-y-auto">
+                <p class="text-center text-gray-500">데이터를 불러오는 중입니다...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white/80 z-[9999] hidden flex-col items-center justify-center no-print">
+        <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <p id="loading-text" class="mt-4 font-bold text-gray-700">저장 중...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbVG3iL3FBJe6alPLZnhFW_QAGpzeqFoY",
+            authDomain: "namhwa-safety-dashboard.firebaseapp.com",
+            projectId: "namhwa-safety-dashboard",
+            storageBucket: "namhwa-safety-dashboard.firebasestorage.app",
+            messagingSenderId: "152864778612",
+            appId: "1:152864778612:web:ecc482adce93a1534a2421"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // 사진은 화면 편집 중에는 localStorage(photo_<index>)에 base64로 즉시 보관하지만,
+        // 그 상태로는 다른 기기·세션(종합결과표, 시정예방조치 요구서 등)에서 접근할 수 없다.
+        // 서버 저장 시 Firebase Storage에 업로드해 URL을 Firestore 문서에 함께 저장한다.
+        // (storage.rules가 "sites/**" 경로만 허용하므로 그 하위에 업로드)
+        async function uploadPhotoIfNeeded(index) {
+            const cachedUrl = localStorage.getItem('photo_url_' + index);
+            if (cachedUrl) return cachedUrl;
+
+            const dataUrl = localStorage.getItem('photo_' + index);
+            if (!dataUrl) return null;
+
+            // 이미 이전 저장에서 복원된 원격 URL이면 재업로드하지 않고 그대로 사용
+            if (!dataUrl.startsWith('data:')) {
+                localStorage.setItem('photo_url_' + index, dataUrl);
+                return dataUrl;
+            }
+
+            const storageRef = ref(storage, `sites/field_check_photos/${Date.now()}_${index}.jpg`);
+            await uploadString(storageRef, dataUrl, 'data_url');
+            const url = await getDownloadURL(storageRef);
+            localStorage.setItem('photo_url_' + index, url);
+            return url;
+        }
+
+        // === 현장명 선택 (기존 저장 목록 드롭다운 + 새 현장 추가) ===
+        const NEW_SITE_VALUE = "__new__";
+        const siteSelect = document.getElementById('site-name-select');
+        const siteNewInput = document.getElementById('site-name-new-input');
+
+        // 현장명 목록은 매번 shm_checks/field_checks 컬렉션 전체를 훑지 않고,
+        // 저장할 때마다 이름만 누적해두는 별도의 작은 캐시 문서(metadata/site_names)에서 읽는다.
+        async function loadSiteNameOptions(preselect) {
+            try {
+                const snap = await getDoc(doc(db, "metadata", "site_names"));
+                const names = new Set(snap.exists() ? (snap.data().names || []) : []);
+                if (preselect) names.add(preselect);
+
+                const sorted = Array.from(names).sort((a, b) => a.localeCompare(b, 'ko'));
+                siteSelect.innerHTML = '<option value="">현장을 선택하세요</option>' +
+                    sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('') +
+                    `<option value="${NEW_SITE_VALUE}">+ 새 현장 추가...</option>`;
+
+                if (preselect) {
+                    siteSelect.value = preselect;
+                    siteNewInput.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('현장명 목록 조회 실패:', error);
+                siteSelect.innerHTML = '<option value="">현장 목록을 불러오지 못했습니다</option>' +
+                    `<option value="${NEW_SITE_VALUE}">+ 새 현장 추가...</option>`;
+            }
+        }
+
+        async function registerSiteName(name) {
+            if (!name) return;
+            try {
+                await setDoc(doc(db, "metadata", "site_names"), { names: arrayUnion(name) }, { merge: true });
+            } catch (error) {
+                console.error('현장명 등록 실패:', error);
+            }
+        }
+
+        siteSelect.addEventListener('change', () => {
+            if (siteSelect.value === NEW_SITE_VALUE) {
+                siteNewInput.style.display = 'inline-block';
+                siteNewInput.value = '';
+                siteNewInput.focus();
+            } else {
+                siteNewInput.style.display = 'none';
+            }
+        });
+
+        window.getSiteName = function () {
+            if (siteSelect.value === NEW_SITE_VALUE) return siteNewInput.value.trim();
+            return siteSelect.value.trim();
+        };
+
+        window.setSiteName = async function (name) {
+            const trimmed = (name || '').trim();
+            if (!trimmed) return;
+            const exists = Array.from(siteSelect.options).some(o => o.value === trimmed);
+            if (!exists) {
+                await loadSiteNameOptions(trimmed);
+            } else {
+                siteSelect.value = trimmed;
+                siteNewInput.style.display = 'none';
+            }
+        };
+
+        loadSiteNameOptions();
+
+        async function collectItems() {
+            const items = [];
+            const rows = document.querySelectorAll('#checklist-body tr.item-row');
+            for (const row of rows) {
+                const idx = parseInt(row.dataset.itemIndex, 10);
+                const issueInput = row.querySelector('input[type="number"]');
+                const checkedRadio = row.querySelector('input[type="radio"]:checked');
+                const commentEl = row.querySelector('textarea');
+                const photoUrl = await uploadPhotoIfNeeded(idx);
+                const photoInfoRaw = localStorage.getItem('photo_info_' + idx);
+                items.push({
+                    index: idx,
+                    issueCount: issueInput ? (issueInput.value || '') : '',
+                    score: checkedRadio ? checkedRadio.dataset.score : null,
+                    comment: commentEl ? commentEl.value : '',
+                    photoUrl: photoUrl || null,
+                    photoInfo: photoInfoRaw ? JSON.parse(photoInfoRaw) : null
+                });
+            }
+            return items;
+        }
+
+        function restoreItems(items) {
+            if (!Array.isArray(items)) return;
+            items.forEach(item => {
+                const row = document.querySelector(`#checklist-body tr[data-item-index="${item.index}"]`);
+                if (!row) return;
+                const issueInput = row.querySelector('input[type="number"]');
+                if (issueInput) issueInput.value = item.issueCount || '';
+                if (item.score !== null && item.score !== undefined) {
+                    const radio = row.querySelector(`input[type="radio"][data-score="${item.score}"]`);
+                    if (radio) radio.checked = true;
+                }
+                const commentEl = row.querySelector('textarea');
+                if (commentEl) {
+                    commentEl.value = item.comment || '';
+                    autoGrowTextarea(commentEl);
+                }
+
+                if (item.photoUrl) {
+                    localStorage.setItem('photo_' + item.index, item.photoUrl);
+                    localStorage.setItem('photo_url_' + item.index, item.photoUrl);
+                    if (item.photoInfo) localStorage.setItem('photo_info_' + item.index, JSON.stringify(item.photoInfo));
+                    loadSinglePhoto(item.index);
+                }
+            });
+        }
+
+        window.saveFieldCheckToServer = async function () {
+            const siteName = window.getSiteName();
+            const quarter = document.getElementById('quarter-input').value.trim();
+            const year = document.getElementById('year').value.trim();
+
+            if (!siteName) { alert('현장명을 입력해주세요.'); return; }
+            if (!quarter) { alert('분기를 입력해주세요.'); return; }
+            if (!year) { alert('년도를 입력해주세요.'); return; }
+
+            const loadingOverlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').textContent = '서버에 저장 중입니다...';
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+
+            try {
+                calculateScore();
+                const totalScoreEl = document.getElementById('total-score');
+
+                const reportData = {
+                    headerInfo: {
+                        siteName,
+                        quarter,
+                        year,
+                        month: document.getElementById('month').value.trim(),
+                        day: document.getElementById('day').value.trim()
+                    },
+                    factors: {
+                        s: document.getElementById('factor-s').value,
+                        r: document.getElementById('factor-r').value,
+                        p: document.getElementById('factor-p').value,
+                        k: document.getElementById('k-value').textContent
+                    },
+                    items: await collectItems(),
+                    bonus: {
+                        improvement: document.getElementById('bonus-improvement').value,
+                        improvementDetail: document.getElementById('bonus-improvement-detail').value,
+                        idea: document.getElementById('bonus-idea').value,
+                        ideaDetail: document.getElementById('bonus-idea-detail').value
+                    },
+                    result: {
+                        totalScore: totalScoreEl.textContent,
+                        baseScore: totalScoreEl.dataset.baseScore || '0',
+                        weightedSum: totalScoreEl.dataset.weightedSum || '0',
+                        maxWeightedSum: totalScoreEl.dataset.maxWeightedSum || '0',
+                        kFactor: totalScoreEl.dataset.kFactor || '1.00',
+                        issueCount: totalScoreEl.dataset.issueCount || '0'
+                    },
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "field_checks"), reportData);
+                await registerSiteName(siteName);
+
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                // 저장 직후 이어서 다른 현장을 평가할 때 이전 현장의 사진·체크결과가
+                // 남아있지 않도록, 초기화 여부를 바로 물어본다.
+                if (confirm('현장 점검표가 서버에 성공적으로 저장되었습니다.\n\n이어서 다른 현장을 평가하시겠습니까?\n("예"를 선택하면 현재 화면의 사진·체크결과·코멘트가 모두 초기화됩니다.)')) {
+                    clearAllInputs();
+                }
+            } catch (error) {
+                console.error('Error saving field check:', error);
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        };
+
+        window.showFieldLoadModal = async function () {
+            const loadModal = document.getElementById('server-load-modal');
+            const listContent = document.getElementById('load-list-content');
+            loadModal.classList.remove('hidden');
+            loadModal.classList.add('flex');
+            listContent.innerHTML = '<p class="text-center text-gray-500">데이터를 불러오는 중입니다...</p>';
+
+            try {
+                // 저장된 문서를 전부 내려받으면 분기가 지날수록 목록이 계속 느려지므로
+                // (실제 확인 결과 17건에 약 1.2MB), 최근 30건만 가져온다 — 최신순 정렬이라
+                // 대부분의 "이어서 수정" 용도에는 지장이 없다.
+                const q = query(collection(db, "field_checks"), orderBy("createdAt", "desc"), limit(30));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    listContent.innerHTML = '<p class="text-center text-gray-500 py-4">저장된 현장 점검표가 없습니다.</p>';
+                    return;
+                }
+
+                const ul = document.createElement('ul');
+                ul.className = 'space-y-2';
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const siteName = data.headerInfo?.siteName || '현장명 미상';
+                    const quarter = data.headerInfo?.quarter || '';
+                    const year = data.headerInfo?.year || '';
+                    const score = data.result?.totalScore || '0';
+                    const dateStr = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : '최근';
+
+                    const li = document.createElement('li');
+                    li.className = 'border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-blue-50 transition-colors';
+                    li.onclick = () => window.loadFieldCheckRow(data);
+                    li.innerHTML = `
+                        <div class="font-bold text-gray-800">${siteName} (${year}년 ${quarter})</div>
+                        <div class="text-sm text-gray-500 flex justify-between mt-1">
+                            <span>총점: ${score}점</span>
+                            <span>저장일시: ${dateStr}</span>
+                        </div>
+                    `;
+                    ul.appendChild(li);
+                });
+
+                listContent.innerHTML = '';
+                listContent.appendChild(ul);
+            } catch (error) {
+                console.error('Error loading field checks:', error);
+                listContent.innerHTML = `<p class="text-center text-red-500 py-4">목록을 불러오는데 실패했습니다: ${error.message}</p>`;
+            }
+        };
+
+        window.loadFieldCheckRow = function (data) {
+            if (!confirm('현재 입력된 내용이 모두 삭제되고 선택한 데이터를 불러옵니다. 계속하시겠습니까?')) return;
+
+            // 확인창의 안내대로 실제로 기존 입력을 전부 비운 뒤 불러온다.
+            // (예전에는 여기서 clearAllInputs()를 호출하지 않아, 불러온 기록에 사진이 없는
+            //  항목은 이전에 화면에 남아있던 사진이 그대로 섞여 보이는 문제가 있었다.)
+            clearAllInputs();
+
+            if (data.headerInfo) {
+                window.setSiteName(data.headerInfo.siteName || '');
+                document.getElementById('quarter-input').value = data.headerInfo.quarter || '1분기';
+                document.getElementById('year').value = data.headerInfo.year || '';
+                document.getElementById('month').value = data.headerInfo.month || '';
+                document.getElementById('day').value = data.headerInfo.day || '';
+            }
+
+            if (data.factors) {
+                if (data.factors.s) document.getElementById('factor-s').value = data.factors.s;
+                if (data.factors.r) document.getElementById('factor-r').value = data.factors.r;
+                if (data.factors.p) document.getElementById('factor-p').value = data.factors.p;
+                if (typeof window.updateKFactor === 'function') window.updateKFactor();
+            }
+
+            restoreItems(data.items);
+
+            if (data.bonus) {
+                document.getElementById('bonus-improvement').value = data.bonus.improvement || '0';
+                document.getElementById('bonus-improvement-detail').value = data.bonus.improvementDetail || '';
+                document.getElementById('bonus-idea').value = data.bonus.idea || '0';
+                document.getElementById('bonus-idea-detail').value = data.bonus.ideaDetail || '';
+            }
+
+            if (typeof window.calculateScore === 'function') window.calculateScore();
+
+            document.getElementById('server-load-modal').classList.add('hidden');
+            document.getElementById('server-load-modal').classList.remove('flex');
+            alert('데이터를 성공적으로 불러왔습니다.');
+        };
+
+        document.getElementById('save-server-btn').addEventListener('click', window.saveFieldCheckToServer);
+        document.getElementById('load-server-btn').addEventListener('click', window.showFieldLoadModal);
+        document.getElementById('close-load-modal-btn').addEventListener('click', () => {
+            const m = document.getElementById('server-load-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        });
+    </script>
 </body>
 
 </html>
