@@ -15,6 +15,7 @@ import NetworkScheduleDashboard from './components/evm/NetworkScheduleDashboard'
 import HiringDashboard from './components/hiring/HiringDashboard';
 import AdvancedHiringDashboard from './components/hiring_advanced/AdvancedHiringDashboard';
 import WbsGeneratorPage from './WbsGeneratorPage';
+import SafetyBudgetPage from './features/safetyBudget/pages/SafetyBudgetPage';
 
 import { AuthProvider } from './context/AuthContext';
 import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
@@ -82,6 +83,11 @@ function App() {
           <Route path="/wbs-generator" element={
             <ApprovedRoute>
               <WbsGeneratorPage />
+            </ApprovedRoute>
+          } />
+          <Route path="/safety-budget/:siteId" element={
+            <ApprovedRoute>
+              <SafetyBudgetPage />
             </ApprovedRoute>
           } />
           {/* Fallback route */}

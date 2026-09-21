@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 산안비(safetyBudget) 모듈 ──────────────────────────────────────
+    // AuthContext.jsx와 동일한 승인 모델을 따른다: users/{uid}.isApproved == true 이거나 role == 'admin'.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isApproved() {
+      return isSignedIn() && (userDoc().isApproved == true || userDoc().role == 'admin');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userDoc().role == 'admin';
+    }
+
+    // 프로젝트/공종/비목배정/협력사: 승인된 사용자는 조회만, 구성 변경은 관리자만.
+    match /safetyBudget_projects/{projectId} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    match /safetyBudget_workPackages/{docId} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    match /safetyBudget_budgetItems/{docId} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    match /safetyBudget_subcontractors/{docId} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    // 집행(Expense) 원장: 승인된 사용자가 등록 가능. 수정/삭제는 금지 — 정정은 새 문서 추가로만 한다(감사 추적).
+    match /safetyBudget_expenses/{docId} {
+      allow read: if isApproved();
+      allow create: if isApproved()
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.projectId is string
+        && request.resource.data.eligibility.status == 'APPROVED'
+        && request.resource.data.createdBy == request.auth.token.email;
+      allow update, delete: if false;
+    }
+
+    // 안전 플러스 지출: 산안비 원장과 별도. 동일한 등록/불변 정책을 적용한다.
+    match /safetyBudget_safetyPlusExpenses/{docId} {
+      allow read: if isApproved();
+      allow create: if isApproved()
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.projectId is string
+        && request.resource.data.createdBy == request.auth.token.email;
+      allow update, delete: if false;
+    }
+  }
+}

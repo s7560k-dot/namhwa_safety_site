@@ -10,5 +10,9 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true, // Fail if port is busy instead of switching
+  },
+  test: {
+    include: ['src/features/**/__tests__/**/*.test.ts'],
+    environment: 'node',
   }
 })

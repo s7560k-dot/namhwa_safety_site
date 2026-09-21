@@ -20,7 +20,8 @@ import {
     LayoutDashboard,
     LogOut,
     Box,
-    Database
+    Database,
+    Wallet
 } from 'lucide-react';
 
 // CI 규정집 색상 (R127 G0 B0)
@@ -489,7 +490,8 @@ const ResourceCenter = () => {
                                 { title: "아웃트리거 받침철판 규격 계산기", sub: "Outrigger Plate Calc", icon: <Calculator />, link: "/OUT/index.html", isInternal: false },
                                 { title: "부대토목 수량 산출 파이프라인", sub: "Civil Quantity Takeoff", icon: <Database />, link: "/civil-calc", isInternal: true },
                                 { title: "골조공사 물량 산출기", sub: "Framework Material Calc", icon: <Box />, link: "/calculator", isInternal: true },
-                                { title: "2D 도면 3D 변환기 (AI)", sub: "Floorplan 3D Converter", icon: <Box />, link: "/floorplan-3d", isInternal: true }
+                                { title: "2D 도면 3D 변환기 (AI)", sub: "Floorplan 3D Converter", icon: <Box />, link: "/floorplan-3d", isInternal: true },
+                                { title: "산안비 실행예산 관리", sub: "Safety Budget Tracker", icon: <Wallet />, link: "/safety-budget/siteA", isInternal: true }
                             ].map((item, index) => {
                                 const CardContent = (
                                     <>

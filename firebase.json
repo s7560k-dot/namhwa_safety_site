@@ -1,9 +1,19 @@
 {
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "ignore": [
+      "venv",
+      ".venv",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log"
+    ]
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   },
   "hosting": [
     {
@@ -20,7 +30,11 @@
           "function": "analyze_floorplan_3d"
         },
         {
-          "source": "!**/*.{js,css,png,jpg,jpeg,gif,svg,ico,pdf,html,json,txt}",
+          "source": "/api/parse_wbs_excel",
+          "function": "parse_wbs_excel"
+        },
+        {
+          "source": "**",
           "destination": "/index.html"
         }
       ],
