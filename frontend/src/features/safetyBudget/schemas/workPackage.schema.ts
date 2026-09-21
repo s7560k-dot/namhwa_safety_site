@@ -13,7 +13,8 @@ export const WorkPackageSchema = z.object({
     name: z.string().min(1),
     /** 위험 가중치. 같은 프로젝트에 속한 공종들의 합이 1이어야 한다 (domain 계층에서 검증). */
     riskWeight: z.number().min(0).max(1),
-    plannedProgressCurve: z.array(ProgressCurvePointSchema),
+    /** Phase 1/2 화면에서는 아직 사용하지 않는 계획값 — 없으면 빈 배열로 간주. */
+    plannedProgressCurve: z.array(ProgressCurvePointSchema).optional().default([]),
     currentProgressPct: z.number().min(0).max(100),
 });
 
