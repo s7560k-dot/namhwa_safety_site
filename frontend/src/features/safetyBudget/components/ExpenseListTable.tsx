@@ -1,11 +1,14 @@
 import { BUDGET_ITEM_CODE_LABELS } from '../config/constants';
 import { hasWeakEvidence } from '../domain/evidence';
+import { sortExpensesForDisplay } from '../domain/expenseSorting';
 import type { Expense } from '../schemas/expense.schema';
 
 export function ExpenseListTable({ expenses }: { expenses: Expense[] }) {
     if (expenses.length === 0) {
         return <p className="text-slate-400 text-center py-12">등록된 집행 내역이 없습니다.</p>;
     }
+
+    const sortedExpenses = sortExpensesForDisplay(expenses);
 
     return (
         <div className="overflow-x-auto">
@@ -20,7 +23,7 @@ export function ExpenseListTable({ expenses }: { expenses: Expense[] }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {expenses.map((expense) => (
+                    {sortedExpenses.map((expense) => (
                         <tr key={expense.id} className="border-b border-slate-50">
                             <td className="py-3 pr-4 text-slate-600">{expense.date.slice(0, 10)}</td>
                             <td className="py-3 pr-4 font-medium text-slate-800">
