@@ -7,7 +7,7 @@ import { listSubcontractors } from '../services/subcontractorService';
 import { listExpenses, addExpense, setExpenseEvidenceConfirmed } from '../services/expenseService';
 import type { AddExpenseResult } from '../services/expenseService';
 import { listSafetyPlusExpenses, addSafetyPlusExpense } from '../services/safetyPlusExpenseService';
-import { saveCalculationBasis } from '../services/calculationBasisService';
+import { saveCalculationBasis, listCalculationBasis } from '../services/calculationBasisService';
 import type { ExpenseInput } from '../schemas/expense.schema';
 import type { SafetyPlusExpenseInput } from '../schemas/safetyPlusExpense.schema';
 import type { CalculationBasis } from '../schemas/calculationBasis.schema';
@@ -19,6 +19,7 @@ const queryKeys = {
     subcontractors: (projectId: string) => ['safetyBudget', 'subcontractors', projectId] as const,
     expenses: (projectId: string) => ['safetyBudget', 'expenses', projectId] as const,
     safetyPlusExpenses: (projectId: string) => ['safetyBudget', 'safetyPlusExpenses', projectId] as const,
+    calculationBasis: (projectId: string) => ['safetyBudget', 'calculationBasis', projectId] as const,
 };
 
 export function useProject(projectId: string) {
@@ -118,6 +119,11 @@ export function useAddExpensesBulk(projectId: string, createdBy: string) {
             }
         },
     });
+}
+
+/** 산안비 예산 품의서(F15)에서 계상 근거(대상액·요율·공사종류)를 표시하기 위한 최신 계산 이력 조회. */
+export function useCalculationBasis(projectId: string) {
+    return useQuery({ queryKey: queryKeys.calculationBasis(projectId), queryFn: () => listCalculationBasis(projectId) });
 }
 
 export function useAddSafetyPlusExpense(projectId: string, createdBy: string) {
