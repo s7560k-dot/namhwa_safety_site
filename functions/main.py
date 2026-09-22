@@ -12,7 +12,7 @@ load_dotenv()
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from firebase_functions import https_fn
-from firebase_admin import initialize_app
+from firebase_admin import initialize_app, firestore
 
 initialize_app()
 
@@ -555,4 +555,40 @@ def parse_expense_ledger_pdf(req: https_fn.Request) -> https_fn.Response:
         error_msg = traceback.format_exc()
         print(f"Expense Ledger PDF Parsing Error: {error_msg}")
         resp = https_fn.Response(json.dumps({"detail": f"AI Parsing Failed: {str(e)}"}), status=400, content_type="application/json")
+        return set_cors_headers(resp)
+
+@https_fn.on_request(max_instances=3)
+def debug_dump_work_packages(req: https_fn.Request) -> https_fn.Response:
+    """TEMP 진단용 — safetyBudget_workPackages/safetyBudget_projects 현황 조회. 진단 끝나면 제거할 것."""
+    if req.method == "OPTIONS":
+        return set_cors_headers(https_fn.Response(status=204))
+    try:
+        project_id = req.args.get('projectId', 'siteA')
+        db = firestore.client()
+
+        project_snap = db.collection('safetyBudget_projects').document(project_id).get()
+        project_data = project_snap.to_dict() if project_snap.exists else None
+
+        wp_docs = db.collection('safetyBudget_workPackages').where('projectId', '==', project_id).stream()
+        work_packages = []
+        weight_sum = 0.0
+        for d in wp_docs:
+            data = d.to_dict()
+            data['id'] = d.id
+            work_packages.append(data)
+            weight_sum += data.get('riskWeight', 0)
+
+        resp = https_fn.Response(json.dumps({
+            "success": True,
+            "projectId": project_id,
+            "project": project_data,
+            "workPackageCount": len(work_packages),
+            "riskWeightSum": weight_sum,
+            "workPackages": work_packages,
+        }, ensure_ascii=False, default=str), content_type="application/json; charset=utf-8")
+        return set_cors_headers(resp)
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        print(f"Debug Dump Error: {error_msg}")
+        resp = https_fn.Response(json.dumps({"detail": str(e)}), status=400, content_type="application/json")
         return set_cors_headers(resp)

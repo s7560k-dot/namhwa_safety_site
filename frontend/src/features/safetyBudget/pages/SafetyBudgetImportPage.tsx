@@ -50,7 +50,7 @@ function SafetyBudgetImportDashboard({ projectId }: { projectId: string }) {
         confirmMutation.mutate(
             {
                 allocatedSafetyBudget: derived.calculation.amount,
-                workPackages: derived.riskWeights.map((w) => ({ name: w.name, riskWeight: w.riskWeight })),
+                workPackages: derived.riskWeights.map((w) => ({ sourceCode: w.code, name: w.name, riskWeight: w.riskWeight })),
                 calculationBasis: {
                     projectId,
                     sourceFileName: fileName,
