@@ -36,6 +36,13 @@ export function SafetyBudgetImportPreview({
     const unmatchedCount = riskWeights.filter((r) => !r.matched).length;
     const hasOverrides = Object.keys(overrides).length > 0;
 
+    const shownAmountTotal = riskWeights.reduce((sum, item) => sum + item.amount, 0);
+    const allocatedAmountTotal = riskWeights.reduce((sum, item) => sum + item.riskWeight * calculation.amount, 0);
+    const excludedAmountTotal = excludedWorkItems.reduce((sum, item) => sum + item.amount, 0);
+    const allDetailAmountTotal = shownAmountTotal + excludedAmountTotal;
+    const targetAmountDiff = allDetailAmountTotal - targetAmount;
+    const allocatedAmountDiff = allocatedAmountTotal - calculation.amount;
+
     return (
         <div className="space-y-8">
             <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
@@ -126,7 +133,45 @@ export function SafetyBudgetImportPreview({
                                 </tr>
                             ))}
                         </tbody>
+                        <tfoot>
+                            <tr className="border-t-2 border-slate-200">
+                                <td className="py-3 pr-4 font-black text-slate-900" colSpan={2}>
+                                    합계 ({riskWeights.length}건)
+                                </td>
+                                <td className="py-3 pr-4 text-right font-black text-slate-900">{currency(shownAmountTotal)}</td>
+                                <td className="py-3 pr-4" />
+                                <td className="py-3 pr-4 text-right font-black text-slate-900">100.00%</td>
+                                <td className="py-3 pr-4 text-right font-black text-red-600">{currency(allocatedAmountTotal)}</td>
+                            </tr>
+                        </tfoot>
                     </table>
+                </div>
+
+                <div className="mt-4 space-y-1 text-xs text-slate-500 bg-slate-50 rounded-xl px-4 py-3">
+                    <p>
+                        배분 산안비 합계 <span className="font-bold text-slate-700">{currency(allocatedAmountTotal)}</span> vs 상단 계상금액{' '}
+                        <span className="font-bold text-slate-700">{currency(calculation.amount)}</span>
+                        {' — '}
+                        {Math.abs(allocatedAmountDiff) < 1 ? (
+                            <span className="font-bold text-emerald-600">일치</span>
+                        ) : (
+                            <span className="font-bold text-amber-600">차이 {currency(allocatedAmountDiff)}</span>
+                        )}
+                    </p>
+                    <p>
+                        세부공종 금액 합계(제외 {excludedWorkItems.length}건 {currency(excludedAmountTotal)} 포함){' '}
+                        <span className="font-bold text-slate-700">{currency(allDetailAmountTotal)}</span> vs 상단 대상액{' '}
+                        <span className="font-bold text-slate-700">{currency(targetAmount)}</span>
+                        {' — '}
+                        {Math.abs(targetAmountDiff) < 1 ? (
+                            <span className="font-bold text-emerald-600">일치</span>
+                        ) : (
+                            <span className="font-bold text-amber-600">
+                                차이 {currency(targetAmountDiff)} (대상액은 재료비+노무비만 포함해 경비가 제외되므로 차이가 있을 수
+                                있습니다)
+                            </span>
+                        )}
+                    </p>
                 </div>
             </div>
 
