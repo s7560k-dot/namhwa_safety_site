@@ -4,15 +4,22 @@
  * 여기 있는 값들은 제품/운영상의 경보 기준일 뿐, 법적 근거가 있는 수치가 아니다.
  */
 
-/** 산안비 비목(사용 항목) 코드. 고용노동부 고시 별표의 사용내역 분류를 따른다. */
+/**
+ * 산안비 비목(사용 항목) 코드. 고용노동부 고시 별지서식("산업안전보건관리비 사용내역서")의 8개 비목 순서를 따른다:
+ * ①인건비 ②안전시설비 ③개인보호구 ④안전진단비 ⑤안전보건교육비 ⑥근로자건강관리비 ⑦기술지도비 ⑧본사사용비.
+ * SMART_EQUIPMENT(스마트 안전장비)만 예외 — 공식 8개 비목엔 없고 ②안전시설비의 하위 인정항목이지만,
+ * 별도 인정한도(SMART_EQUIPMENT_RECOGNITION_CAP_RATIO)를 관리하기 위해 이 앱에서 별도 코드로 분리했다.
+ */
 export const BUDGET_ITEM_CODES = [
-    'LABOR', // 인건비 (안전관리자 등)
-    'SAFETY_FACILITY', // 안전시설비
-    'PPE', // 개인보호구
-    'EDUCATION', // 안전보건교육비
-    'TECH_GUIDANCE', // 기술지도비
-    'SMART_EQUIPMENT', // 스마트 안전장비
-    'HEADQUARTERS_USAGE', // 본사 사용분
+    'LABOR', // ① 인건비 (안전관리자 등)
+    'SAFETY_FACILITY', // ② 안전시설비
+    'PPE', // ③ 개인보호구
+    'SAFETY_DIAGNOSIS', // ④ 안전진단비
+    'EDUCATION', // ⑤ 안전보건교육비
+    'WORKER_HEALTH_CARE', // ⑥ 근로자 건강관리비
+    'TECH_GUIDANCE', // ⑦ 기술지도비
+    'HEADQUARTERS_USAGE', // ⑧ 본사 사용분
+    'SMART_EQUIPMENT', // (비공식) 스마트 안전장비 — 안전시설비의 하위 인정항목, 한도 관리 목적으로 별도 분리
 ] as const;
 
 export type BudgetItemCode = (typeof BUDGET_ITEM_CODES)[number];
@@ -22,10 +29,12 @@ export const BUDGET_ITEM_CODE_LABELS: Record<BudgetItemCode, string> = {
     LABOR: '인건비',
     SAFETY_FACILITY: '안전시설비',
     PPE: '개인보호구',
+    SAFETY_DIAGNOSIS: '안전진단비',
     EDUCATION: '안전보건교육비',
+    WORKER_HEALTH_CARE: '근로자 건강관리비',
     TECH_GUIDANCE: '기술지도비',
-    SMART_EQUIPMENT: '스마트 안전장비',
     HEADQUARTERS_USAGE: '본사 사용분',
+    SMART_EQUIPMENT: '스마트 안전장비',
 };
 
 /**
