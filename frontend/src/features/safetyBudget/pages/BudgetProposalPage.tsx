@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { SafetyBudgetQueryProvider } from '../providers/SafetyBudgetQueryProvider';
 import { useProject, useWorkPackages, useCalculationBasis } from '../hooks/useSafetyBudgetData';
-import { sortWorkPackagesForProposal } from '../domain/budgetProposal';
+import { sortWorkPackagesForProposal, groupWorkPackagesByDiscipline } from '../domain/budgetProposal';
 import { SafetyBudgetHeader } from '../components/SafetyBudgetHeader';
 import { BudgetProposalPrintReport } from '../components/BudgetProposalPrintReport';
 
@@ -15,6 +15,7 @@ function BudgetProposalDashboard({ projectId }: { projectId: string }) {
     const [selectedWorkPackageId, setSelectedWorkPackageId] = useState('');
 
     const sortedWorkPackages = useMemo(() => sortWorkPackagesForProposal(workPackages), [workPackages]);
+    const disciplineGroups = useMemo(() => groupWorkPackagesByDiscipline(workPackages), [workPackages]);
     const latestCalculationBasis = calculationBasisHistory[0] ?? null;
 
     const displayedWorkPackages = useMemo(() => {
@@ -83,10 +84,14 @@ function BudgetProposalDashboard({ projectId }: { projectId: string }) {
                             className="border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700"
                         >
                             <option value="">공종을 선택하세요</option>
-                            {sortedWorkPackages.map((wp) => (
-                                <option key={wp.id} value={wp.id}>
-                                    {wp.name} ({(wp.riskWeight * 100).toFixed(2)}%)
-                                </option>
+                            {disciplineGroups.map((group) => (
+                                <optgroup key={group.discipline} label={group.discipline}>
+                                    {group.workPackages.map((wp) => (
+                                        <option key={wp.id} value={wp.id}>
+                                            {wp.name} ({(wp.riskWeight * 100).toFixed(2)}%)
+                                        </option>
+                                    ))}
+                                </optgroup>
                             ))}
                         </select>
                     )}
