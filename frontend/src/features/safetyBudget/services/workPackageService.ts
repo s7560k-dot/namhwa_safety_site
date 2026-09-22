@@ -18,6 +18,8 @@ export interface WorkPackageUpsertInput {
     /** 내역서상 원본 세부공종 코드(예: "01010105"). 같은 이름이 여러 번 등장할 수 있어 매칭 키로 name 대신 이걸 쓴다. */
     sourceCode: string;
     name: string;
+    /** 대공종 분류(예: "건축", "철탑"). 예산 품의서 등에서 그룹핑용으로 저장해둔다. */
+    discipline: string;
     riskWeight: number;
 }
 
@@ -48,13 +50,18 @@ export async function upsertWorkPackages(projectId: string, items: readonly Work
     for (const item of items) {
         const found = existingByCode.get(item.sourceCode);
         if (found) {
-            batch.update(doc(db, COLLECTIONS.WORK_PACKAGES, found.id), { name: item.name, riskWeight: item.riskWeight });
+            batch.update(doc(db, COLLECTIONS.WORK_PACKAGES, found.id), {
+                name: item.name,
+                discipline: item.discipline,
+                riskWeight: item.riskWeight,
+            });
         } else {
             const newRef = doc(collection(db, COLLECTIONS.WORK_PACKAGES));
             const newWorkPackage = WorkPackageSchema.omit({ id: true }).parse({
                 projectId,
                 name: item.name,
                 sourceCode: item.sourceCode,
+                discipline: item.discipline,
                 riskWeight: item.riskWeight,
                 plannedProgressCurve: [],
                 currentProgressPct: 0,

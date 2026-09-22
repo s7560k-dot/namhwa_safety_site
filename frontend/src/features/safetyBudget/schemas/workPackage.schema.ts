@@ -17,6 +17,8 @@ export const WorkPackageSchema = z.object({
      * 고유 식별자가 될 수 없다 — upsertWorkPackages는 이 필드로 매칭한다. 수동 생성된 WorkPackage는 없을 수 있다.
      */
     sourceCode: z.string().min(1).optional(),
+    /** 대공종 분류(예: "건축", "토목", "철탑"). 내역서 가져오기로 생성된 경우에만 채워진다. 예산 품의서 등에서 그룹핑용으로 쓴다. */
+    discipline: z.string().min(1).optional(),
     /** 위험 가중치. 같은 프로젝트에 속한 공종들의 합이 1이어야 한다 (domain 계층에서 검증). */
     riskWeight: z.number().min(0).max(1),
     /** Phase 1/2 화면에서는 아직 사용하지 않는 계획값 — 없으면 빈 배열로 간주. */

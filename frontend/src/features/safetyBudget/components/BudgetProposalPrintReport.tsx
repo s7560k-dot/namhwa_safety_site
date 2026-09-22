@@ -1,4 +1,5 @@
-import { calculateAllocatedAmount } from '../domain/budgetProposal';
+import { Fragment } from 'react';
+import { calculateAllocatedAmount, groupWorkPackagesByDiscipline } from '../domain/budgetProposal';
 import type { WorkPackage } from '../schemas/workPackage.schema';
 import type { CalculationBasis } from '../schemas/calculationBasis.schema';
 
@@ -6,7 +7,6 @@ interface BudgetProposalPrintReportProps {
     projectName: string;
     allocatedSafetyBudget: number;
     calculationBasis: CalculationBasis | null;
-    /** 이미 원하는 순서로 정렬해서 전달한다 (sortWorkPackagesForProposal). */
     workPackages: readonly WorkPackage[];
     /** '전체'면 모든 공종, '단일'이면 선택된 공종 1개만 보여준다는 안내 문구용. */
     mode: 'ALL' | 'SINGLE';
@@ -24,6 +24,7 @@ export function BudgetProposalPrintReport({
 }: BudgetProposalPrintReportProps) {
     const today = new Date().toISOString().slice(0, 10);
     const totalAllocated = workPackages.reduce((sum, wp) => sum + calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget), 0);
+    const disciplineGroups = groupWorkPackagesByDiscipline(workPackages);
 
     return (
         <div className="p-6 text-black text-sm">
@@ -78,17 +79,30 @@ export function BudgetProposalPrintReport({
                         </tr>
                     </thead>
                     <tbody>
-                        {workPackages.map((wp) => (
-                            <tr key={wp.id}>
-                                <td className="border border-slate-300 py-1 px-2">{wp.name}</td>
-                                <td className="border border-slate-300 py-1 text-center">{(wp.riskWeight * 100).toFixed(2)}%</td>
-                                <td className="border border-slate-300 py-1 text-right px-2">
-                                    {currency(calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget))}
-                                </td>
-                            </tr>
+                        {disciplineGroups.map((group) => (
+                            <Fragment key={group.discipline}>
+                                <tr className="bg-gray-100">
+                                    <td className="border border-slate-300 py-1 px-2 font-bold" colSpan={1}>
+                                        {group.discipline} 소계 ({group.workPackages.length}건)
+                                    </td>
+                                    <td className="border border-slate-300 py-1 text-center font-bold">{(group.riskWeight * 100).toFixed(2)}%</td>
+                                    <td className="border border-slate-300 py-1 text-right px-2 font-bold">
+                                        {currency(calculateAllocatedAmount(group.riskWeight, allocatedSafetyBudget))}
+                                    </td>
+                                </tr>
+                                {group.workPackages.map((wp) => (
+                                    <tr key={wp.id}>
+                                        <td className="border border-slate-300 py-1 px-2 pl-5">{wp.name}</td>
+                                        <td className="border border-slate-300 py-1 text-center">{(wp.riskWeight * 100).toFixed(2)}%</td>
+                                        <td className="border border-slate-300 py-1 text-right px-2">
+                                            {currency(calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget))}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </Fragment>
                         ))}
                         <tr className="font-bold bg-gray-50">
-                            <td className="border border-slate-300 py-1 px-2">합계</td>
+                            <td className="border border-slate-300 py-1 px-2">총합계</td>
                             <td className="border border-slate-300 py-1 text-center">
                                 {(workPackages.reduce((sum, wp) => sum + wp.riskWeight, 0) * 100).toFixed(2)}%
                             </td>

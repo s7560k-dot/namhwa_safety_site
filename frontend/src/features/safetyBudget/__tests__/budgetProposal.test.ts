@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateAllocatedAmount, sortWorkPackagesForProposal } from '../domain/budgetProposal';
+import { calculateAllocatedAmount, sortWorkPackagesForProposal, groupWorkPackagesByDiscipline } from '../domain/budgetProposal';
 import type { WorkPackage } from '../schemas/workPackage.schema';
 
 function makeWorkPackage(overrides: Partial<WorkPackage>): WorkPackage {
@@ -49,5 +49,38 @@ describe('sortWorkPackagesForProposal', () => {
         const original = [...items];
         sortWorkPackagesForProposal(items);
         expect(items).toEqual(original);
+    });
+});
+
+describe('groupWorkPackagesByDiscipline', () => {
+    it('discipline별로 묶고 대공종 소계(riskWeight 합)를 계산한다', () => {
+        const items = [
+            makeWorkPackage({ id: 'a', discipline: '건축', riskWeight: 0.3 }),
+            makeWorkPackage({ id: 'b', discipline: '토목', riskWeight: 0.2 }),
+            makeWorkPackage({ id: 'c', discipline: '건축', riskWeight: 0.5 }),
+        ];
+        const groups = groupWorkPackagesByDiscipline(items);
+        expect(groups.map((g) => g.discipline)).toEqual(['건축', '토목']); // 소계 큰 순서(0.8 > 0.2)
+        expect(groups[0].riskWeight).toBeCloseTo(0.8);
+        expect(groups[0].workPackages.map((w) => w.id)).toEqual(['c', 'a']); // 그룹 내부는 riskWeight 내림차순
+        expect(groups[1].riskWeight).toBeCloseTo(0.2);
+    });
+
+    it('discipline이 없는 공종은 "기타"로 묶는다', () => {
+        const items = [makeWorkPackage({ id: 'a', discipline: undefined, riskWeight: 0.1 })];
+        const groups = groupWorkPackagesByDiscipline(items);
+        expect(groups).toHaveLength(1);
+        expect(groups[0].discipline).toBe('기타');
+    });
+
+    it('전체 그룹의 riskWeight 합은 원본 전체 합과 같다', () => {
+        const items = [
+            makeWorkPackage({ id: 'a', discipline: '건축', riskWeight: 0.3 }),
+            makeWorkPackage({ id: 'b', discipline: '토목', riskWeight: 0.2 }),
+            makeWorkPackage({ id: 'c', discipline: '철탑', riskWeight: 0.5 }),
+        ];
+        const groups = groupWorkPackagesByDiscipline(items);
+        const total = groups.reduce((sum, g) => sum + g.riskWeight, 0);
+        expect(total).toBeCloseTo(1);
     });
 });
