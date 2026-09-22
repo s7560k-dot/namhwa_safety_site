@@ -4,6 +4,7 @@ import { COLLECTIONS } from './collections';
 import { ExpenseSchema, ExpenseInputSchema } from '../schemas/expense.schema';
 import type { Expense, ExpenseInput } from '../schemas/expense.schema';
 import { checkEligibility, checkHeadquartersUsageCap } from '../domain/eligibility';
+import { findDuplicateExpense } from '../domain/duplicateDetection';
 import { getProject } from './projectService';
 import { HEADQUARTERS_USAGE_CAP_RATIO } from '../config/regulation.config';
 
@@ -28,8 +29,10 @@ export type AddExpenseResult =
  * @param createdBy 등록자 식별자 (uid 또는 email)
  */
 export async function addExpense(input: ExpenseInput, createdBy: string): Promise<AddExpenseResult> {
-    // 1. 계획: 저장 전 (a) 비목 적격성 심사, (b) 본사 사용분이면 상한 심사 → 둘 중 하나라도 불인정이면 저장하지 않는다.
-    // 2. 검증: 각 분기는 domain/eligibility.test.ts에서 검증됨. 여기서는 Firestore 조회/저장만 담당.
+    // 1. 계획: 저장 전 (a) 비목 적격성 심사, (b) 동일 날짜·비목·금액 중복 검사, (c) 본사 사용분이면 상한 심사
+    //    → 하나라도 불인정/중복이면 저장하지 않는다.
+    // 2. 검증: 각 분기는 domain/eligibility.test.ts, domain/duplicateDetection.test.ts에서 검증됨.
+    //    여기서는 Firestore 조회/저장만 담당.
     // 3. 구현:
     const validatedInput = ExpenseInputSchema.parse(input);
     const eligibility = checkEligibility(validatedInput.itemCode);
@@ -38,11 +41,20 @@ export async function addExpense(input: ExpenseInput, createdBy: string): Promis
         return { status: 'REJECTED', reason: eligibility.reason };
     }
 
+    // 같은 사용내역서 PDF를 실수로 다시 일괄등록하는 등, 동일 날짜·비목·금액의 지출이 이미 있으면 막는다.
+    // 순차 처리(useAddExpensesBulk)에서는 같은 배치 안에서 방금 등록한 항목도 여기서 다시 조회되어
+    // 함께 검사되므로, 배치 내부 중복도 함께 잡힌다.
+    const existingExpenses = await listExpenses(validatedInput.projectId);
+    const duplicate = findDuplicateExpense(validatedInput, existingExpenses);
+    if (duplicate) {
+        return {
+            status: 'REJECTED',
+            reason: `중복 등록으로 의심됩니다: 동일 날짜(${validatedInput.date.slice(0, 10)})·비목·금액(${validatedInput.amount.toLocaleString()}원)의 집행이 이미 등록되어 있습니다.`,
+        };
+    }
+
     if (validatedInput.itemCode === 'HEADQUARTERS_USAGE') {
-        const [project, existingExpenses] = await Promise.all([
-            getProject(validatedInput.projectId),
-            listExpenses(validatedInput.projectId),
-        ]);
+        const project = await getProject(validatedInput.projectId);
         const existingHqUsage = existingExpenses
             .filter((e) => e.itemCode === 'HEADQUARTERS_USAGE')
             .reduce((sum, e) => sum + e.amount, 0);
