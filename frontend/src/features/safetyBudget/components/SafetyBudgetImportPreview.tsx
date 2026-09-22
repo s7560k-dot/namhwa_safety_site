@@ -43,6 +43,24 @@ export function SafetyBudgetImportPreview({
     const targetAmountDiff = allDetailAmountTotal - targetAmount;
     const allocatedAmountDiff = allocatedAmountTotal - calculation.amount;
 
+    // 대공종별로 묶어서 보여준다: 대공종 간 배분은 위험계수와 무관하게 대상액 비례로 정해지므로,
+    // 세부공종을 대공종 단위로 그룹핑해 그 근거(대공종 위험가중치 소계)를 눈에 보이게 한다.
+    const disciplineOrder: string[] = [];
+    const groupedByDiscipline = new Map<string, RiskWeightAllocationItem[]>();
+    for (const item of riskWeights) {
+        if (!groupedByDiscipline.has(item.discipline)) {
+            disciplineOrder.push(item.discipline);
+            groupedByDiscipline.set(item.discipline, []);
+        }
+        groupedByDiscipline.get(item.discipline)!.push(item);
+    }
+    const disciplineGroups = disciplineOrder
+        .map((discipline) => {
+            const items = groupedByDiscipline.get(discipline)!;
+            return { discipline, items, riskWeight: items.reduce((sum, i) => sum + i.riskWeight, 0) };
+        })
+        .sort((a, b) => b.riskWeight - a.riskWeight);
+
     return (
         <div className="space-y-8">
             <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
@@ -91,9 +109,11 @@ export function SafetyBudgetImportPreview({
                     </div>
                 </div>
                 <p className="text-xs text-slate-400 mb-4">
-                    위험계수는 법적 근거가 아닌 운영상 기준(KOSHA 재해통계 참고 초안)입니다. 매칭 실패 항목은 기본계수(1.0)가
-                    적용되며, 계수를 직접 입력해 보정할 수 있습니다. 직접 수정한 값을 자동 산정값으로 되돌리려면 "위험계수
-                    초기화"를 누르세요. 산안비 배분액은 계상금액 × 위험가중치로, 확정 시 저장되는 값이 아니라 참고용입니다.
+                    배분은 2단계로 이뤄집니다 — <strong>대공종(건축/토목/기계/철탑/전기/통신/소방) 간</strong>은 원가계산서와
+                    동일하게 <strong>대상액(재료비+노무비) 비례</strong>로만 나누고(위험계수 미적용), <strong>같은 대공종 안의
+                    세부공종끼리</strong>는 금액 × 위험계수로 나눕니다. 위험계수는 법적 근거가 아닌 운영상 기준(KOSHA 재해통계
+                    참고 초안)입니다. 매칭 실패 항목은 기본계수(1.0)가 적용되며, 계수를 직접 입력해 보정할 수 있습니다. 직접
+                    수정한 값을 자동 산정값으로 되돌리려면 "위험계수 초기화"를 누르세요.
                 </p>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -107,32 +127,45 @@ export function SafetyBudgetImportPreview({
                                 <th className="py-2 pr-4 text-right">배분 산안비</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {riskWeights.map((item) => (
-                                <tr key={item.code} className="border-b border-slate-50">
-                                    <td className="py-2 pr-4 font-bold text-slate-800">
-                                        {item.name}
-                                        {!item.matched && <span className="ml-2 text-[10px] font-bold text-amber-600">미매칭</span>}
+                        {disciplineGroups.map((group) => (
+                            <tbody key={group.discipline}>
+                                <tr className="bg-slate-50">
+                                    <td className="py-2 pr-4 font-black text-slate-700" colSpan={4}>
+                                        {group.discipline} 대공종 소계 ({group.items.length}건)
                                     </td>
-                                    <td className="py-2 pr-4 text-slate-500">{item.discipline}</td>
-                                    <td className="py-2 pr-4 text-right text-slate-700">{currency(item.amount)}</td>
-                                    <td className="py-2 pr-4 text-right">
-                                        <input
-                                            type="number"
-                                            step="0.1"
-                                            min="0"
-                                            value={overrides[item.code] ?? item.riskCoefficient}
-                                            onChange={(e) => onOverrideChange(item.code, Number(e.target.value))}
-                                            className={`w-20 text-right border rounded-lg px-2 py-1 ${
-                                                item.matched ? 'border-slate-200' : 'border-amber-300 bg-amber-50'
-                                            }`}
-                                        />
+                                    <td className="py-2 pr-4 text-right font-black text-slate-700">{(group.riskWeight * 100).toFixed(2)}%</td>
+                                    <td className="py-2 pr-4 text-right font-black text-red-600">
+                                        {currency(group.riskWeight * calculation.amount)}
                                     </td>
-                                    <td className="py-2 pr-4 text-right font-bold text-slate-900">{(item.riskWeight * 100).toFixed(2)}%</td>
-                                    <td className="py-2 pr-4 text-right font-bold text-red-600">{currency(item.riskWeight * calculation.amount)}</td>
                                 </tr>
-                            ))}
-                        </tbody>
+                                {group.items.map((item) => (
+                                    <tr key={item.code} className="border-b border-slate-50">
+                                        <td className="py-2 pr-4 pl-4 font-bold text-slate-800">
+                                            {item.name}
+                                            {!item.matched && <span className="ml-2 text-[10px] font-bold text-amber-600">미매칭</span>}
+                                        </td>
+                                        <td className="py-2 pr-4 text-slate-500">{item.discipline}</td>
+                                        <td className="py-2 pr-4 text-right text-slate-700">{currency(item.amount)}</td>
+                                        <td className="py-2 pr-4 text-right">
+                                            <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                value={overrides[item.code] ?? item.riskCoefficient}
+                                                onChange={(e) => onOverrideChange(item.code, Number(e.target.value))}
+                                                className={`w-20 text-right border rounded-lg px-2 py-1 ${
+                                                    item.matched ? 'border-slate-200' : 'border-amber-300 bg-amber-50'
+                                                }`}
+                                            />
+                                        </td>
+                                        <td className="py-2 pr-4 text-right font-bold text-slate-900">{(item.riskWeight * 100).toFixed(2)}%</td>
+                                        <td className="py-2 pr-4 text-right font-bold text-red-600">
+                                            {currency(item.riskWeight * calculation.amount)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        ))}
                         <tfoot>
                             <tr className="border-t-2 border-slate-200">
                                 <td className="py-3 pr-4 font-black text-slate-900" colSpan={2}>

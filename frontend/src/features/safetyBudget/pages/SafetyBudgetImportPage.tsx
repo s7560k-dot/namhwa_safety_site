@@ -31,7 +31,7 @@ function SafetyBudgetImportDashboard({ projectId }: { projectId: string }) {
         try {
             const categoryDetermination = determineConstructionCategory(parseResult.majorWorkTypeTotals);
             const calculation = calculateSafetyBudgetAmount(parseResult.targetAmount, categoryDetermination.category);
-            const riskWeights = deriveRiskWeights(parseResult.detailWorkItems, overrides);
+            const riskWeights = deriveRiskWeights(parseResult.detailWorkItems, parseResult.disciplineTargetAmounts, overrides);
             const { excluded } = partitionWorkItemsByEligibility(parseResult.detailWorkItems);
             return { categoryDetermination, calculation, riskWeights, excluded, error: null as string | null };
         } catch (err) {

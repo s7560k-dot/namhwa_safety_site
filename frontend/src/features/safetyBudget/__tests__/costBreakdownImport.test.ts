@@ -7,6 +7,16 @@ function row(label: string, materialAmount: number, laborAmount: number, totalAm
     return [label, '', '', 1, 0, materialAmount, 0, laborAmount, 0, 0, 0, totalAmount, ''];
 }
 
+/**
+ * 전기(집)/통신(집) 등 전문공종형 시트의 열 순서: 번호,공종코드,…,품명,단위,수량,
+ * 재료비단가,재료비금액,노무비단가,노무비금액,경비단가,경비금액,합계단가,합계금액,비고.
+ * 표준 레이아웃과 달리 코드와 품명이 서로 다른 컬럼(공종코드=2번째, 품명=4번째)에 분리되어 있고,
+ * 하위 항목의 품명에는 코드가 포함되지 않는다(예: "1-1. 전력간선설비공사"처럼 코드 없이 시작).
+ */
+function altLayoutRow(code: string, name: string, materialAmount: number, laborAmount: number, totalAmount: number): unknown[] {
+    return ['', code, '', name, '식', 1, 0, materialAmount, 0, laborAmount, 0, 0, 0, totalAmount, ''];
+}
+
 function buildFixtureWorkbook(): XLSX.WorkBook {
     const workbook = XLSX.utils.book_new();
 
@@ -85,6 +95,13 @@ describe('parseWorkbookForImport', () => {
         expect(soil?.discipline).toBe('토목');
     });
 
+    it('대공종별 대상액(재료비+노무비)을 그 대공종 시트의 최상위(리프 아닌) 행에서 추출한다', () => {
+        const result = parseWorkbookForImport(buildFixtureWorkbook());
+        // 건축(집)의 "0101 건축공사" 행: 재료비 600 + 노무비 300 = 900
+        // 토목(집)의 "0102 토목공사" 행: 재료비 400 + 노무비 200 = 600
+        expect(result.disciplineTargetAmounts).toEqual({ 건축: 900, 토목: 600 });
+    });
+
     it('상위/하위 코드 채번이 어긋나도(접두어 불일치) 위치(깊이) 기반으로 판단해 중복 집계하지 않는다', () => {
         // 실제 파일에서 발견된 패턴 재현: "010201 부지정지공사"의 하위 항목이 "0103xxxx"로 채번되어
         // 문자열 접두어로는 이어지지 않는다. 바로 다음 행이 더 깊은 코드이므로 상위 항목은 리프가 아니어야 한다.
@@ -109,6 +126,40 @@ describe('parseWorkbookForImport', () => {
         expect(names).not.toContain('부지정지공사');
         expect(names).toEqual(['토공', 'L형옹벽설치']);
         expect(result.detailWorkItems.reduce((sum, item) => sum + item.amount, 0)).toBe(100); // 100이 아니라 200이면 중복 집계
+    });
+
+    it('전기(집)/통신(집)처럼 품명 컬럼 위치·금액 컬럼 오프셋이 다른 전문공종형 시트도 파싱한다', () => {
+        // 실제 파일에서 발견된 패턴: 번호·공종코드 컬럼이 앞에 있어 품명이 4번째 컬럼이고, 재료비/노무비/합계금액도
+        // 표준 레이아웃보다 전부 2칸씩 뒤로 밀려있다. 표준 레이아웃으로 시도해 0건이면 이 레이아웃으로 재시도해야 한다.
+        const workbook = XLSX.utils.book_new();
+        const summaryAoa = [['h'], ['h'], ['h'], ['h'], row('01  테스트현장', 190505050, 114200002, 305285366), row('0105  전기공사', 190505050, 114200002, 305285366)];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summaryAoa), '총괄집계');
+
+        const elecAoa = [
+            ['총줄수->', '55', '2.0', '공사명 : 테스트현장'],
+            ['번호', '공종코드', '…', '공종명', '단위', '수량', '재료비', '', '노무비', '', '경비', '', '합계', '', '비고'],
+            ['', '', '', '', '', '', '단가', '금액', '단가', '금액', '단가', '금액', '단가', '금액'],
+            ['공종줄'],
+            altLayoutRow('001', '0105 전기공사', 190505050, 114200002, 305285366),
+            // 실제 파일에서 발견된 패턴: "공종줄"이라는 섹션 구분 행이 코드 컬럼에 문자열을 넣은 채로 끼어든다.
+            // 숫자가 아닌 코드를 걸러내지 않으면 이 행이 깊이 판단에 끼어들어 바로 위 총계 행("001")을
+            // 리프로 잘못 인식시킨다.
+            altLayoutRow('공종줄', '1.전기공사', 0, 0, 0),
+            altLayoutRow('00101', '1-1. 전력간선설비공사', 71042985, 11918590, 82986845),
+            altLayoutRow('00102', '1-2. 동력설비공사', 12775649, 20726282, 33544281),
+            // 실제 파일에서 발견된 패턴: 맨 아래 섹션 합계 행이 최상위 코드("001")를 그대로 재사용하고
+            // 품명에 "( 합    계 )" 마커가 들어있다. 코드가 중복돼 마커 검사 없이는 세부공종처럼 잡힌다.
+            altLayoutRow('001', '( 합       계 )', 190505050, 114200002, 305285366),
+        ];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(elecAoa), '전기(집)');
+
+        const result = parseWorkbookForImport(workbook);
+        const names = result.detailWorkItems.map((item) => item.name).sort();
+        expect(names).toEqual(['1-1.전력간선설비공사', '1-2.동력설비공사'].sort());
+        expect(names).not.toContain('(합계)');
+        expect(names).not.toContain('0105전기공사'); // 최상위 총계 행이 리프로 잘못 섞이면 안 된다
+        // 대공종 총계 행("0105 전기공사")에서 재료비+노무비를 뽑아야 한다: 190505050+114200002
+        expect(result.disciplineTargetAmounts['전기']).toBe(190505050 + 114200002);
     });
 
     it('"총괄집계" 시트가 없으면 에러를 던진다', () => {
