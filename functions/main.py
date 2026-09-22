@@ -556,3 +556,4 @@ def parse_expense_ledger_pdf(req: https_fn.Request) -> https_fn.Response:
         print(f"Expense Ledger PDF Parsing Error: {error_msg}")
         resp = https_fn.Response(json.dumps({"detail": f"AI Parsing Failed: {str(e)}"}), status=400, content_type="application/json")
         return set_cors_headers(resp)
+

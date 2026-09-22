@@ -88,4 +88,5 @@ export const SITE_OPTIONS = [
     { id: 'siteA', label: '대광 새마을금고 골프연습장' },
     { id: 'siteB', label: '수원 노유자시설 신축공사' },
     { id: 'siteC', label: '평택 세탁소 시설 신축공사' },
+    { id: 'siteD', label: '바이오헬스 융복합 지식산업센터' },
 ] as const;

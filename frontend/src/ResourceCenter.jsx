@@ -174,7 +174,8 @@ const ResourceCenter = () => {
     const sites = [
         { id: 'siteA', title: "대광 새마을금고 골프연습장", link: "/dashboard/siteA", status: "진행중" },
         { id: 'siteB', title: "수원 노유자시설 신축공사", link: "/dashboard/siteB", status: "진행중" },
-        { id: 'siteC', title: "평택 세탁소 시설 신축공사", link: "/dashboard/siteC", status: "진행중" }
+        { id: 'siteC', title: "평택 세탁소 시설 신축공사", link: "/dashboard/siteC", status: "진행중" },
+        { id: 'siteD', title: "바이오헬스 융복합 지식산업센터", link: "/dashboard/siteD", status: "진행중" }
     ];
 
     return (
