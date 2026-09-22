@@ -24,7 +24,8 @@ export function BudgetProposalPrintReport({
 }: BudgetProposalPrintReportProps) {
     const today = new Date().toISOString().slice(0, 10);
     const totalAllocated = workPackages.reduce((sum, wp) => sum + calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget), 0);
-    const disciplineGroups = groupWorkPackagesByDiscipline(workPackages);
+    // 공종 1개만 보는 개별 선택 모드에서는 대공종 소계가 그 공종 자신과 값이 겹쳐 중복 표시가 되므로 그룹핑을 건너뛴다.
+    const disciplineGroups = mode === 'ALL' ? groupWorkPackagesByDiscipline(workPackages) : null;
 
     return (
         <div className="p-6 text-black text-sm">
@@ -79,28 +80,40 @@ export function BudgetProposalPrintReport({
                         </tr>
                     </thead>
                     <tbody>
-                        {disciplineGroups.map((group) => (
-                            <Fragment key={group.discipline}>
-                                <tr className="bg-gray-100">
-                                    <td className="border border-slate-300 py-1 px-2 font-bold" colSpan={1}>
-                                        {group.discipline} 소계 ({group.workPackages.length}건)
-                                    </td>
-                                    <td className="border border-slate-300 py-1 text-center font-bold">{(group.riskWeight * 100).toFixed(2)}%</td>
-                                    <td className="border border-slate-300 py-1 text-right px-2 font-bold">
-                                        {currency(calculateAllocatedAmount(group.riskWeight, allocatedSafetyBudget))}
-                                    </td>
-                                </tr>
-                                {group.workPackages.map((wp) => (
-                                    <tr key={wp.id}>
-                                        <td className="border border-slate-300 py-1 px-2 pl-5">{wp.name}</td>
-                                        <td className="border border-slate-300 py-1 text-center">{(wp.riskWeight * 100).toFixed(2)}%</td>
-                                        <td className="border border-slate-300 py-1 text-right px-2">
-                                            {currency(calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget))}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </Fragment>
-                        ))}
+                        {disciplineGroups
+                            ? disciplineGroups.map((group) => (
+                                  <Fragment key={group.discipline}>
+                                      <tr className="bg-gray-100">
+                                          <td className="border border-slate-300 py-1 px-2 font-bold" colSpan={1}>
+                                              {group.discipline} 소계 ({group.workPackages.length}건)
+                                          </td>
+                                          <td className="border border-slate-300 py-1 text-center font-bold">
+                                              {(group.riskWeight * 100).toFixed(2)}%
+                                          </td>
+                                          <td className="border border-slate-300 py-1 text-right px-2 font-bold">
+                                              {currency(calculateAllocatedAmount(group.riskWeight, allocatedSafetyBudget))}
+                                          </td>
+                                      </tr>
+                                      {group.workPackages.map((wp) => (
+                                          <tr key={wp.id}>
+                                              <td className="border border-slate-300 py-1 px-2 pl-5">{wp.name}</td>
+                                              <td className="border border-slate-300 py-1 text-center">{(wp.riskWeight * 100).toFixed(2)}%</td>
+                                              <td className="border border-slate-300 py-1 text-right px-2">
+                                                  {currency(calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget))}
+                                              </td>
+                                          </tr>
+                                      ))}
+                                  </Fragment>
+                              ))
+                            : workPackages.map((wp) => (
+                                  <tr key={wp.id}>
+                                      <td className="border border-slate-300 py-1 px-2">{wp.name}</td>
+                                      <td className="border border-slate-300 py-1 text-center">{(wp.riskWeight * 100).toFixed(2)}%</td>
+                                      <td className="border border-slate-300 py-1 text-right px-2">
+                                          {currency(calculateAllocatedAmount(wp.riskWeight, allocatedSafetyBudget))}
+                                      </td>
+                                  </tr>
+                              ))}
                         <tr className="font-bold bg-gray-50">
                             <td className="border border-slate-300 py-1 px-2">총합계</td>
                             <td className="border border-slate-300 py-1 text-center">
