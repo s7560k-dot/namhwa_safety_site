@@ -473,3 +473,86 @@ def generate_shm_summary(req: https_fn.Request) -> https_fn.Response:
         print(f"Gemini SHM Summary API Error: {error_msg}")
         resp = https_fn.Response(json.dumps({"success": False, "detail": f"AI 분석 중 오류 발생: {str(e)}"}), status=400, content_type="application/json")
         return set_cors_headers(resp)
+
+# 아래 9개 라벨은 frontend/src/features/safetyBudget/config/constants.ts의 BUDGET_ITEM_CODE_LABELS와
+# 반드시 동기화해야 한다 (두 언어 프로젝트 간에는 상수를 직접 공유할 수 없어 수동 동기화 필요).
+_EXPENSE_LEDGER_ITEM_LABELS = [
+    "인건비", "안전시설비", "개인보호구", "안전진단비", "안전보건교육비",
+    "근로자 건강관리비", "기술지도비", "본사 사용분", "스마트 안전장비",
+]
+
+@https_fn.on_request(max_instances=10, timeout_sec=120, memory=1024)
+def parse_expense_ledger_pdf(req: https_fn.Request) -> https_fn.Response:
+    """산업안전보건관리비 사용내역서 PDF를 분석해 항목별 사용내역(날짜/비목/금액/내용)을 구조화된 JSON으로 추출"""
+    if req.method == "OPTIONS":
+        return set_cors_headers(https_fn.Response(status=204))
+
+    if req.method != "POST":
+        resp = https_fn.Response(json.dumps({"detail": "Only POST method is supported"}), status=405)
+        return set_cors_headers(resp)
+
+    try:
+        data = req.get_json(silent=True)
+        if not data or "pdfBase64" not in data:
+            return set_cors_headers(https_fn.Response(json.dumps({"detail": "Missing pdfBase64"}), status=400, content_type="application/json"))
+
+        api_key = os.environ.get("GOOGLE_API_KEY_SAFETY")
+        if not api_key:
+            print("[ERROR] GOOGLE_API_KEY_SAFETY missing")
+            return set_cors_headers(https_fn.Response(json.dumps({"detail": "Server API Key Missing (Safety)"}), status=400, content_type="application/json"))
+
+        genai.configure(api_key=api_key)
+
+        labels_str = ", ".join(f'"{label}"' for label in _EXPENSE_LEDGER_ITEM_LABELS)
+        system_instruction = f"""
+          너는 대한민국 건설현장의 산업안전보건관리비 사용내역서를 판독하는 전문가다.
+          첨부된 PDF는 "산업안전보건관리비 사용내역서"(고용노동부 고시 별지서식)이며, 날짜·비목·금액이 항목별로 구분되어 기재되어 있다.
+          이 문서에서 실제로 금액이 사용(집행)된 항목을 모두 추출하라. 합계/소계/누계 행이나 서식 안내 문구는 추출하지 마라.
+
+          각 항목의 비목(itemLabel)은 반드시 다음 9개 중 하나와 정확히 일치시켜야 한다. 이 중 어디에도 명확히 해당하지 않으면 null로 두어라:
+          [{labels_str}]
+
+          반드시 아래 JSON 스키마와 100% 일치하게 반환하고, 마크다운 코드 블록이나 다른 설명 텍스트를 포함하지 마라.
+          {{
+            "items": [
+              {{
+                "date": "YYYY-MM-DD 형식, 판독 불가하면 null",
+                "itemLabel": "위 9개 라벨 중 하나 또는 null",
+                "description": "사용 내용 요약 (문서에 적힌 그대로, 짧게)",
+                "amount": 숫자 (원 단위, 콤마/단위 제거)
+              }}
+            ]
+          }}
+        """
+
+        model = genai.GenerativeModel(
+            model_name='gemini-2.5-flash',
+            generation_config=genai.types.GenerationConfig(
+                response_mime_type="application/json",
+                temperature=0.1,
+            ),
+            system_instruction=system_instruction
+        )
+
+        import base64
+        base64_data = data["pdfBase64"].replace("data:application/pdf;base64,", "")
+        pdf_bytes = base64.b64decode(base64_data)
+
+        prompt = "첨부된 산업안전보건관리비 사용내역서 PDF를 분석해 지정된 JSON 포맷으로 사용내역을 추출해 줘."
+        pdf_blob = {
+            "mime_type": "application/pdf",
+            "data": pdf_bytes
+        }
+
+        response = model.generate_content([prompt, pdf_blob])
+        ai_response_text = response.text.strip()
+        clean_json_text = ai_response_text.replace("```json", "").replace("```", "").strip()
+
+        resp = https_fn.Response(json.dumps({"success": True, "data": json.loads(clean_json_text)}), content_type="application/json")
+        return set_cors_headers(resp)
+
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        print(f"Expense Ledger PDF Parsing Error: {error_msg}")
+        resp = https_fn.Response(json.dumps({"detail": f"AI Parsing Failed: {str(e)}"}), status=400, content_type="application/json")
+        return set_cors_headers(resp)

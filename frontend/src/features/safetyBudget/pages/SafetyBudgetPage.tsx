@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { FileUp } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { SafetyBudgetQueryProvider } from '../providers/SafetyBudgetQueryProvider';
 import {
@@ -15,6 +16,7 @@ import { SCurveChart } from '../components/SCurveChart';
 import { LedgerReconciliationCard } from '../components/LedgerReconciliationCard';
 import { ExpenseRegistrationForm } from '../components/ExpenseRegistrationForm';
 import { ExpenseListTable } from '../components/ExpenseListTable';
+import { ExpenseLedgerImportSection } from '../components/ExpenseLedgerImportSection';
 import { EligibilityModal } from '../components/EligibilityModal';
 import { SafetyBudgetHeader } from '../components/SafetyBudgetHeader';
 import type { ExpenseInput } from '../schemas/expense.schema';
@@ -28,6 +30,7 @@ function SafetyBudgetDashboard({ projectId }: { projectId: string }) {
     const addExpenseMutation = useAddExpense(projectId, user?.email ?? 'unknown');
 
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+    const [isLedgerImportOpen, setIsLedgerImportOpen] = useState(false);
 
     const analysisResult = useMemo(() => {
         if (!project) return { ok: false as const, error: '' };
@@ -95,6 +98,21 @@ function SafetyBudgetDashboard({ projectId }: { projectId: string }) {
                             />
                         </div>
                     </>
+                )}
+
+                {isLedgerImportOpen ? (
+                    <ExpenseLedgerImportSection
+                        projectId={projectId}
+                        createdBy={user?.email ?? 'unknown'}
+                        onClose={() => setIsLedgerImportOpen(false)}
+                    />
+                ) : (
+                    <button
+                        onClick={() => setIsLedgerImportOpen(true)}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-red-600 border border-slate-200 rounded-xl px-4 py-3 bg-white transition-colors"
+                    >
+                        <FileUp size={16} /> 사용내역서 PDF로 일괄 등록
+                    </button>
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -5,6 +5,7 @@ import type { WorkPackageUpsertInput } from '../services/workPackageService';
 import { listBudgetItems } from '../services/budgetItemService';
 import { listSubcontractors } from '../services/subcontractorService';
 import { listExpenses, addExpense, setExpenseEvidenceConfirmed } from '../services/expenseService';
+import type { AddExpenseResult } from '../services/expenseService';
 import { listSafetyPlusExpenses, addSafetyPlusExpense } from '../services/safetyPlusExpenseService';
 import { saveCalculationBasis } from '../services/calculationBasisService';
 import type { ExpenseInput } from '../schemas/expense.schema';
@@ -92,6 +93,29 @@ export function useConfirmCostBreakdownImport(projectId: string) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.project(projectId) });
             queryClient.invalidateQueries({ queryKey: queryKeys.workPackages(projectId) });
+        },
+    });
+}
+
+/**
+ * 사용내역서 PDF 가져오기 미리보기의 "일괄 등록" 액션.
+ * 본사 사용분 누적 한도 검사가 이전 행의 등록 결과를 반영해야 정확하므로 반드시 순차(for...of)로 처리한다
+ * (Promise.all 등으로 병렬 처리하면 안 됨).
+ */
+export function useAddExpensesBulk(projectId: string, createdBy: string) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (inputs: readonly ExpenseInput[]) => {
+            const results: AddExpenseResult[] = [];
+            for (const input of inputs) {
+                results.push(await addExpense(input, createdBy));
+            }
+            return results;
+        },
+        onSuccess: (results) => {
+            if (results.some((r) => r.status === 'APPROVED')) {
+                queryClient.invalidateQueries({ queryKey: queryKeys.expenses(projectId) });
+            }
         },
     });
 }
