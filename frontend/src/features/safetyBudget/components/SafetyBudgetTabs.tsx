@@ -5,6 +5,7 @@ const TABS = [
     { path: '/subcontractors', label: '협력사 잔액' },
     { path: '/settlement', label: '정산 시뮬레이션' },
     { path: '/audit', label: '감사 준비도' },
+    { path: '/import', label: '내역서 가져오기' },
 ] as const;
 
 export function SafetyBudgetTabs({ projectId, active }: { projectId: string; active: (typeof TABS)[number]['path'] }) {

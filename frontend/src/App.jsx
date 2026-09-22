@@ -19,6 +19,7 @@ import SafetyBudgetPage from './features/safetyBudget/pages/SafetyBudgetPage';
 import SubcontractorDashboardPage from './features/safetyBudget/pages/SubcontractorDashboardPage';
 import SettlementSimulationPage from './features/safetyBudget/pages/SettlementSimulationPage';
 import AuditReadinessPage from './features/safetyBudget/pages/AuditReadinessPage';
+import SafetyBudgetImportPage from './features/safetyBudget/pages/SafetyBudgetImportPage';
 
 import { AuthProvider } from './context/AuthContext';
 import { AuthenticatedRoute, ApprovedRoute, AdminRoute } from './components/auth/ProtectedRoute';
@@ -106,6 +107,11 @@ function App() {
           <Route path="/safety-budget/:siteId/audit" element={
             <ApprovedRoute>
               <AuditReadinessPage />
+            </ApprovedRoute>
+          } />
+          <Route path="/safety-budget/:siteId/import" element={
+            <ApprovedRoute>
+              <SafetyBudgetImportPage />
             </ApprovedRoute>
           } />
           {/* Fallback route */}

@@ -7,7 +7,7 @@ import { SafetyBudgetTabs } from './SafetyBudgetTabs';
 interface SafetyBudgetHeaderProps {
     projectId: string;
     projectName: string;
-    activeTab: '' | '/subcontractors' | '/settlement' | '/audit';
+    activeTab: '' | '/subcontractors' | '/settlement' | '/audit' | '/import';
     rightSlot?: ReactNode;
 }
 

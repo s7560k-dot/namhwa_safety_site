@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../../firebase-modular';
 import { COLLECTIONS } from './collections';
 import { WorkPackageSchema } from '../schemas/workPackage.schema';
@@ -12,4 +12,40 @@ export async function listWorkPackages(projectId: string): Promise<WorkPackage[]
     const q = query(collection(db, COLLECTIONS.WORK_PACKAGES), where('projectId', '==', projectId));
     const snapshot = await getDocs(q);
     return snapshot.docs.map((docSnap) => WorkPackageSchema.parse({ id: docSnap.id, ...docSnap.data() }));
+}
+
+export interface WorkPackageUpsertInput {
+    name: string;
+    riskWeight: number;
+}
+
+/**
+ * 내역서 기반 자동 산정 결과(F13)로 공종별 위험가중치를 반영한다. 미리보기 화면에서 사용자가 "확정"을 눌렀을 때만 호출된다.
+ * 같은 이름의 기존 WorkPackage는 riskWeight만 갱신하고, 없으면 새로 생성한다(currentProgressPct 0으로 시작).
+ * 하나의 배치로 처리해 일부만 반영되는 상황을 피한다.
+ * @param projectId 프로젝트 id
+ * @param items 세부공종별 산정된 위험가중치 (합이 1이어야 함은 호출 전 domain 계층에서 보장)
+ */
+export async function upsertWorkPackages(projectId: string, items: readonly WorkPackageUpsertInput[]): Promise<void> {
+    const existing = await listWorkPackages(projectId);
+    const existingByName = new Map(existing.map((wp) => [wp.name, wp]));
+
+    const batch = writeBatch(db);
+    for (const item of items) {
+        const found = existingByName.get(item.name);
+        if (found) {
+            batch.update(doc(db, COLLECTIONS.WORK_PACKAGES, found.id), { riskWeight: item.riskWeight });
+        } else {
+            const newRef = doc(collection(db, COLLECTIONS.WORK_PACKAGES));
+            const newWorkPackage = WorkPackageSchema.omit({ id: true }).parse({
+                projectId,
+                name: item.name,
+                riskWeight: item.riskWeight,
+                plannedProgressCurve: [],
+                currentProgressPct: 0,
+            });
+            batch.set(newRef, newWorkPackage);
+        }
+    }
+    await batch.commit();
 }

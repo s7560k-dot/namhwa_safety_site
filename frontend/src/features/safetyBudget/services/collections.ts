@@ -6,4 +6,5 @@ export const COLLECTIONS = {
     EXPENSES: 'safetyBudget_expenses',
     SUBCONTRACTORS: 'safetyBudget_subcontractors',
     SAFETY_PLUS_EXPENSES: 'safetyBudget_safetyPlusExpenses',
+    CALCULATION_BASIS: 'safetyBudget_calculationBasis',
 } as const;
