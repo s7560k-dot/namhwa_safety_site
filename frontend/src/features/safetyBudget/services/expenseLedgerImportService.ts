@@ -6,6 +6,10 @@ export interface ParsedExpenseLedgerItem {
     itemLabel: string | null;
     description: string;
     amount: number;
+    /** PDF 내에 날짜·금액이 일치하는 증빙 문서(세금계산서 등)가 첨부되어 있는지 AI가 확인한 결과. */
+    evidenceDocumentFound: boolean;
+    /** 확인된 증빙 문서 종류 (세금계산서/거래명세서/노무비대장/입금표/기타). 확인 안 됐으면 null. */
+    evidenceDocumentType: string | null;
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {

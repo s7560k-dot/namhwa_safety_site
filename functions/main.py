@@ -512,6 +512,12 @@ def parse_expense_ledger_pdf(req: https_fn.Request) -> https_fn.Response:
           각 항목의 비목(itemLabel)은 반드시 다음 9개 중 하나와 정확히 일치시켜야 한다. 이 중 어디에도 명확히 해당하지 않으면 null로 두어라:
           [{labels_str}]
 
+          이 PDF에는 사용내역 요약표 뒤에 각 항목의 증빙 문서(세금계산서, 거래명세서, 노무비대장/급여대장, 계좌이체 입금표 등)가
+          함께 첨부되어 있을 수 있다. 요약표의 각 항목에 대해, 뒤쪽 페이지에서 **날짜와 금액이 실제로 일치하는** 증빙 문서를
+          찾을 수 있는지 확인하라. 확실히 대응되는 증빙을 찾았을 때만 evidenceDocumentFound를 true로 하고, evidenceDocumentType에
+          그 문서 종류를 "세금계산서"/"거래명세서"/"노무비대장"/"입금표"/"기타" 중 하나로 적어라. 애매하거나 확신이 없으면
+          반드시 false와 null로 두어라 (없는 것을 있다고 판단하지 말 것 — 과소평가가 과대평가보다 안전하다).
+
           반드시 아래 JSON 스키마와 100% 일치하게 반환하고, 마크다운 코드 블록이나 다른 설명 텍스트를 포함하지 마라.
           {{
             "items": [
@@ -519,7 +525,9 @@ def parse_expense_ledger_pdf(req: https_fn.Request) -> https_fn.Response:
                 "date": "YYYY-MM-DD 형식, 판독 불가하면 null",
                 "itemLabel": "위 9개 라벨 중 하나 또는 null",
                 "description": "사용 내용 요약 (문서에 적힌 그대로, 짧게)",
-                "amount": 숫자 (원 단위, 콤마/단위 제거)
+                "amount": 숫자 (원 단위, 콤마/단위 제거),
+                "evidenceDocumentFound": true 또는 false,
+                "evidenceDocumentType": "세금계산서" | "거래명세서" | "노무비대장" | "입금표" | "기타" | null
               }}
             ]
           }}

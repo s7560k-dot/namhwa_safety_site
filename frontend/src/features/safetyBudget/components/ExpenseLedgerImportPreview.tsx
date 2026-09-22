@@ -1,4 +1,4 @@
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2, FileCheck2 } from 'lucide-react';
 import { ELIGIBLE_ITEM_CODES, BUDGET_ITEM_CODE_LABELS } from '../config/constants';
 import type { BudgetItemCode } from '../config/constants';
 import type { AddExpenseResult } from '../services/expenseService';
@@ -11,6 +11,9 @@ export interface EditableLedgerRow {
     amount: number;
     /** AI가 추출한 itemLabel이 비목 코드에 정확히 매칭됐는지 여부. false면 사용자가 직접 선택해야 한다. */
     matched: boolean;
+    /** PDF 내에 날짜·금액이 일치하는 증빙 문서(세금계산서 등)가 첨부되어 있는지 AI가 확인한 결과. */
+    evidenceDocumentFound: boolean;
+    evidenceDocumentType: string | null;
     result?: AddExpenseResult;
 }
 
@@ -36,6 +39,7 @@ export function ExpenseLedgerImportPreview({
     submitError,
 }: ExpenseLedgerImportPreviewProps) {
     const unmatchedCount = rows.filter((r) => !r.matched).length;
+    const noEvidenceCount = rows.filter((r) => !r.evidenceDocumentFound).length;
     const hasUnselected = rows.some((r) => r.itemCode === '');
     const hasSubmitted = rows.some((r) => r.result);
     const totalAmount = rows.reduce((sum, r) => sum + r.amount, 0);
@@ -44,15 +48,25 @@ export function ExpenseLedgerImportPreview({
 
     return (
         <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                 <h3 className="text-xl font-black text-slate-900">사용내역 미리보기 ({rows.length}건)</h3>
-                {unmatchedCount > 0 && (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 rounded-full px-3 py-1">
-                        <AlertTriangle size={14} /> 비목 매칭 실패 {unmatchedCount}건 — 직접 선택 필요
-                    </span>
-                )}
+                <div className="flex items-center gap-2">
+                    {unmatchedCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 rounded-full px-3 py-1">
+                            <AlertTriangle size={14} /> 비목 매칭 실패 {unmatchedCount}건 — 직접 선택 필요
+                        </span>
+                    )}
+                    {noEvidenceCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-100 rounded-full px-3 py-1">
+                            <FileCheck2 size={14} /> PDF 내 증빙 미확인 {noEvidenceCount}건
+                        </span>
+                    )}
+                </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">파일: {fileName}</p>
+            <p className="text-xs text-slate-400 mb-4">
+                파일: {fileName}. 증빙 확인 여부는 PDF에 첨부된 세금계산서 등을 AI가 대조한 참고 정보이며, 등록을 막지는
+                않습니다. 등록된 지출의 "증빙 링크"는 별도이므로, 감사 대응이 필요하면 실제 링크도 첨부해주세요.
+            </p>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -62,6 +76,7 @@ export function ExpenseLedgerImportPreview({
                             <th className="py-2 pr-4">비목</th>
                             <th className="py-2 pr-4">사용 내용</th>
                             <th className="py-2 pr-4 text-right">금액</th>
+                            <th className="py-2 pr-4">PDF 내 증빙</th>
                             <th className="py-2 pr-4">결과</th>
                             <th className="py-2 pr-4" />
                         </tr>
@@ -111,6 +126,17 @@ export function ExpenseLedgerImportPreview({
                                     />
                                 </td>
                                 <td className="py-2 pr-4">
+                                    {row.evidenceDocumentFound ? (
+                                        <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                                            {row.evidenceDocumentType ?? '확인됨'}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-400">
+                                            미확인
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="py-2 pr-4">
                                     {row.result && (
                                         <span
                                             className={`text-[11px] font-bold px-2 py-1 rounded-full ${
@@ -140,7 +166,7 @@ export function ExpenseLedgerImportPreview({
                                 합계 ({rows.length}건)
                             </td>
                             <td className="py-3 pr-4 text-right font-black text-slate-900">{currency(totalAmount)}</td>
-                            <td className="py-3 pr-4 text-xs text-slate-500" colSpan={2}>
+                            <td className="py-3 pr-4 text-xs text-slate-500" colSpan={3}>
                                 {hasSubmitted && `승인 ${approvedCount}건 / 반려 ${rejectedCount}건`}
                             </td>
                         </tr>

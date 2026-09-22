@@ -27,6 +27,8 @@ function toEditableRows(items: ParsedExpenseLedgerItem[]): EditableLedgerRow[] {
             description: item.description ?? '',
             amount: item.amount,
             matched: itemCode !== null,
+            evidenceDocumentFound: item.evidenceDocumentFound,
+            evidenceDocumentType: item.evidenceDocumentType,
         };
     });
 }
