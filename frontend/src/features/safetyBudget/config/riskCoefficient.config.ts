@@ -78,10 +78,6 @@ export const WORK_TYPE_RISK_COEFFICIENTS: Record<string, number> = {
     목공사및수장공사: LOW,
     칠공사: LOW,
     조경공사: LOW,
-    골재비: LOW,
-    주요자재비: LOW,
-    관로표시테이프: LOW,
-    하수관내CCTV조사: LOW,
     폐기물처리비: LOW,
     한전불입금: LOW,
     기타공사: LOW,
@@ -93,7 +89,8 @@ export const WORK_TYPE_RISK_COEFFICIENTS: Record<string, number> = {
     위생기구설치공사: LOW,
     바닥난방배관공사: LOW,
     자동화재탐지설비공사: LOW,
-    임시소방시설: LOW,
+    // 임시소방시설, 골재비, 주요자재비, 관로표시테이프, 하수관내CCTV조사:
+    // 산안비 배분 제외 항목 — config/nonEligibleWorkTypes.config.ts에서 제외 처리하므로 여기 등록하지 않는다.
 
     // 기계설비·소방 (실사용 샘플에서 추가 확인된 명칭)
     장비설치공사: HIGH, // 중량물(펌프·수전설비 등) 양중·설치

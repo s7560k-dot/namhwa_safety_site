@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveRiskWeights, matchWorkTypeToRiskCoefficient } from '../domain/riskWeightAllocation';
+import { deriveRiskWeights, matchWorkTypeToRiskCoefficient, partitionWorkItemsByEligibility } from '../domain/riskWeightAllocation';
 import { validateRiskWeightSum } from '../domain/weightedProgress';
 import type { DetailWorkItem } from '../domain/costBreakdownImport';
 import type { WorkPackage } from '../schemas/workPackage.schema';
@@ -77,5 +77,65 @@ describe('deriveRiskWeights', () => {
 
     it('모든 금액이 0이면 예외를 던진다', () => {
         expect(() => deriveRiskWeights([makeItem({ amount: 0 })])).toThrow();
+    });
+
+    it('임시소방시설은 산안비로 집행할 수 없는 항목이라 위험가중치 산정에서 제외된다', () => {
+        const items = [
+            makeItem({ code: 'A', name: '철근콘크리트공사', amount: 700 }),
+            makeItem({ code: 'B', name: '임시소방시설', amount: 300 }),
+        ];
+        const result = deriveRiskWeights(items);
+        expect(result.map((r) => r.name)).not.toContain('임시소방시설');
+        expect(result).toHaveLength(1);
+        // 제외 대상 금액이 정규화 분모에서도 빠져야 하므로 남은 항목의 가중치는 1이다.
+        expect(result[0].riskWeight).toBeCloseTo(1);
+    });
+
+    it('제외 대상만 있으면(산안비 배분 대상 없음) 예외를 던진다', () => {
+        expect(() => deriveRiskWeights([makeItem({ code: 'A', name: '임시소방시설', amount: 100 })])).toThrow();
+    });
+
+    it.each(['골재비', '주요자재비', '관로표시테이프', '하수관내CCTV조사'])(
+        '%s는 시공 작업이 아닌 자재비/용역비 항목이라 위험가중치 산정에서 제외된다',
+        (name) => {
+            const items = [
+                makeItem({ code: 'A', name: '철근콘크리트공사', amount: 700 }),
+                makeItem({ code: 'B', name, amount: 300 }),
+            ];
+            const result = deriveRiskWeights(items);
+            expect(result.map((r) => r.name)).not.toContain(name);
+        }
+    );
+
+    it('같은 이름의 제외 대상이 여러 개(코드가 달라도)라도 모두 제외된다', () => {
+        // 실제 내역서에서 "하수관내CCTV조사"가 서로 다른 코드로 3번 등장하는 사례를 재현
+        const items = [
+            makeItem({ code: 'A', name: '철근콘크리트공사', amount: 700 }),
+            makeItem({ code: 'B1', name: '하수관내CCTV조사', amount: 10 }),
+            makeItem({ code: 'B2', name: '하수관내CCTV조사', amount: 20 }),
+            makeItem({ code: 'B3', name: '하수관내CCTV조사', amount: 30 }),
+        ];
+        const result = deriveRiskWeights(items);
+        expect(result).toHaveLength(1);
+        expect(result[0].riskWeight).toBeCloseTo(1);
+    });
+});
+
+describe('partitionWorkItemsByEligibility', () => {
+    it('산안비 집행 불가 항목(임시소방시설)을 사유와 함께 분리한다', () => {
+        const items = [
+            makeItem({ code: 'A', name: '철근콘크리트공사', amount: 700 }),
+            makeItem({ code: 'B', name: '임시소방시설', amount: 300 }),
+        ];
+        const { eligible, excluded } = partitionWorkItemsByEligibility(items);
+        expect(eligible.map((i) => i.name)).toEqual(['철근콘크리트공사']);
+        expect(excluded).toHaveLength(1);
+        expect(excluded[0].name).toBe('임시소방시설');
+        expect(excluded[0].reason).toContain('산안비로 집행할 수 없다');
+    });
+
+    it('제외 대상이 없으면 excluded는 빈 배열이다', () => {
+        const { excluded } = partitionWorkItemsByEligibility([makeItem({ name: '철골공사' })]);
+        expect(excluded).toEqual([]);
     });
 });

@@ -1,5 +1,37 @@
 import { WORK_TYPE_RISK_COEFFICIENTS, DEFAULT_RISK_COEFFICIENT } from '../config/riskCoefficient.config';
+import { NON_ELIGIBLE_WORK_TYPES } from '../config/nonEligibleWorkTypes.config';
 import type { DetailWorkItem } from './costBreakdownImport';
+
+export interface ExcludedWorkItem extends DetailWorkItem {
+    /** 산안비 집행 대상에서 제외된 사유. */
+    reason: string;
+}
+
+function findExclusionReason(name: string): string | undefined {
+    return NON_ELIGIBLE_WORK_TYPES.find((entry) => entry.name === name)?.reason;
+}
+
+/**
+ * 세부공종 목록을 "산안비 위험가중 배분 대상"과 "제외 대상"(산안비로 집행할 수 없는 공종)으로 나눈다.
+ * 제외 대상은 위험가중치 산정에 포함되지 않지만, 대상액·계상금액 계산에는 영향을 주지 않는다
+ * (대상액은 재료비+노무비 총액 기준으로, 산안비 집행 가능 여부와 무관하기 때문).
+ */
+export function partitionWorkItemsByEligibility(items: readonly DetailWorkItem[]): {
+    eligible: DetailWorkItem[];
+    excluded: ExcludedWorkItem[];
+} {
+    const eligible: DetailWorkItem[] = [];
+    const excluded: ExcludedWorkItem[] = [];
+    for (const item of items) {
+        const reason = findExclusionReason(item.name);
+        if (reason) {
+            excluded.push({ ...item, reason });
+        } else {
+            eligible.push(item);
+        }
+    }
+    return { eligible, excluded };
+}
 
 /** 위험계수 매칭 결과가 포함된 세부공종별 위험가중치 산정 결과. */
 export interface RiskWeightAllocationItem {
@@ -26,18 +58,20 @@ export function matchWorkTypeToRiskCoefficient(name: string): { coefficient: num
 /**
  * 세부공종별 금액 × 위험계수를 정규화해 위험가중치(합=1)를 산정한다.
  * riskWeight_i = (amount_i × coefficient_i) / Σ(amount_j × coefficient_j)
+ * NON_ELIGIBLE_WORK_TYPES(산안비로 집행할 수 없는 공종, 예: 임시소방시설)는 자동으로 제외하고 계산한다.
  * @param overrides 사용자가 미리보기 화면에서 수동으로 지정한 위험계수 (코드 기준, 매칭 실패 항목 보정용)
- * @throws {Error} 입력이 비어있거나 가중합이 0일 때 (모든 금액이 0인 경우)
+ * @throws {Error} 산안비 배분 대상 공종이 없거나(전부 제외 대상 포함) 가중합이 0일 때
  */
 export function deriveRiskWeights(
     detailWorkItems: readonly DetailWorkItem[],
     overrides: Readonly<Record<string, number>> = {}
 ): RiskWeightAllocationItem[] {
-    if (detailWorkItems.length === 0) {
+    const { eligible } = partitionWorkItemsByEligibility(detailWorkItems);
+    if (eligible.length === 0) {
         throw new Error('세부공종 데이터가 없어 위험가중치를 산정할 수 없습니다.');
     }
 
-    const withCoefficients = detailWorkItems.map((item) => {
+    const withCoefficients = eligible.map((item) => {
         if (item.code in overrides) {
             return { ...item, coefficient: overrides[item.code], matched: true };
         }

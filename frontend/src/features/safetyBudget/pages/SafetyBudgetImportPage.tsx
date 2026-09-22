@@ -7,7 +7,7 @@ import { CostBreakdownUploader } from '../components/CostBreakdownUploader';
 import { SafetyBudgetImportPreview } from '../components/SafetyBudgetImportPreview';
 import { SafetyBudgetHeader } from '../components/SafetyBudgetHeader';
 import { determineConstructionCategory, calculateSafetyBudgetAmount } from '../domain/safetyBudgetCalculation';
-import { deriveRiskWeights } from '../domain/riskWeightAllocation';
+import { deriveRiskWeights, partitionWorkItemsByEligibility } from '../domain/riskWeightAllocation';
 import type { CostBreakdownImportResult } from '../domain/costBreakdownImport';
 
 function SafetyBudgetImportDashboard({ projectId }: { projectId: string }) {
@@ -32,12 +32,14 @@ function SafetyBudgetImportDashboard({ projectId }: { projectId: string }) {
             const categoryDetermination = determineConstructionCategory(parseResult.majorWorkTypeTotals);
             const calculation = calculateSafetyBudgetAmount(parseResult.targetAmount, categoryDetermination.category);
             const riskWeights = deriveRiskWeights(parseResult.detailWorkItems, overrides);
-            return { categoryDetermination, calculation, riskWeights, error: null as string | null };
+            const { excluded } = partitionWorkItemsByEligibility(parseResult.detailWorkItems);
+            return { categoryDetermination, calculation, riskWeights, excluded, error: null as string | null };
         } catch (err) {
             return {
                 categoryDetermination: null,
                 calculation: null,
                 riskWeights: null,
+                excluded: [],
                 error: err instanceof Error ? err.message : '분석 중 오류가 발생했습니다.',
             };
         }
@@ -99,6 +101,7 @@ function SafetyBudgetImportDashboard({ projectId }: { projectId: string }) {
                         categoryDetermination={derived.categoryDetermination}
                         calculation={derived.calculation}
                         riskWeights={derived.riskWeights}
+                        excludedWorkItems={derived.excluded}
                         overrides={overrides}
                         onOverrideChange={(code, coefficient) => setOverrides((prev) => ({ ...prev, [code]: coefficient }))}
                         onResetOverrides={() => setOverrides({})}

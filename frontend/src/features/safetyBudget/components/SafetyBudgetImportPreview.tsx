@@ -1,6 +1,6 @@
-import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, RotateCcw, Ban } from 'lucide-react';
 import type { ConstructionCategoryDetermination, SafetyBudgetCalculationResult } from '../domain/safetyBudgetCalculation';
-import type { RiskWeightAllocationItem } from '../domain/riskWeightAllocation';
+import type { RiskWeightAllocationItem, ExcludedWorkItem } from '../domain/riskWeightAllocation';
 
 interface SafetyBudgetImportPreviewProps {
     fileName: string;
@@ -8,6 +8,7 @@ interface SafetyBudgetImportPreviewProps {
     categoryDetermination: ConstructionCategoryDetermination;
     calculation: SafetyBudgetCalculationResult;
     riskWeights: RiskWeightAllocationItem[];
+    excludedWorkItems: ExcludedWorkItem[];
     overrides: Record<string, number>;
     onOverrideChange: (code: string, coefficient: number) => void;
     onResetOverrides: () => void;
@@ -24,6 +25,7 @@ export function SafetyBudgetImportPreview({
     categoryDetermination,
     calculation,
     riskWeights,
+    excludedWorkItems,
     overrides,
     onOverrideChange,
     onResetOverrides,
@@ -127,6 +129,24 @@ export function SafetyBudgetImportPreview({
                     </table>
                 </div>
             </div>
+
+            {excludedWorkItems.length > 0 && (
+                <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
+                    <h3 className="text-sm font-black text-slate-500 mb-4 flex items-center gap-2">
+                        <Ban size={16} className="text-slate-400" /> 산안비 배분에서 제외된 공종 ({excludedWorkItems.length}건)
+                    </h3>
+                    <ul className="space-y-3">
+                        {excludedWorkItems.map((item) => (
+                            <li key={item.code} className="text-xs bg-slate-50 rounded-xl px-4 py-3">
+                                <span className="font-bold text-slate-700">
+                                    {item.name} ({currency(item.amount)})
+                                </span>
+                                <p className="text-slate-500 mt-1 leading-relaxed">{item.reason}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {confirmError && <p className="text-sm font-medium text-red-600 bg-red-50 rounded-xl px-4 py-3">{confirmError}</p>}
 
