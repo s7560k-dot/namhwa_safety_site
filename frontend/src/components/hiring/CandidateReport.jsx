@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { hiringService } from '../../services/hiringService';
+import { isMultiDimEvaluation, calcMultiDimScore, MULTIDIM_CATEGORIES } from '../../constants/hiringConstants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Award, TrendingUp, AlertTriangle, FileText, Send, Download, BrainCircuit, ChevronLeft, MessageSquare, X, Edit, Target } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+
+// 신(다차원, 100점)/구(BARS, 25점) 평가 체계를 모두 지원하기 위한 공용 표시 헬퍼
+const getMaxScore = (reportData) => reportData.maxScore || 25;
+const getScorePercent = (reportData) => (reportData.totalScore / getMaxScore(reportData)) * 100;
 
 const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
   const [copied, setCopied] = useState(false);
@@ -23,8 +28,8 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
 
     <div style="background-color: #F8F9FA; padding: 15px; border-left: 4px solid #9C2E21; margin: 20px 0;">
       <strong style="color: #9C2E21;">■ 핵심 평가 요약</strong><br>
-      - <b>종합 점수:</b> ${reportData.totalScore} / 25점<br>
-      - <b>최종 등급:</b> ${reportData.totalScore >= 19 ? '우수(A이상)' : '보통(B이하)'} 수준<br>
+      - <b>종합 점수:</b> ${reportData.totalScore} / ${getMaxScore(reportData)}점<br>
+      - <b>최종 등급:</b> ${getScorePercent(reportData) >= 76 ? '우수(A이상)' : '보통(B이하)'} 수준<br>
       ${aiSummary ? `- <b>AI 분석 인사이트:</b> ${aiSummary.substring(0, 150)}...` : '- 상세 분석 데이터는 시스템 리포트를 참조하십시오.'}
     </div>
 
@@ -127,10 +132,13 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
     fetchReport();
   }, [candidate.id]);
 
-  const getGrade = (score) => {
-    if (score >= 23) return { label: 'S', color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-200', desc: '적극 채용 (Exemplary)' };
-    if (score >= 19) return { label: 'A', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', desc: '채용 (Successful)' };
-    if (score >= 14) return { label: 'B', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', desc: '조건부 채용 (Emerging)' };
+  // 다차원(100점)·구(25점) 두 체계를 모두 지원: 원점수가 아닌 백분율로 등급을 판정한다.
+  // 기존 25점 만점 기준(23/19/14점)과 동일한 92%/76%/56% 경계를 그대로 사용.
+  const getGrade = (score, maxScore = 25) => {
+    const pct = maxScore ? (score / maxScore) * 100 : (score / 25) * 100;
+    if (pct >= 92) return { label: 'S', color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-200', desc: '적극 채용 (Exemplary)' };
+    if (pct >= 76) return { label: 'A', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', desc: '채용 (Successful)' };
+    if (pct >= 56) return { label: 'B', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', desc: '조건부 채용 (Emerging)' };
     return { label: 'C/D', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', desc: '채용 불가 (Unsuccessful)' };
   };
 
@@ -141,15 +149,32 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+      const isNewFormat = isMultiDimEvaluation(reportData.evaluations);
+      let scoreScaleText;
+      let competencyText;
+      if (isNewFormat) {
+        const { byCategory, total } = calcMultiDimScore(reportData.evaluations);
+        scoreScaleText = `${total} / 100점 (가중배점: 산업안전보건법 25% · 중대재해처벌법 25% · 현장실무경험 35% · 조직적합성 15%)`;
+        competencyText = MULTIDIM_CATEGORIES
+          .map(cat => `- ${cat.label} (${cat.weight}%): ${byCategory[cat.key].toFixed(1)}/5`)
+          .join('\n        ');
+      } else {
+        scoreScaleText = `${reportData.totalScore} / 25점 (5개 항목, 각 5점 만점)`;
+        competencyText = [
+          `- 1. 법규 시스템 융합: ${reportData.evaluations.q1 || 0}/5`,
+          `- 2. 위험성평가 역량: ${reportData.evaluations.q2 || 0}/5`,
+          `- 3. 위기 대응 및 예방: ${reportData.evaluations.q3 || 0}/5`,
+          `- 4. 소통 및 갈등 조정: ${reportData.evaluations.q4 || 0}/5`,
+          `- 5. 리더십 및 문화조성: ${reportData.evaluations.q5 || 0}/5`,
+        ].join('\n        ');
+      }
+
       const prompt = `
         건설업 안전보건 전담팀 지원자 면접 평가 분석을 정중한 경어체(어미를 '~습니다.', '~보입니다.' 등으로 확실하게 통일)로 작성해줘.
         지원자 이름: ${candidate.name}
-        역량 점수 (총 25점 만점, 각 5점): 
-        - 1. 법규 시스템 융합: ${reportData.evaluations.q1 || 0}/5
-        - 2. 위험성평가 역량: ${reportData.evaluations.q2 || 0}/5
-        - 3. 위기 대응 및 예방: ${reportData.evaluations.q3 || 0}/5
-        - 4. 소통 및 갈등 조정: ${reportData.evaluations.q4 || 0}/5
-        - 5. 리더십 및 문화조성: ${reportData.evaluations.q5 || 0}/5
+        종합 점수: ${scoreScaleText}
+        영역별 역량 점수:
+        ${competencyText}
         면접관 의견: ${reportData.feedback}
         
         형식 (마크다운 사용금지, 간결한 텍스트로):
@@ -234,15 +259,25 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   if (loading) return <div className="fixed inset-0 bg-blue-50/95 z-[100] flex items-center justify-center font-bold text-slate-500">리포트를 불러오는 중...</div>;
   if (!reportData) return <div className="fixed inset-0 bg-blue-50/95 z-[100] flex items-center justify-center font-bold text-slate-500">아직 완료된 평가 리포트가 없습니다.</div>;
 
-  const chartData = [
-    { subject: '법규/시스템', A: reportData.evaluations.q1 || 0, fullMark: 5 },
-    { subject: '위험성평가', A: reportData.evaluations.q2 || 0, fullMark: 5 },
-    { subject: '위기 대응력', A: reportData.evaluations.q3 || 0, fullMark: 5 },
-    { subject: '소통/갈등', A: reportData.evaluations.q4 || 0, fullMark: 5 },
-    { subject: '리더십/문화', A: reportData.evaluations.q5 || 0, fullMark: 5 },
-  ];
+  const isNewFormatReport = isMultiDimEvaluation(reportData.evaluations);
+  const chartData = isNewFormatReport
+    ? (() => {
+        const { byCategory } = calcMultiDimScore(reportData.evaluations);
+        return MULTIDIM_CATEGORIES.map(cat => ({
+          subject: cat.label,
+          A: Number(byCategory[cat.key].toFixed(1)),
+          fullMark: 5,
+        }));
+      })()
+    : [
+        { subject: '법규/시스템', A: reportData.evaluations.q1 || 0, fullMark: 5 },
+        { subject: '위험성평가', A: reportData.evaluations.q2 || 0, fullMark: 5 },
+        { subject: '위기 대응력', A: reportData.evaluations.q3 || 0, fullMark: 5 },
+        { subject: '소통/갈등', A: reportData.evaluations.q4 || 0, fullMark: 5 },
+        { subject: '리더십/문화', A: reportData.evaluations.q5 || 0, fullMark: 5 },
+      ];
 
-  const grade = getGrade(reportData.totalScore);
+  const grade = getGrade(reportData.totalScore, reportData.maxScore);
   
   const currentYear = new Date().getFullYear();
   const birthYearText = candidate.birthYear ? `${candidate.birthYear}년생 (만 ${currentYear - candidate.birthYear}세)` : '생년월일 미입력';
@@ -287,7 +322,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
               <div className={`${isPdfMode ? 'text-5xl mb-1' : 'text-7xl mb-3'} leading-none font-black ${grade.color} z-10`}>{grade.label}</div>
               <p className={`text-base font-bold ${grade.color} z-10 leading-tight`}>{grade.desc}</p>
               <div className="mt-4 px-4 py-1.5 bg-white/60 rounded-full text-slate-700 font-bold z-10 shadow-sm text-sm border border-white/50">
-                종합 점수: <span className="text-lg text-slate-900">{reportData.totalScore}</span> / 25
+                종합 점수: <span className="text-lg text-slate-900">{reportData.totalScore}</span> / {getMaxScore(reportData)}
               </div>
             </div>
           </div>
@@ -396,7 +431,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
               <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                 <Target size={24} />
               </div>
-              다차원 역량 분석(BARS) 배점 기준 요약표
+다차원 역량진단 배점 기준 요약표
             </h3>
             
             <div className="space-y-4 mb-8">

@@ -1,4 +1,5 @@
 import { db, Timestamp } from '../firebase';
+import { isMultiDimEvaluation, calcMultiDimScore } from '../constants/hiringConstants';
 
 /**
  * @file hiringService.js
@@ -83,12 +84,24 @@ export const hiringService = {
         evaluationData: { appearance, competency, specific, safetyTech, bars },
         feedback: feedback || feedbackParam
       };
+    } else if (isMultiDimEvaluation(evaluationInput)) {
+      // 다차원 역량진단(2026-10 개편, a1~d3 16문항, 가중배점 A25·B25·C35·D15 → 100점)
+      const { total } = calcMultiDimScore(evaluationInput);
+      saveData = {
+        ...saveData,
+        evaluations: evaluationInput,
+        totalScore: total,
+        maxScore: 100,
+        scheme: 'multidim_v1',
+        feedback: feedbackParam
+      };
     } else {
-      // 레거시 BARS 시스템 대응 (평면적인 evaluations 객체)
+      // 레거시 BARS 시스템 대응 (q1~q5 평면적인 evaluations 객체, 25점 만점)
       saveData = {
         ...saveData,
         evaluations: evaluationInput, // 기존 필드명 유지
         totalScore: Object.values(evaluationInput).reduce((a, b) => a + (Number(b) || 0), 0),
+        maxScore: 25,
         feedback: feedbackParam
       };
     }
