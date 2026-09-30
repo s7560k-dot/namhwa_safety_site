@@ -99,6 +99,10 @@ const InterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusChange }) =
   const scores = calcMultiDimScore(evaluations);
   const categoryQuestions = MULTIDIM_QUESTIONS.filter(q => q.category === activeCategory);
   const answeredCount = Object.values(evaluations).filter(v => v > 0).length;
+  // 피드백 작성 가이드에서 "지금 가장 낮은 영역"을 짚어주기 위한 계산
+  const weakestCategory = MULTIDIM_CATEGORIES.reduce((min, cat) =>
+    scores.byCategory[cat.key] < scores.byCategory[min.key] ? cat : min
+  , MULTIDIM_CATEGORIES[0]);
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
@@ -261,10 +265,30 @@ const InterviewPanel = ({ candidate, onClose, onSaveSuccess, onStatusChange }) =
             </div>
 
             <label className="text-xs font-bold text-slate-600 block mb-2 uppercase tracking-widest">종합 평가 의견 (정성 피드백)</label>
+
+            {/* 강점만 나열하거나 인상 위주로 흐르지 않도록, 세 요소를 균형 있게 채우도록 안내 */}
+            <div className="mb-3 p-4 bg-amber-50/60 border border-amber-100 rounded-xl">
+              <p className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <Info size={12} /> 균형있는 피드백 작성 가이드
+              </p>
+              <ul className="text-xs text-amber-800 space-y-1.5 leading-relaxed font-medium list-none">
+                <li><b>① 강점</b> — 어느 영역에서 특히 좋았는지, 실제 답변 내용을 근거로 적어주세요.</li>
+                <li>
+                  <b>② 보완점</b> — 가장 낮은 점수를 받은 영역과 그 이유를 적어주세요.
+                  {answeredCount > 0 && (
+                    <> <span className="inline-block bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-bold">
+                      현재 최저 영역: {weakestCategory.label} {scores.byCategory[weakestCategory.key].toFixed(1)}점
+                    </span></>
+                  )}
+                </li>
+                <li><b>③ 채용 의견</b> — 조건부 채용이라면 어떤 보완이 필요한지까지 구체적으로 적어주세요.</li>
+              </ul>
+            </div>
+
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              placeholder="후보자의 법령 이해도, 현장 실무 경험, 조직적합성을 종합하여 코멘트를 기록해 주세요."
+              placeholder="① 강점: 어느 영역에서 어떤 답변이 좋았는지&#10;② 보완점: 가장 낮은 영역과 그 이유&#10;③ 채용 의견: 조건부 채용 시 필요한 보완 조건"
               className="w-full h-32 bg-white border border-slate-200 rounded-2xl p-5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar resize-none mb-6 placeholder-slate-400 shadow-sm"
             />
 

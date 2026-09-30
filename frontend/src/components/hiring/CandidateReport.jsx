@@ -29,7 +29,7 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
     <div style="background-color: #F8F9FA; padding: 15px; border-left: 4px solid #9C2E21; margin: 20px 0;">
       <strong style="color: #9C2E21;">■ 핵심 평가 요약</strong><br>
       - <b>종합 점수:</b> ${reportData.totalScore} / ${getMaxScore(reportData)}점<br>
-      - <b>최종 등급:</b> ${getScorePercent(reportData) >= 76 ? '우수(A이상)' : '보통(B이하)'} 수준<br>
+      - <b>최종 등급:</b> ${getScorePercent(reportData) >= 80 ? '우수(A이상)' : '보통(B이하)'} 수준<br>
       ${aiSummary ? `- <b>AI 분석 인사이트:</b> ${aiSummary.substring(0, 150)}...` : '- 상세 분석 데이터는 시스템 리포트를 참조하십시오.'}
     </div>
 
@@ -133,12 +133,13 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   }, [candidate.id]);
 
   // 다차원(100점)·구(25점) 두 체계를 모두 지원: 원점수가 아닌 백분율로 등급을 판정한다.
-  // 기존 25점 만점 기준(23/19/14점)과 동일한 92%/76%/56% 경계를 그대로 사용.
+  // 커트라인은 화면에 표시되는 1~5점 BARS 앵커(5=탁월·4=우수·3=보통)를 그대로 백분율로 확장한 값이다.
+  // 전 항목이 "3점(보통)"이면 정확히 60%, "4점(우수)"이면 80%가 되도록 설계해 배점표와 등급이 일치한다.
   const getGrade = (score, maxScore = 25) => {
     const pct = maxScore ? (score / maxScore) * 100 : (score / 25) * 100;
-    if (pct >= 92) return { label: 'S', color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-200', desc: '적극 채용 (Exemplary)' };
-    if (pct >= 76) return { label: 'A', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', desc: '채용 (Successful)' };
-    if (pct >= 56) return { label: 'B', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', desc: '조건부 채용 (Emerging)' };
+    if (pct >= 90) return { label: 'S', color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-200', desc: '적극 채용 (Exemplary)' };
+    if (pct >= 80) return { label: 'A', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', desc: '채용 (Successful)' };
+    if (pct >= 60) return { label: 'B', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', desc: '조건부 채용 (Emerging)' };
     return { label: 'C/D', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', desc: '채용 불가 (Unsuccessful)' };
   };
 
@@ -458,7 +459,11 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             
             <div className="p-5 bg-indigo-50/50 rounded-xl border border-indigo-100">
               <p className="text-sm font-bold text-indigo-800 leading-relaxed">
-                * 위 배점 기준표는 면접관의 주관적 평가를 객관화하기 위한 BARS(Behaviorally Anchored Rating Scales) 기반의 평가 척도입니다. 레이더 차트는 이 기준에 따라 5개 영역(법규/시스템, 위험성평가, 위기 대응력, 소통/갈등, 리더십/문화)에서 획득한 점수를 나타냅니다.
+                * 위 배점 기준표는 면접관의 주관적 평가를 객관화하기 위한 BARS(Behaviorally Anchored Rating Scales) 기반의 평가 척도입니다. 레이더 차트는 이 기준에 따라{' '}
+                {isNewFormatReport
+                  ? `${MULTIDIM_CATEGORIES.length}개 영역(${MULTIDIM_CATEGORIES.map(c => c.label).join(', ')})`
+                  : '5개 영역(법규/시스템, 위험성평가, 위기 대응력, 소통/갈등, 리더십/문화)'}
+                에서 획득한 점수를 나타냅니다.
               </p>
             </div>
           </div>
