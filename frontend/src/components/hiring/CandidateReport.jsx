@@ -356,19 +356,20 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 다차원 역량 분석
               </h3>
 
-              <div className={`flex flex-col md:flex-row items-center ${isPdfMode ? 'gap-2' : 'gap-8'}`}>
-                <div className={`${isPdfMode ? 'h-36' : 'h-56'} w-full md:w-1/2`}>
+              <div className={`flex flex-col md:flex-row items-center ${isPdfMode ? 'gap-4' : 'gap-8'}`}>
+                <div className={`${isPdfMode ? 'h-80' : 'h-56'} w-full md:w-1/2`}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
+                    <RadarChart cx="50%" cy="50%" outerRadius={isPdfMode ? '80%' : '75%'} data={chartData}>
                       <PolarGrid stroke="#e2e8f0" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#334155', fontSize: 12, fontWeight: 'bold' }} />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#1e293b', fontSize: isPdfMode ? 20 : 12, fontWeight: 'bold' }} />
                       <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
                       <Radar
                         name={candidate.name}
                         dataKey="A"
                         stroke="#1e293b"
                         fill="#1e293b"
-                        fillOpacity={0.55}
+                        fillOpacity={0.4}
+                        strokeWidth={isPdfMode ? 4 : 2}
                         isAnimationActive={false}
                       />
                     </RadarChart>
@@ -377,9 +378,9 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
 
                 <div className="w-full md:w-1/2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {chartData.map((d, i) => (
-                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-2 px-1' : 'py-5 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
-                      <div className={`${isPdfMode ? 'text-xl' : 'text-3xl'} font-black text-slate-900 leading-none mb-1.5`}>{d.A}</div>
-                      <div className="text-xs text-slate-600 font-bold tracking-tight text-center break-keep w-[90%] leading-snug">{d.subject}</div>
+                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-5 px-2' : 'py-5 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
+                      <div className={`${isPdfMode ? 'text-4xl' : 'text-3xl'} font-black text-slate-900 leading-none mb-1.5`}>{d.A}</div>
+                      <div className={`${isPdfMode ? 'text-base' : 'text-xs'} text-slate-600 font-bold tracking-tight text-center break-keep w-[90%] leading-snug`}>{d.subject}</div>
                     </div>
                   ))}
                 </div>
