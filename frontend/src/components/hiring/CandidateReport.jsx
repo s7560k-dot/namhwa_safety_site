@@ -114,6 +114,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   const [isPdfMode, setIsPdfMode] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const reportRef = useRef(null);
+  const insightRef = useRef(null);
   const guideRef = useRef(null);
 
   useEffect(() => {
@@ -245,6 +246,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         };
 
         await renderCanvasToPdf(reportRef, true);
+        await renderCanvasToPdf(insightRef, false);
         await renderCanvasToPdf(guideRef, false);
         
         pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);
@@ -307,7 +309,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           {/* Hero Section */}
           <div className={`grid grid-cols-1 lg:grid-cols-3 ${isPdfMode ? 'gap-4 shrink-0' : 'gap-6 mb-6'}`}>
             {/* Left: General Info */}
-            <div className={`lg:col-span-2 bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4' : 'p-6'} flex items-center justify-center md:justify-start shadow-sm`}>
+            <div className={`lg:col-span-2 bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4' : 'p-8'} flex items-center justify-center md:justify-start shadow-sm`}>
               <div className="text-center md:text-left">
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
                   {experienceType && (
@@ -328,7 +330,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Right: Grade Card */}
-            <div className={`${grade.bg} border-2 border-dashed ${grade.border} rounded-3xl ${isPdfMode ? 'p-3' : 'p-6'} flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden`}>
+            <div className={`${grade.bg} border-2 border-dashed ${grade.border} rounded-3xl ${isPdfMode ? 'p-3' : 'p-8'} flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden`}>
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 rounded-bl-full -z-0"></div>
               <p className="text-sm font-black uppercase tracking-widest text-slate-600 mb-1 z-10">최종 평가 등급</p>
               <div className={`${isPdfMode ? 'text-5xl mb-1' : 'text-7xl mb-3'} leading-none font-black ${grade.color} z-10`}>{grade.label}</div>
@@ -339,24 +341,24 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* Vertical Stack Layout */}
-          <div className={`flex flex-col ${isPdfMode ? 'gap-4 flex-1 my-4' : 'gap-4 mb-4'}`}>
+          {/* Vertical Stack Layout: 지원자 개요(Hero) + 역량분석 + 종합피드백 = 한 페이지 구성 */}
+          <div className={`flex flex-col ${isPdfMode ? 'gap-4 flex-1 my-4' : 'gap-6 mb-4'}`}>
 
             {/* Competency Chart */}
-            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col justify-center' : 'p-6'} shadow-sm`}>
-              <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col justify-center' : 'p-8'} shadow-sm`}>
+              <h3 className={`text-xl font-black ${isPdfMode ? 'mb-3' : 'mb-6 border-b border-slate-100 pb-5'} flex items-center gap-2 text-slate-900`}>
                 <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-                  <TrendingUp size={20} />
+                  <TrendingUp size={24} />
                 </div>
                 다차원 역량 분석
               </h3>
 
-              <div className={`flex flex-col md:flex-row items-center ${isPdfMode ? 'gap-2' : 'gap-6'}`}>
-                <div className={`${isPdfMode ? 'h-36' : 'h-44'} w-full md:w-1/2`}>
+              <div className={`flex flex-col md:flex-row items-center ${isPdfMode ? 'gap-2' : 'gap-8'}`}>
+                <div className={`${isPdfMode ? 'h-36' : 'h-56'} w-full md:w-1/2`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
                       <PolarGrid stroke="#e2e8f0" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#334155', fontSize: 11, fontWeight: 'bold' }} />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#334155', fontSize: 12, fontWeight: 'bold' }} />
                       <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
                       <Radar
                         name={candidate.name}
@@ -372,8 +374,8 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
 
                 <div className="w-full md:w-1/2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {chartData.map((d, i) => (
-                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-2 px-1' : 'py-4 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
-                      <div className={`${isPdfMode ? 'text-xl' : 'text-2xl'} font-black text-slate-900 leading-none mb-1.5`}>{d.A}</div>
+                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-2 px-1' : 'py-5 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
+                      <div className={`${isPdfMode ? 'text-xl' : 'text-3xl'} font-black text-slate-900 leading-none mb-1.5`}>{d.A}</div>
                       <div className="text-xs text-slate-600 font-bold tracking-tight text-center break-keep w-[90%] leading-snug">{d.subject}</div>
                     </div>
                   ))}
@@ -382,61 +384,63 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Qualitative Feedback */}
-            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 shrink-0' : 'p-6 md:p-8'} shadow-sm`}>
-              <h3 className={`text-lg font-black ${isPdfMode ? 'mb-2' : 'mb-5'} flex items-center gap-2 text-slate-900`}>
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 shrink-0' : 'p-8'} shadow-sm`}>
+              <h3 className={`text-xl font-black ${isPdfMode ? 'mb-2' : 'mb-6 border-b border-slate-100 pb-5'} flex items-center gap-2 text-slate-900`}>
                 <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-                  <MessageSquare size={20} />
+                  <MessageSquare size={24} />
                 </div>
                 면접관 종합 피드백
               </h3>
-              <div className={`bg-slate-50 border border-slate-200 rounded-2xl ${isPdfMode ? 'p-4' : 'p-6 md:p-8'} shadow-inner`}>
-                <p className="text-slate-900 leading-loose whitespace-pre-wrap text-base md:text-lg font-medium">
+              <div className={`bg-slate-50 border border-slate-200 rounded-2xl ${isPdfMode ? 'p-4' : 'p-8'} shadow-inner`}>
+                <p className="text-slate-900 leading-loose whitespace-pre-wrap text-lg font-medium">
                   "{reportData.feedback || "등록된 면접 피드백이 없습니다."}"
                 </p>
-              </div>
-            </div>
-
-            {/* AI Insights */}
-            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col' : 'p-6'} shadow-sm relative overflow-hidden group`}>
-              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                <BrainCircuit size={160} className="text-slate-900" />
-              </div>
-
-              <div className={`flex justify-between items-center ${isPdfMode ? 'mb-2' : 'mb-4'} relative z-10 w-full`}>
-                <h3 className="text-lg font-black flex items-center gap-2 text-slate-900">
-                  <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-                    <BrainCircuit size={20} />
-                  </div>
-                  AI 종합 인사이트
-                </h3>
-                <button
-                  onClick={generateAiSummary}
-                  disabled={isGeneratingAi}
-                  className="flex items-center gap-2 text-xs font-bold bg-slate-900 hover:bg-slate-700 transition-colors px-4 py-2 rounded-xl text-white disabled:opacity-50 shadow-md shadow-slate-900/20 active:scale-95"
-                >
-                  {isGeneratingAi ? '분석 중...' : 'AI 분석 실행'}
-                </button>
-              </div>
-
-              <div className={`w-full bg-slate-50 rounded-2xl ${isPdfMode ? 'p-4 flex-1' : 'p-5 md:p-6 min-h-[140px]'} border border-slate-100 relative z-10`}>
-                {aiSummary ? (
-                  <div className="text-slate-900 leading-loose text-base whitespace-pre-wrap font-medium">
-                    {aiSummary}
-                  </div>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-6">
-                    <FileText className="text-slate-300 mb-3" size={36} />
-                    <p className="text-slate-400 font-bold text-xs max-w-[250px] leading-relaxed">
-                      'AI 분석 실행'을 눌러 종합 리포트를 받아보세요.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* PDF Export Target 2: BARS Guide Page */}
+        {/* PDF Export Target 2: AI Insights Page */}
+        <div ref={insightRef} className="bg-slate-50 pt-8 pb-8 rounded-3xl mt-8">
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm mx-0.5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+              <BrainCircuit size={160} className="text-slate-900" />
+            </div>
+
+            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-5 relative z-10 w-full">
+              <h3 className="text-xl font-black flex items-center gap-2 text-slate-900">
+                <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
+                  <BrainCircuit size={24} />
+                </div>
+                AI 종합 인사이트
+              </h3>
+              <button
+                onClick={generateAiSummary}
+                disabled={isGeneratingAi}
+                className="flex items-center gap-2 text-xs font-bold bg-slate-900 hover:bg-slate-700 transition-colors px-4 py-2 rounded-xl text-white disabled:opacity-50 shadow-md shadow-slate-900/20 active:scale-95"
+              >
+                {isGeneratingAi ? '분석 중...' : 'AI 분석 실행'}
+              </button>
+            </div>
+
+            <div className="w-full bg-slate-50 rounded-2xl p-8 min-h-[160px] border border-slate-100 relative z-10">
+              {aiSummary ? (
+                <div className="text-slate-900 leading-loose text-lg whitespace-pre-wrap font-medium">
+                  {aiSummary}
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center py-6">
+                  <FileText className="text-slate-300 mb-3" size={36} />
+                  <p className="text-slate-400 font-bold text-xs max-w-[250px] leading-relaxed">
+                    'AI 분석 실행'을 눌러 종합 리포트를 받아보세요.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* PDF Export Target 3: BARS Guide Page */}
         <div ref={guideRef} className="bg-slate-50 pt-8 pb-8 rounded-3xl mt-8">
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm mx-0.5">
             <h3 className="text-xl font-black mb-8 flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-5">
