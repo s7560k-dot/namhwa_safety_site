@@ -228,21 +228,21 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           });
           
           const imgData = canvas.toDataURL('image/png');
-          let finalPdfWidth = pageWidth - (MARGIN_MM * 2);
-          let finalPdfHeight = (canvas.height * finalPdfWidth) / canvas.width;
-          
-          // 세로 높이가 1페이지를 초과하면 1페이지에 딱 맞게 비율 축소
-          if (finalPdfHeight > maxPdfHeight) {
-            finalPdfHeight = maxPdfHeight;
-            finalPdfWidth = (canvas.width * finalPdfHeight) / canvas.height;
-          }
-          
-          // 가운데 정렬
-          const xOffset = MARGIN_MM + ((pageWidth - (MARGIN_MM * 2) - finalPdfWidth) / 2);
-          
+          const availableWidth = pageWidth - (MARGIN_MM * 2);
+
+          // 가로/세로 중 더 빡빡한 비율에 맞춰 스케일을 정해 페이지를 최대한 채움
+          // (기존에는 내용이 페이지보다 짧을 때 축소를 안 해 하단에 빈 여백이 크게 남았음)
+          const scale = Math.min(availableWidth / canvas.width, maxPdfHeight / canvas.height);
+          const finalPdfWidth = canvas.width * scale;
+          const finalPdfHeight = canvas.height * scale;
+
+          // 가로·세로 모두 가운데 정렬
+          const xOffset = MARGIN_MM + ((availableWidth - finalPdfWidth) / 2);
+          const yOffset = MARGIN_MM + ((maxPdfHeight - finalPdfHeight) / 2);
+
           if (!isFirstRender) pdf.addPage();
-          
-          pdf.addImage(imgData, 'PNG', xOffset, MARGIN_MM, finalPdfWidth, finalPdfHeight);
+
+          pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalPdfWidth, finalPdfHeight);
         };
 
         await renderCanvasToPdf(reportRef, true);
