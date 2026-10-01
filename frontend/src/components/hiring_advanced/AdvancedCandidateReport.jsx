@@ -181,6 +181,24 @@ const AdvancedCandidateReport = ({ candidate, onClose, onEdit }) => {
   if (loading) return <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center font-bold">로딩 중...</div>;
   if (!reportData) return <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center font-bold">평가 데이터가 없습니다.</div>;
 
+  // BARS(다차원 역량진단) 시스템에서 평가된 후보는 evaluationData가 아닌 evaluations 필드를 사용하므로
+  // 이 리포트 형식과 호환되지 않음 — 크래시 대신 안내 화면을 보여줌
+  if (!reportData.evaluationData) {
+    return (
+      <div className="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center gap-4 p-8 text-center">
+        <AlertTriangle className="text-amber-500" size={48} />
+        <p className="font-bold text-slate-700 max-w-md leading-relaxed">
+          이 지원자는 BARS(다차원 역량진단) 시스템으로 평가되어 고도화 리포트 형식과 호환되지 않습니다.
+          <br />
+          "안전보건 전담팀 인재 선발 시스템(BARS)" 메뉴에서 리포트를 확인해 주세요.
+        </p>
+        <button onClick={onClose} className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold">
+          목록으로 돌아가기
+        </button>
+      </div>
+    );
+  }
+
   const { evaluationData } = reportData;
   
   // Radar Chart Data Calculation
