@@ -214,11 +214,16 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
 
         const renderCanvasToPdf = async (elementRef, isFirstRender = false) => {
           if (!elementRef.current) return;
-          
-          const canvas = await html2canvas(elementRef.current, {
+          const el = elementRef.current;
+
+          // 캡처 영역을 고정 높이가 아닌 실제 콘텐츠 전체 높이(scrollHeight)로 지정해
+          // 피드백 등 내용이 길어져도 하단이 잘리지 않도록 함
+          const canvas = await html2canvas(el, {
             scale: 2,
             useCORS: true,
             backgroundColor: '#f8fafc',
+            height: el.scrollHeight,
+            windowHeight: el.scrollHeight,
           });
           
           const imgData = canvas.toDataURL('image/png');
@@ -296,7 +301,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         </button>
 
         {/* PDF Export Target Container */}
-        <div ref={reportRef} className={`bg-slate-50 ${isPdfMode ? 'p-6 flex flex-col justify-between' : 'pb-6'} rounded-3xl`} style={isPdfMode ? { width: '1024px', height: '1519px' } : { minHeight: '600px' }}>
+        <div ref={reportRef} className={`bg-slate-50 ${isPdfMode ? 'p-6 flex flex-col gap-5' : 'pb-6'} rounded-3xl`} style={isPdfMode ? { width: '1024px' } : { minHeight: '600px' }}>
           
           {/* Hero Section */}
           <div className={`grid grid-cols-1 lg:grid-cols-3 ${isPdfMode ? 'gap-4 shrink-0' : 'gap-6 mb-6'}`}>
@@ -332,8 +337,8 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           <div className={`flex flex-col ${isPdfMode ? 'gap-4 flex-1 my-4' : 'gap-4 mb-4'}`}>
             
             {/* Competency Chart */}
-            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col justify-center' : 'p-5'} shadow-sm`}>
-              <h3 className="text-lg font-black mb-3 flex items-center gap-2 text-slate-900">
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col justify-center' : 'p-6'} shadow-sm`}>
+              <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-slate-900">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                   <TrendingUp size={20} />
                 </div>
@@ -361,9 +366,9 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 
                 <div className="w-full md:w-1/2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {chartData.map((d, i) => (
-                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-2 px-1' : 'py-3 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
-                      <div className={`${isPdfMode ? 'text-xl' : 'text-2xl'} font-black text-blue-600 leading-none mb-1`}>{d.A}</div>
-                      <div className="text-[11px] text-slate-500 font-bold tracking-tight text-center break-keep w-[90%] leading-tight">{d.subject}</div>
+                    <div key={i} className={`text-center bg-slate-50 ${isPdfMode ? 'py-2 px-1' : 'py-4 px-2'} rounded-xl border border-slate-100 flex flex-col justify-center items-center`}>
+                      <div className={`${isPdfMode ? 'text-xl' : 'text-2xl'} font-black text-slate-900 leading-none mb-1.5`}>{d.A}</div>
+                      <div className="text-xs text-slate-600 font-bold tracking-tight text-center break-keep w-[90%] leading-snug">{d.subject}</div>
                     </div>
                   ))}
                 </div>
@@ -371,12 +376,12 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* AI Insights */}
-            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col' : 'p-5'} shadow-sm relative overflow-hidden group`}>
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col' : 'p-6'} shadow-sm relative overflow-hidden group`}>
               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                 <BrainCircuit size={160} className="text-blue-600" />
               </div>
-              
-              <div className={`flex justify-between items-center ${isPdfMode ? 'mb-2' : 'mb-3'} relative z-10 w-full`}>
+
+              <div className={`flex justify-between items-center ${isPdfMode ? 'mb-2' : 'mb-4'} relative z-10 w-full`}>
                 <h3 className="text-lg font-black flex items-center gap-2 text-slate-900">
                   <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                     <BrainCircuit size={20} />
@@ -392,9 +397,9 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
                 </button>
               </div>
 
-              <div className={`w-full bg-slate-50 rounded-2xl ${isPdfMode ? 'p-4 flex-1' : 'p-4 min-h-[120px]'} border border-slate-100 relative z-10`}>
+              <div className={`w-full bg-slate-50 rounded-2xl ${isPdfMode ? 'p-4 flex-1' : 'p-5 md:p-6 min-h-[140px]'} border border-slate-100 relative z-10`}>
                 {aiSummary ? (
-                  <div className="text-slate-700 leading-relaxed text-[13.5px] whitespace-pre-wrap font-medium">
+                  <div className="text-slate-900 leading-loose text-base whitespace-pre-wrap font-medium">
                     {aiSummary}
                   </div>
                 ) : (
@@ -410,15 +415,15 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Qualitative Feedback */}
-          <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 shrink-0' : 'p-5'} shadow-sm`}>
-            <h3 className={`text-lg font-black ${isPdfMode ? 'mb-2' : 'mb-4'} flex items-center gap-2 text-slate-900`}>
+          <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 shrink-0' : 'p-6 md:p-8'} shadow-sm`}>
+            <h3 className={`text-lg font-black ${isPdfMode ? 'mb-2' : 'mb-5'} flex items-center gap-2 text-slate-900`}>
               <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                 <MessageSquare size={20} />
               </div>
               면접관 종합 피드백
             </h3>
-            <div className={`bg-slate-50 border border-slate-200 rounded-2xl ${isPdfMode ? 'p-4' : 'p-6'} shadow-inner`}>
-              <p className="text-slate-700 leading-loose whitespace-pre-wrap text-[15px] font-bold">
+            <div className={`bg-slate-50 border border-slate-200 rounded-2xl ${isPdfMode ? 'p-4' : 'p-6 md:p-8'} shadow-inner`}>
+              <p className="text-slate-900 leading-loose whitespace-pre-wrap text-base md:text-lg font-medium">
                 "{reportData.feedback || "등록된 면접 피드백이 없습니다."}"
               </p>
             </div>
