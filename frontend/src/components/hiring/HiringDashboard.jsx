@@ -4,6 +4,7 @@ import { db, Timestamp } from '../../firebase';
 import { Search, UserPlus, FileText, ChevronRight, CheckCircle, Clock, Database, Trash2, Edit } from 'lucide-react';
 import InterviewPanel from './InterviewPanel';
 import CandidateReport from './CandidateReport';
+import { EXPERIENCE_TYPES, getExperienceType } from '../../constants/hiringConstants';
 
 const HiringDashboard = () => {
   const [candidates, setCandidates] = useState([]);
@@ -11,6 +12,7 @@ const HiringDashboard = () => {
   const [newName, setNewName] = useState('');
   const [newBirthYear, setNewBirthYear] = useState('');
   const [newPosition, setNewPosition] = useState('안전보건 전담팀 (신입/경력)');
+  const [newExperienceType, setNewExperienceType] = useState('신입');
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editCandidateData, setEditCandidateData] = useState(null);
@@ -52,11 +54,13 @@ const HiringDashboard = () => {
       await hiringService.addCandidate({
         name: newName,
         birthYear: parseInt(newBirthYear) || null,
-        position: newPosition
+        position: newPosition,
+        experienceType: newExperienceType
       });
       setNewName('');
       setNewBirthYear('');
       setNewPosition('안전보건 전담팀 (신입/경력)');
+      setNewExperienceType('신입');
       setIsAdding(false);
       fetchCandidates();
     } catch (error) {
@@ -70,7 +74,8 @@ const HiringDashboard = () => {
     try {
       await hiringService.updateCandidate(editCandidateData.id, {
         name: editCandidateData.name,
-        birthYear: parseInt(editCandidateData.birthYear) || null
+        birthYear: parseInt(editCandidateData.birthYear) || null,
+        experienceType: editCandidateData.experienceType || null
       });
       setIsEditing(false);
       setEditCandidateData(null);
@@ -130,6 +135,14 @@ const HiringDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getExperienceBadge = (candidate) => {
+    const type = getExperienceType(candidate);
+    if (!type) return <span className="text-slate-300 text-xs font-bold">-</span>;
+    return type === '경력'
+      ? <span className="px-3 py-1.5 bg-slate-900 text-white rounded-full text-xs font-bold w-fit">경력</span>
+      : <span className="px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-300 rounded-full text-xs font-bold w-fit">신입</span>;
   };
 
   const getStatusBadge = (status) => {
@@ -216,6 +229,7 @@ const HiringDashboard = () => {
                 <thead>
                   <tr className="text-slate-400 text-xs border-b border-slate-100 bg-slate-50/50">
                     <th className="px-8 py-5 font-bold uppercase tracking-widest">지원자</th>
+                    <th className="px-8 py-5 font-bold uppercase tracking-widest">구분</th>
                     <th className="px-8 py-5 font-bold uppercase tracking-widest">지원 직무</th>
                     <th className="px-8 py-5 font-bold uppercase tracking-widest">상태</th>
                     <th className="px-8 py-5 font-bold uppercase tracking-widest">등록일시</th>
@@ -237,6 +251,9 @@ const HiringDashboard = () => {
                           <span className="font-bold text-slate-900 text-lg">{candidate.name}</span>
                         </div>
                       </td>
+                      <td className="px-8 py-5">
+                        {getExperienceBadge(candidate)}
+                      </td>
                       <td className="px-8 py-5 text-slate-500 font-medium">
                         {candidate.position}
                       </td>
@@ -250,7 +267,7 @@ const HiringDashboard = () => {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditCandidateData(candidate);
+                            setEditCandidateData({ ...candidate, experienceType: getExperienceType(candidate) });
                             setIsEditing(true);
                           }}
                           className="p-3 bg-slate-50 hover:bg-emerald-100 rounded-xl text-slate-400 hover:text-emerald-600 transition-all font-bold text-sm flex items-center justify-center opacity-0 group-hover:opacity-100"
@@ -347,7 +364,7 @@ const HiringDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">지원 구분</label>
-                  <select 
+                  <select
                     value={newPosition}
                     onChange={(e) => setNewPosition(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm font-bold text-slate-900"
@@ -356,9 +373,28 @@ const HiringDashboard = () => {
                     <option value="현장 안전관리자">현장 안전관리자</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">채용 구분</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {EXPERIENCE_TYPES.map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setNewExperienceType(type)}
+                        className={`py-4 rounded-xl font-bold border transition-all ${
+                          newExperienceType === type
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-4">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsAdding(false)}
                   className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors rounded-xl font-bold"
@@ -405,9 +441,28 @@ const HiringDashboard = () => {
                     placeholder="예: 1990"
                   />
                 </div>
+                <div>
+                  <label className="block text-slate-500 text-sm font-bold mb-3 uppercase tracking-wider">채용 구분</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {EXPERIENCE_TYPES.map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setEditCandidateData({...editCandidateData, experienceType: type})}
+                        className={`py-4 rounded-xl font-bold border transition-all ${
+                          editCandidateData.experienceType === type
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-4">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsEditing(false)}
                   className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors rounded-xl font-bold"

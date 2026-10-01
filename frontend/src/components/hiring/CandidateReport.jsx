@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { hiringService } from '../../services/hiringService';
-import { isMultiDimEvaluation, calcMultiDimScore, MULTIDIM_CATEGORIES } from '../../constants/hiringConstants';
+import { isMultiDimEvaluation, calcMultiDimScore, MULTIDIM_CATEGORIES, getExperienceType } from '../../constants/hiringConstants';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Award, TrendingUp, AlertTriangle, FileText, Send, Download, BrainCircuit, ChevronLeft, MessageSquare, X, Edit, Target } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -284,7 +284,8 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
       ];
 
   const grade = getGrade(reportData.totalScore, reportData.maxScore);
-  
+  const experienceType = getExperienceType(candidate);
+
   const currentYear = new Date().getFullYear();
   const birthYearText = candidate.birthYear ? `${candidate.birthYear}년생 (만 ${currentYear - candidate.birthYear}세)` : '생년월일 미입력';
 
@@ -309,6 +310,11 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             <div className={`lg:col-span-2 bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4' : 'p-6'} flex items-center justify-center md:justify-start shadow-sm`}>
               <div className="text-center md:text-left">
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
+                  {experienceType && (
+                    <span className="px-3 py-1 bg-white text-slate-900 rounded-full text-xs font-bold border-2 border-slate-900 uppercase tracking-widest">
+                      {experienceType}
+                    </span>
+                  )}
                   <span className="px-3 py-1 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-widest">
                     {candidate.position}
                   </span>

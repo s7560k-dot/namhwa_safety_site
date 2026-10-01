@@ -239,6 +239,22 @@ export function calcMultiDimScore(evaluations) {
   return { byCategory, total: Math.round(total * 10) / 10 };
 }
 
+// 지원자 채용 구분 (신입/경력) - 다차원 역량진단 시스템(hiring/) 공용
+export const EXPERIENCE_TYPES = ['신입', '경력'];
+
+/**
+ * 지원자의 채용 구분(신입/경력)을 반환.
+ * 신규 등록 건은 candidate.experienceType 필드를 직접 사용하고,
+ * 그 필드가 없는 과거 데이터는 position 문자열에 포함된 "(신입)"/"(경력)" 표기를 보고 추정한다.
+ */
+export function getExperienceType(candidate) {
+  if (!candidate) return null;
+  if (candidate.experienceType) return candidate.experienceType;
+  if (candidate.position?.includes('경력')) return '경력';
+  if (candidate.position?.includes('신입')) return '신입';
+  return null;
+}
+
 // 안전보건팀 전용 - 전문 기술 질문 (Technical Safety, 고도화 면접 시스템 전용 — 별도 유지)
 export const SAFETY_TECH_QUESTIONS = [
   {
