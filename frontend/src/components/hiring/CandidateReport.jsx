@@ -72,7 +72,7 @@ const EmailPreviewModal = ({ candidate, reportData, aiSummary, onClose }) => {
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
             <h3 className="text-xl font-black text-slate-900">경영진 보고용 메일 양식 미리보기</h3>
-            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">하단 버튼을 눌러 본문을 복사한 후 메일 앱에 붙여넣으세요.</p>
+            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">하단 버튼으로 본문을 복사해 메일 앱에 붙여넣고, 자동 다운로드된 PDF 리포트를 첨부해 주세요.</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
             <X size={24} />
@@ -261,6 +261,9 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
   };
 
   const handleSendToExecutives = () => {
+    // 메일 양식(본문)은 그대로 두고, 점수·역량분석·피드백 등 실제 보고 내용은
+    // PDF 문서로 자동 다운로드해 메일에 첨부할 수 있도록 함
+    handleDownloadPdf();
     setShowEmailModal(true);
   };
 
