@@ -245,8 +245,8 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalPdfWidth, finalPdfHeight);
         };
 
+        // AI 종합 인사이트는 PDF 출력에서 제외 (화면에서만 확인하는 영역)
         await renderCanvasToPdf(reportRef, true);
-        await renderCanvasToPdf(insightRef, false);
         await renderCanvasToPdf(guideRef, false);
         
         pdf.save(`남화토건_면접리포트_${candidate.name}.pdf`);
@@ -304,7 +304,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
         </button>
 
         {/* PDF Export Target Container */}
-        <div ref={reportRef} className={`bg-slate-50 ${isPdfMode ? 'p-6 flex flex-col gap-5' : 'pb-6'} rounded-3xl`} style={isPdfMode ? { width: '1024px' } : { minHeight: '600px' }}>
+        <div ref={reportRef} className={`bg-slate-50 ${isPdfMode ? 'p-6 flex flex-col justify-between' : 'pb-6'} rounded-3xl`} style={isPdfMode ? { width: '1024px', minHeight: '1519px' } : { minHeight: '600px' }}>
           
           {/* Hero Section */}
           <div className={`grid grid-cols-1 lg:grid-cols-3 ${isPdfMode ? 'gap-4 shrink-0' : 'gap-6 mb-6'}`}>
@@ -342,7 +342,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
           </div>
 
           {/* Vertical Stack Layout: 지원자 개요(Hero) + 역량분석 + 종합피드백 = 한 페이지 구성 */}
-          <div className={`flex flex-col ${isPdfMode ? 'gap-4 flex-1 my-4' : 'gap-6 mb-4'}`}>
+          <div className={`flex flex-col ${isPdfMode ? 'gap-4 flex-1' : 'gap-6 mb-4'}`}>
 
             {/* Competency Chart */}
             <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col justify-center' : 'p-8'} shadow-sm`}>
@@ -384,7 +384,7 @@ const CandidateReport = ({ candidate, onClose, onEdit }) => {
             </div>
 
             {/* Qualitative Feedback */}
-            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 shrink-0' : 'p-8'} shadow-sm`}>
+            <div className={`bg-white border border-slate-200 rounded-3xl ${isPdfMode ? 'p-4 flex-1 flex flex-col justify-center' : 'p-8'} shadow-sm`}>
               <h3 className={`text-xl font-black ${isPdfMode ? 'mb-2' : 'mb-6 border-b border-slate-100 pb-5'} flex items-center gap-2 text-slate-900`}>
                 <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
                   <MessageSquare size={24} />
