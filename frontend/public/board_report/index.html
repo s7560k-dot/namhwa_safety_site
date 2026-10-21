@@ -280,6 +280,7 @@ function render(year,shm,weeks,weeklyErr){
     h+=lineChart([{name:'통합 점검 점수(시스템+현장)',color:'#7f2b2f',data:qAvg}],QS,{min:40,max:100,step:10});
 
     h+=`<h4 style="margin:18px 0 4px">② 7개 카테고리 달성률 (분기별)</h4><table class="t"><tr><th style="width:28%">카테고리</th>${QS.map(q=>`<th>${q}</th>`).join('')}<th>연평균</th><th style="width:20%">연평균 그래프</th></tr>`;
+    h+=`<tr><td class="l" style="color:var(--mute)">기준 점검 (현장 수 · 점검일)</td>${QS.map((_,i)=>{const r=shm[i];if(!r.length)return '<td style="color:#94a3b8">-</td>';const ds=r.map(x=>x.checkDate).filter(Boolean).sort();const n=r.filter(x=>x.sb&&(x.sb.categoryScores||[]).length).length;return `<td style="font-size:11px;color:var(--mute)">${r.length}개 현장 (항목별 ${n})<br>${esc(ds[0]||'')}${ds.length>1&&ds[ds.length-1]!==ds[0]?'~'+esc(ds[ds.length-1].slice(5)):''}</td>`}).join('')}<td colspan="2"></td></tr>`;
     CAT.forEach((n,c)=>{
       h+=`<tr><td class="l">${esc(n)}</td>${QS.map((_,i)=>{const v=catByQ[i][c];return `<td style="color:${pctColor(v)};font-weight:700">${v==null?'-':f1(v)+'%'}</td>`}).join('')}<td><b style="color:${pctColor(catYear[c])}">${catYear[c]==null?'-':f1(catYear[c])+'%'}</b></td><td><div class="bar"><i style="width:${catYear[c]||0}%;background:${pctColor(catYear[c])}"></i></div></td></tr>`});
     h+=`</table><div class="note">달성률 = 항목별 획득점수/배점의 현장 평균. 항목별 점수가 저장되지 않은 과거 점검은 제외됩니다. 색상: 우수(≥85) 녹색 · 보통(70~84) 파랑 · 미흡(≤69) 적색.</div>`;
