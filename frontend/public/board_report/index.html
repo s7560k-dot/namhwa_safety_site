@@ -97,7 +97,7 @@ const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
 const f1=v=>v==null?'-':(Math.round(v*10)/10).toString();
 const sum=a=>a.reduce((x,y)=>x+y,0);
 
-// ───────── SHM 등급(점검 점수) / AI 주간검토 등급 / 달성률 색상 ─────────
+// ───────── 등급 / 달성률 색상 ─────────
 function shmGradeCls(g){return g==='양호'?'c-good':g==='보통'?'c-mid':g==='미흡'?'c-bad':'c-na'}
 function pctCls(p){return p==null?'c-na':p>=85?'c-good':p>=70?'c-mid':'c-bad'}
 function pctColor(p){return p==null?'#94a3b8':p>=85?'var(--good)':p>=70?'var(--mid)':'var(--bad)'}
@@ -144,7 +144,7 @@ async function siteResults(year,q){
     const work=parseInt((d.deductions&&d.deductions.workAccident)||'0',10)||0;
     const base={siteName:name,major,work,region:(d.headerInfo&&d.headerInfo.region)||'',checkDate:(d.headerInfo&&d.headerInfo.checkDate)||'',sb:d.sectionBreakdown||null};
     if(d.finalScores&&d.finalScores.totalScore!==undefined){
-      out.push({...base,score:parseFloat(d.finalScores.totalScore)||0,grade:(d.finalScores.finalGrade||'-').replace('우수','양호'),fieldRaw:parseFloat(d.deductions&&d.deductions.fieldScore)||null});
+      out.push({...base,score:parseFloat(d.finalScores.totalScore)||0,grade:(d.finalScores.finalGrade||'-').replace('우수','양호'),fieldRaw:parseFloat(d.deductions&&d.deductions.fieldScore)||null,legacy:true,sysConv:null,fldConv:null,wS:null,wF:null,hasField:true});
       continue;
     }
     const prog=parseFloat(d.headerInfo&&d.headerInfo.progress)||0, w=phaseWeights(prog);
@@ -153,7 +153,7 @@ async function siteResults(year,q){
     const fd=fld[name];
     if(fd){fieldRaw=Math.min(100,Math.max(0,parseFloat(fd.result&&fd.result.totalScore)||0));fc=fieldRaw/100*w.f}
     const total=Math.max(0,sysRaw/100*w.s+fc);
-    out.push({...base,score:total,grade:total>=90?'양호':total>=60?'보통':'미흡',fieldRaw});
+    out.push({...base,score:total,grade:total>=90?'양호':total>=60?'보통':'미흡',fieldRaw,sysConv:sysRaw/100*w.s,fldConv:fc,wS:w.s,wF:w.f,hasField:!!fd});
   }
   return out;
 }
@@ -165,7 +165,7 @@ function categoryPct(results){
   });
 }
 
-// ───────── 주간 AI 검토 (safety-report-ai) ─────────
+// ───────── 주간 업무 검토 (safety-report-ai) ─────────
 function startDate(period){
   if(!period)return null;
   const re=/(\d{4}|\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/g;let m;const ds=[];
@@ -217,18 +217,6 @@ function lineChart(series,labels,opt){
 }
 
 // ───────── 렌더링 ─────────
-const MAP9=[
-  ['1호','안전보건 목표와 경영방침 설정',[0],'시스템점검 카테고리 1'],
-  ['2호','안전·보건 업무 총괄 전담조직(해당 시)',null,'조직도·인력 현황 별첨'],
-  ['3호','유해·위험요인 확인·개선 절차 마련 및 점검','FIELD','현장점검표 평균'],
-  ['4호','재해예방에 필요한 예산 편성·집행',null,'산업안전보건관리비 집행 현황 별첨'],
-  ['5호','안전보건관리책임자 등의 권한·책임 부여 및 평가',[1],'시스템점검 카테고리 2'],
-  ['6호','안전관리자·보건관리자 등 전문인력 배치',null,'선임·배치 현황 별첨'],
-  ['7호','종사자 의견 청취 절차',[2],'시스템점검 카테고리 3'],
-  ['8호','중대산업재해 발생 시 조치 매뉴얼(비상대응)',[3],'시스템점검 카테고리 4'],
-  ['9호','도급·용역·위탁 시 평가기준·절차(협력사)',[4],'시스템점검 카테고리 5'],
-  ['제5조','안전보건관계 법령 의무이행 점검·개선',[5,6],'시스템점검 카테고리 6·7'],
-];
 
 function render(year,shm,weeks,weeklyErr){
   const quartersWithData=QS.map((q,i)=>({q,i,res:shm[i]})).filter(x=>x.res.length);
@@ -238,13 +226,17 @@ function render(year,shm,weeks,weeklyErr){
   const yearAvg=avg(qAvg.filter(v=>v!=null));
   const catByQ=shm.map(categoryPct);
   const catYear=CAT.map((_,c)=>avg(catByQ.map(a=>a[c]).filter(v=>v!=null)));
+  const sysConvQ=shm.map(r=>avg(r.map(x=>x.sysConv).filter(v=>v!=null)));
+  const fldConvQ=shm.map(r=>avg(r.map(x=>x.fldConv).filter(v=>v!=null)));
+  const sysConvYear=avg(sysConvQ.filter(v=>v!=null)), fldConvYear=avg(fldConvQ.filter(v=>v!=null));
+  const noField=allRes.filter(r=>!r.legacy&&!r.hasField).length;
   const fieldAll=allRes.map(r=>r.fieldRaw).filter(v=>v!=null);
   const fieldAvg=avg(fieldAll);
   const siteCnt=new Set(allRes.map(r=>r.siteName)).size;
   const major=sum(allRes.map(r=>r.major)), work=sum(allRes.map(r=>r.work));
   const today=new Date();const dateStr=today.getFullYear()+'. '+(today.getMonth()+1)+'. '+today.getDate();
 
-  // 주간 AI
+  // 주간 업무 검토
   const wq=QS.map((_,i)=>weeks.filter(w=>w.q===i+1));
   const wScoreQ=wq.map(a=>avg(a.map(w=>w.score).filter(v=>v!=null)));
   const wYearAvg=avg(weeks.map(w=>w.score).filter(v=>v!=null));
@@ -264,27 +256,28 @@ function render(year,shm,weeks,weeklyErr){
 
   h+=`<div class="page body-page">`;
   // 1. 요약
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">1</span>경영진 요약</h3><p class="sub">분기별 안전보건경영시스템 점검 결과와 주간 AI 검토 결과를 종합한 연간 성과입니다.</p>
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">1</span>경영진 요약</h3><p class="sub">분기별 안전보건경영시스템 점검과 현장 안전점검을 합산·환산한 통합 점검 점수와, 주간 업무 검토 결과를 종합한 연간 성과입니다.</p>
   <div class="kpis">
-    <div class="kpi"><div class="l">연평균 점검 점수</div><div class="v" style="color:${pctColor(yearAvg)}">${f1(yearAvg)}<small style="font-size:12px">점</small></div><div class="n">${quartersWithData.length}개 분기 평균</div></div>
-    <div class="kpi"><div class="l">${lastQ?lastQ.q:'최근 분기'} 점검 점수</div><div class="v" style="color:${pctColor(lastQ?qAvg[lastQ.i]:null)}">${f1(lastQ?qAvg[lastQ.i]:null)}<small style="font-size:12px">점</small></div><div class="n">${lastQ?lastQ.res.length+'개 현장':'데이터 없음'}</div></div>
+    <div class="kpi"><div class="l">연평균 통합 점검 점수</div><div class="v" style="color:${pctColor(yearAvg)}">${f1(yearAvg)}<small style="font-size:12px">점</small></div><div class="n">시스템 ${f1(sysConvYear)} + 현장 ${f1(fldConvYear)}점 (${quartersWithData.length}개 분기 평균)</div></div>
+    <div class="kpi"><div class="l">${lastQ?lastQ.q:'최근 분기'} 통합 점검 점수</div><div class="v" style="color:${pctColor(lastQ?qAvg[lastQ.i]:null)}">${f1(lastQ?qAvg[lastQ.i]:null)}<small style="font-size:12px">점</small></div><div class="n">${lastQ?('시스템 '+f1(sysConvQ[lastQ.i])+' + 현장 '+f1(fldConvQ[lastQ.i])+'점 · '+lastQ.res.length+'개 현장'):'데이터 없음'}</div></div>
     <div class="kpi"><div class="l">중대재해·업무상 사고(점검 반영)</div><div class="v">${major} · ${work}<small style="font-size:12px">건</small></div><div class="n">시스템점검 감점 입력 합계</div></div>
-    <div class="kpi"><div class="l">주간 AI 검토 평균</div><div class="v" style="color:${pctColor(wYearAvg)}">${f1(wYearAvg)}<small style="font-size:12px">점</small></div><div class="n">${weeks.length}주차 · ${Object.keys(siteMap).length}개 현장</div></div>
+    <div class="kpi"><div class="l">주간 업무 검토 평균</div><div class="v" style="color:${pctColor(wYearAvg)}">${f1(wYearAvg)}<small style="font-size:12px">점</small></div><div class="n">${weeks.length}주차 · ${Object.keys(siteMap).length}개 현장</div></div>
   </div>
   <div class="edit" data-edit="summary" contenteditable="true">${esc(draftSummary(year,qAvg,yearAvg,lastQ,catYear,wYearAvg,weeks.length,major,work))}</div>
   <div class="note no-print">※ 위 문안은 수치를 바탕으로 자동 작성된 초안입니다. 클릭해서 직접 수정할 수 있으며 수정 내용은 이 브라우저에 저장됩니다.</div></div>`;
 
   // 2. 분기별 점검 성과
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">2</span>분기별 안전보건경영시스템 점검 성과</h3><p class="sub">출처: 안전보건팀 자료실 분기별 점검(시스템점검 + 현장점검). 양호 ≥90 / 보통 60~89 / 미흡 &lt;60 (SHM 등급 기준).</p>`;
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">2</span>분기별 안전보건경영시스템 점검 성과</h3><p class="sub">출처: 안전보건팀 자료실 분기별 안전보건경영시스템 점검 + 현장 안전점검(서버 저장분). 공정 단계별 가중치(초기 70:30 · 본공사 50:50 · 마무리 60:40 · 준공 100:0)로 환산해 합산합니다. 양호 ≥90 / 보통 60~89 / 미흡 &lt;60.</p>`;
   if(!quartersWithData.length){h+=`<div class="empty">${year}년 점검 결과가 없습니다.</div>`}
   else{
-    h+=`<table class="t"><tr><th>구분</th><th>점검 현장</th><th>평균 점수</th><th>양호</th><th>보통</th><th>미흡</th><th>현장점검 평균</th><th>중대재해</th><th>업무상 사고</th></tr>`;
+    h+=`<table class="t"><tr><th>구분</th><th>점검 현장</th><th>시스템 환산</th><th>현장 환산</th><th>통합 점수</th><th>양호</th><th>보통</th><th>미흡</th><th>중대재해</th><th>업무상 사고</th></tr>`;
     QS.forEach((q,i)=>{const r=shm[i];
-      if(!r.length){h+=`<tr><td>${q}</td><td colspan="8" style="color:#94a3b8">점검 결과 없음</td></tr>`;return}
+      if(!r.length){h+=`<tr><td>${q}</td><td colspan="9" style="color:#94a3b8">점검 결과 없음</td></tr>`;return}
       const gc=g=>r.filter(x=>x.grade===g).length;
-      h+=`<tr><td><b>${q}</b></td><td>${r.length}</td><td><b style="color:${pctColor(qAvg[i])}">${f1(qAvg[i])}</b></td><td>${gc('양호')}</td><td>${gc('보통')}</td><td>${gc('미흡')}</td><td>${f1(avg(r.map(x=>x.fieldRaw).filter(v=>v!=null)))}</td><td>${sum(r.map(x=>x.major))}</td><td>${sum(r.map(x=>x.work))}</td></tr>`});
+      h+=`<tr><td><b>${q}</b></td><td>${r.length}</td><td>${f1(sysConvQ[i])}</td><td>${f1(fldConvQ[i])}</td><td><b style="color:${pctColor(qAvg[i])}">${f1(qAvg[i])}</b></td><td>${gc('양호')}</td><td>${gc('보통')}</td><td>${gc('미흡')}</td><td>${sum(r.map(x=>x.major))}</td><td>${sum(r.map(x=>x.work))}</td></tr>`});
     h+=`</table>`;
-    h+=lineChart([{name:'시스템+현장 점검 점수',color:'#7f2b2f',data:qAvg}],QS,{min:40,max:100,step:10});
+    if(noField)h+=`<div class="warnbox">현장 안전점검 결과가 서버에 없는 점검 건(현장·분기 기준)이 ${noField}건 있어 해당 건의 현장 환산 점수는 0점으로 반영되었습니다.</div>`;
+    h+=lineChart([{name:'통합 점검 점수(시스템+현장)',color:'#7f2b2f',data:qAvg}],QS,{min:40,max:100,step:10});
 
     h+=`<h4 style="margin:18px 0 4px">② 7개 카테고리 달성률 (분기별)</h4><table class="t"><tr><th style="width:28%">카테고리</th>${QS.map(q=>`<th>${q}</th>`).join('')}<th>연평균</th><th style="width:20%">연평균 그래프</th></tr>`;
     CAT.forEach((n,c)=>{
@@ -293,27 +286,15 @@ function render(year,shm,weeks,weeklyErr){
 
     if(lastQ){
       const rs=[...lastQ.res].sort((a,b)=>b.score-a.score);
-      h+=`<h4 style="margin:18px 0 4px">③ ${lastQ.q} 현장별 결과</h4><table class="t"><tr><th>현장</th><th>지역</th><th>점검일</th><th>점수</th><th>등급</th><th style="width:26%">점수 그래프</th></tr>`;
-      rs.forEach(r=>{h+=`<tr><td class="l">${esc(r.siteName)}</td><td>${esc(r.region)}</td><td>${esc(r.checkDate)}</td><td><b>${f1(r.score)}</b></td><td><span class="chip ${shmGradeCls(r.grade)}">${esc(r.grade)}</span></td><td><div class="bar"><i style="width:${Math.min(100,r.score)}%;background:${r.grade==='양호'?'var(--good)':r.grade==='보통'?'var(--mid)':'var(--bad)'}"></i></div></td></tr>`});
+      h+=`<h4 style="margin:18px 0 4px">③ ${lastQ.q} 현장별 결과</h4><table class="t"><tr><th>현장</th><th>점검일</th><th>가중치<br>(시스템:현장)</th><th>시스템 환산</th><th>현장 환산</th><th>통합 점수</th><th>등급</th></tr>`;
+      rs.forEach(r=>{h+=`<tr><td class="l">${esc(r.siteName)}</td><td>${esc(r.checkDate)}</td><td>${r.legacy?'-':r.wS+' : '+r.wF}</td><td>${r.legacy?'-':f1(r.sysConv)}</td><td>${r.legacy?'-':(r.hasField?f1(r.fldConv):'<span style="color:var(--bad)">미실시(0)</span>')}</td><td><b>${f1(r.score)}</b></td><td><span class="chip ${shmGradeCls(r.grade)}">${esc(r.grade)}</span></td></tr>`});
       h+=`</table>`;
     }
   }
   h+=`</div>`;
 
-  // 3. 중처법 시행령 제4조
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">3</span>중대재해처벌법 시행령 제4조 이행 현황</h3><p class="sub">경영책임자의 안전보건관리체계 구축·이행 의무 항목별로 연간 점검 결과를 대응시켰습니다.</p>
-  <table class="t"><tr><th style="width:9%">조항</th><th style="width:36%">의무 내용(요약)</th><th style="width:22%">근거 자료</th><th>연간 달성률</th><th>판정</th></tr>`;
-  MAP9.forEach(m=>{
-    let v=null,basis=m[3];
-    if(m[2]==='FIELD'){v=fieldAvg}
-    else if(Array.isArray(m[2])){v=avg(m[2].map(c=>catYear[c]).filter(x=>x!=null))}
-    if(m[2]==null){h+=`<tr><td>${m[0]}</td><td class="l">${esc(m[1])}</td><td class="l">${esc(basis)}</td><td colspan="2"><span class="chip c-att">별첨 확인</span></td></tr>`}
-    else{h+=`<tr><td>${m[0]}</td><td class="l">${esc(m[1])}</td><td class="l">${esc(basis)}</td><td><b style="color:${pctColor(v)}">${v==null?'-':f1(v)+'%'}</b></td><td><span class="chip ${pctCls(v)}">${pctLabel(v)}</span></td></tr>`}
-  });
-  h+=`</table><div class="warnbox">※ 조문 내용은 요약본이며, 보고 전 <b>법령 원문 및 법무 검토</b>로 확인이 필요합니다. 「별첨 확인」 항목은 점검표 데이터로 판정할 수 없어 조직도·선임현황·산안비 집행 자료로 증빙합니다.</div></div>`;
-
-  // 4. 주간 AI 점검
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">4</span>현장 주간 안전보건 업무 운영 성과 (AI 검토)</h3><p class="sub">출처: 주간 업무보고서 AI 검토(법정 기재사항 대조). 우수 ≥85 / 보통 70~84 / 미흡 ≤69.</p>`;
+  // 3. 주간 업무 검토
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">3</span>현장 주간 안전보건 업무 운영 성과</h3><p class="sub">출처: 주간 업무 검토 결과(법정 기재사항 대조). 우수 ≥85 / 보통 70~84 / 미흡 ≤69.</p>`;
   if(weeklyErr){h+=`<div class="errbox">⚠ ${esc(weeklyErr)}</div>`}
   else if(!weeks.length){h+=`<div class="empty">${year}년 주간 검토 이력이 없습니다.</div>`}
   else{
@@ -323,7 +304,7 @@ function render(year,shm,weeks,weeklyErr){
       const nc=sum(a.map(w=>w.ncr));
       h+=`<tr><td><b>${q}</b></td><td>${a.length}</td><td><b style="color:${pctColor(wScoreQ[i])}">${f1(wScoreQ[i])}</b></td><td>${nc}</td><td>${f1(nc/a.length)}</td><td>${sum(a.map(w=>w.wp))}</td><td>${sum(a.map(w=>w.ra))}</td><td>${sum(a.map(w=>w.edu))}</td><td>${sum(a.map(w=>w.trainees))}</td></tr>`});
     h+=`</table>`;
-    h+=lineChart([{name:'주간 검토 평균 점수',color:'#2563eb',data:wScoreQ}],QS,{min:40,max:100,step:10});
+    h+=lineChart([{name:'주간 업무 검토 평균 점수',color:'#2563eb',data:wScoreQ}],QS,{min:40,max:100,step:10});
     h+=`<h4 style="margin:16px 0 4px">현장별 연간 평균</h4><table class="t"><tr><th>현장</th><th>검토 주차</th><th>평균 점수</th><th>등급</th><th>지적(NCR)</th><th style="width:26%">점수 그래프</th></tr>`;
     Object.entries(siteMap).map(([s,a])=>({s,n:a.length,v:avg(a.map(w=>w.score).filter(x=>x!=null)),nc:sum(a.map(w=>w.ncr))})).sort((a,b)=>(b.v||0)-(a.v||0)).forEach(r=>{
       h+=`<tr><td class="l">${esc(r.s)}</td><td>${r.n}</td><td><b>${f1(r.v)}</b></td><td><span class="chip ${pctCls(r.v)}">${pctLabel(r.v)}</span></td><td>${r.nc}</td><td><div class="bar"><i style="width:${r.v||0}%;background:${pctColor(r.v)}"></i></div></td></tr>`});
@@ -338,7 +319,7 @@ function render(year,shm,weeks,weeklyErr){
   h+=`</div>`;
 
   // 5. 재해·사고
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">5</span>재해·사고·아차사고 현황</h3><p class="sub">시스템점검에 입력된 건수를 기본값으로 채웠습니다. 안전보건팀 제출 서식이 확정되면 해당 양식에 맞춰 입력·보완합니다.</p>
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">4</span>재해·사고·아차사고 현황</h3><p class="sub">시스템점검에 입력된 건수를 기본값으로 채웠습니다. 안전보건팀 제출 서식이 확정되면 해당 양식에 맞춰 입력·보완합니다.</p>
   <table class="t"><tr><th>구분</th>${QS.map(q=>`<th>${q}</th>`).join('')}<th>합계</th></tr>
     <tr><td><b>중대재해</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-major-${i}">${shm[i].length?sum(shm[i].map(x=>x.major)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-major-t">${major}</td></tr>
     <tr><td><b>업무상 사고(재해)</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-work-${i}">${shm[i].length?sum(shm[i].map(x=>x.work)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-work-t">${work}</td></tr>
@@ -346,23 +327,23 @@ function render(year,shm,weeks,weeklyErr){
   </table><div class="note no-print">표의 칸을 클릭해 직접 입력하세요. (이 브라우저에 저장)</div></div>`;
 
   // 6. 목표 대비 실적
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">6</span>연간 안전보건 목표 대비 실적</h3><p class="sub">목표 지표는 협의 후 확정 예정입니다. 점검 데이터로 산출 가능한 후보 지표를 참고값으로 제시합니다.</p>
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">5</span>연간 안전보건 목표 대비 실적</h3><p class="sub">목표 지표는 협의 후 확정 예정입니다. 점검 데이터로 산출 가능한 후보 지표를 참고값으로 제시합니다.</p>
   <table class="t"><tr><th style="width:30%">지표</th><th>목표</th><th>실적(참고)</th><th>달성</th></tr>
     <tr><td class="l">연평균 점검 점수</td><td class="edit-c" contenteditable="true" data-edit="goal-0-t"></td><td>${f1(yearAvg)}점</td><td class="edit-c" contenteditable="true" data-edit="goal-0-a"></td></tr>
     <tr><td class="l">중대재해 발생 건수</td><td class="edit-c" contenteditable="true" data-edit="goal-1-t"></td><td>${major}건</td><td class="edit-c" contenteditable="true" data-edit="goal-1-a"></td></tr>
-    <tr><td class="l">주간 AI 검토 평균 점수</td><td class="edit-c" contenteditable="true" data-edit="goal-2-t"></td><td>${f1(wYearAvg)}점</td><td class="edit-c" contenteditable="true" data-edit="goal-2-a"></td></tr>
+    <tr><td class="l">주간 업무 검토 평균 점수</td><td class="edit-c" contenteditable="true" data-edit="goal-2-t"></td><td>${f1(wYearAvg)}점</td><td class="edit-c" contenteditable="true" data-edit="goal-2-a"></td></tr>
     <tr><td class="l edit-c" contenteditable="true" data-edit="goal-3-n">(지표 추가)</td><td class="edit-c" contenteditable="true" data-edit="goal-3-t"></td><td class="edit-c" contenteditable="true" data-edit="goal-3-r"></td><td class="edit-c" contenteditable="true" data-edit="goal-3-a"></td></tr>
   </table></div>`;
 
   // 7. 산안비
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">7</span>산업안전보건관리비 집행 현황</h3><p class="sub">집행 내역은 별첨 PDF로 첨부합니다.</p>
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">6</span>산업안전보건관리비 집행 현황</h3><p class="sub">집행 내역은 별첨 PDF로 첨부합니다.</p>
   <div class="slot">📎 산업안전보건관리비 집행 현황 (PDF 별첨) — 인쇄 후 이 면 뒤에 철합니다.</div></div>`;
 
   // 8. 종합
-  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">8</span>종합 평가 및 차년도 추진 계획</h3>
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">7</span>종합 평가 및 차년도 추진 계획</h3>
   <div class="grid2"><div><b>주요 성과 및 보완 과제</b><div class="edit" data-edit="eval" contenteditable="true">${esc(draftEval(catYear))}</div></div>
   <div><b>차년도 중점 추진 계획</b><div class="edit" data-edit="plan" contenteditable="true">1. \n2. \n3. </div></div></div>
-  <div class="note">보고서 생성일 ${dateStr} · 데이터: SHM 시스템/현장 점검(Firestore), 주간 AI 검토(safety-report-ai)</div></div>`;
+  <div class="note">보고서 생성일 ${dateStr} · 데이터: SHM 시스템/현장 점검(Firestore), 주간 업무 검토</div></div>`;
 
   h+=`</div>`;
   $('report').innerHTML=h;
@@ -373,13 +354,13 @@ function draftSummary(year,qAvg,yearAvg,lastQ,catYear,wAvg,wn,major,work){
   const parts=[];
   if(yearAvg!=null){
     const tr=qAvg.map((v,i)=>v==null?null:QS[i]+' '+f1(v)+'점').filter(Boolean).join(' → ');
-    parts.push(`${year}년 안전보건경영시스템 점검 연평균은 ${f1(yearAvg)}점(${tr})입니다.`);
+    parts.push(`${year}년 시스템점검·현장점검 통합 점수 연평균은 ${f1(yearAvg)}점(${tr})입니다.`);
   } else parts.push(`${year}년 안전보건경영시스템 점검 결과가 아직 없습니다.`);
   const ok=catYear.map((v,i)=>({v,i})).filter(x=>x.v!=null);
   if(ok.length){const hi=ok.reduce((a,b)=>b.v>a.v?b:a),lo=ok.reduce((a,b)=>b.v<a.v?b:a);
     parts.push(`7개 절차 중 달성률이 가장 높은 항목은 「${CAT_SHORT[hi.i]}」(${f1(hi.v)}%), 가장 낮은 항목은 「${CAT_SHORT[lo.i]}」(${f1(lo.v)}%)입니다.`)}
   parts.push(`점검에 반영된 중대재해 ${major}건, 업무상 사고 ${work}건입니다.`);
-  if(wn)parts.push(`주간 업무보고 AI 검토 ${wn}주차 평균은 ${f1(wAvg)}점입니다.`);
+  if(wn)parts.push(`주간 업무 검토 ${wn}주차 평균은 ${f1(wAvg)}점입니다.`);
   return parts.join(' ');
 }
 function draftEval(catYear){
