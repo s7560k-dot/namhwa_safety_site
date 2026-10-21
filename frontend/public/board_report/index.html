@@ -230,8 +230,6 @@ function render(year,shm,weeks,weeklyErr){
   const fldConvQ=shm.map(r=>avg(r.map(x=>x.fldConv).filter(v=>v!=null)));
   const sysConvYear=avg(sysConvQ.filter(v=>v!=null)), fldConvYear=avg(fldConvQ.filter(v=>v!=null));
   const noField=allRes.filter(r=>!r.legacy&&!r.hasField).length;
-  const legacyN=allRes.filter(r=>r.legacy).length;
-  const legacyQ=shm.map(r=>r.some(x=>x.legacy));
   const fieldAll=allRes.map(r=>r.fieldRaw).filter(v=>v!=null);
   const fieldAvg=avg(fieldAll);
   const siteCnt=new Set(allRes.map(r=>r.siteName)).size;
@@ -260,12 +258,12 @@ function render(year,shm,weeks,weeklyErr){
   // 1. 요약
   h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">1</span>경영진 요약</h3><p class="sub">분기별 안전보건경영시스템 점검과 현장 안전점검을 합산·환산한 통합 점검 점수와, 주간 업무 검토 결과를 종합한 연간 성과입니다.</p>
   <div class="kpis">
-    <div class="kpi"><div class="l">연평균 통합 점검 점수</div><div class="v" style="color:${pctColor(yearAvg)}">${f1(yearAvg)}<small style="font-size:12px">점</small></div><div class="n">${legacyN?quartersWithData.length+'개 분기 평균 (구버전 '+legacyN+'건 포함)':'시스템 '+f1(sysConvYear)+' + 현장 '+f1(fldConvYear)+'점 ('+quartersWithData.length+'개 분기 평균)'}</div></div>
-    <div class="kpi"><div class="l">${lastQ?lastQ.q:'최근 분기'} 통합 점검 점수</div><div class="v" style="color:${pctColor(lastQ?qAvg[lastQ.i]:null)}">${f1(lastQ?qAvg[lastQ.i]:null)}<small style="font-size:12px">점</small></div><div class="n">${lastQ?((legacyQ[lastQ.i]?'':'시스템 '+f1(sysConvQ[lastQ.i])+' + 현장 '+f1(fldConvQ[lastQ.i])+'점 · ')+lastQ.res.length+'개 현장'):'데이터 없음'}</div></div>
+    <div class="kpi"><div class="l">연평균 통합 점검 점수</div><div class="v" style="color:${pctColor(yearAvg)}">${f1(yearAvg)}<small style="font-size:12px">점</small></div><div class="n">시스템 ${f1(sysConvYear)} + 현장 ${f1(fldConvYear)}점 (${quartersWithData.length}개 분기 평균)</div></div>
+    <div class="kpi"><div class="l">${lastQ?lastQ.q:'최근 분기'} 통합 점검 점수</div><div class="v" style="color:${pctColor(lastQ?qAvg[lastQ.i]:null)}">${f1(lastQ?qAvg[lastQ.i]:null)}<small style="font-size:12px">점</small></div><div class="n">${lastQ?('시스템 '+f1(sysConvQ[lastQ.i])+' + 현장 '+f1(fldConvQ[lastQ.i])+'점 · '+lastQ.res.length+'개 현장'):'데이터 없음'}</div></div>
     <div class="kpi"><div class="l">중대재해·업무상 사고(점검 반영)</div><div class="v">${major} · ${work}<small style="font-size:12px">건</small></div><div class="n">시스템점검 감점 입력 합계</div></div>
     <div class="kpi"><div class="l">주간 업무 검토 평균</div><div class="v" style="color:${pctColor(wYearAvg)}">${f1(wYearAvg)}<small style="font-size:12px">점</small></div><div class="n">${weeks.length}주차 · ${Object.keys(siteMap).length}개 현장</div></div>
   </div>
-  <div class="edit" data-edit="summary" data-auto="1" contenteditable="true">${esc(draftSummary(year,qAvg,yearAvg,lastQ,catYear,wYearAvg,weeks.length,major,work))}</div>
+  <div class="edit" data-edit="summary" contenteditable="true">${esc(draftSummary(year,qAvg,yearAvg,lastQ,catYear,wYearAvg,weeks.length,major,work))}</div>
   <div class="note no-print">※ 위 문안은 수치를 바탕으로 자동 작성된 초안입니다. 클릭해서 직접 수정할 수 있으며 수정 내용은 이 브라우저에 저장됩니다.</div></div>`;
 
   // 2. 분기별 점검 성과
@@ -276,9 +274,8 @@ function render(year,shm,weeks,weeklyErr){
     QS.forEach((q,i)=>{const r=shm[i];
       if(!r.length){h+=`<tr><td>${q}</td><td colspan="9" style="color:#94a3b8">점검 결과 없음</td></tr>`;return}
       const gc=g=>r.filter(x=>x.grade===g).length;
-      h+=`<tr><td><b>${q}</b></td><td>${r.length}</td><td>${legacyQ[i]?'-':f1(sysConvQ[i])}</td><td>${legacyQ[i]?'-':f1(fldConvQ[i])}</td><td><b style="color:${pctColor(qAvg[i])}">${f1(qAvg[i])}</b></td><td>${gc('양호')}</td><td>${gc('보통')}</td><td>${gc('미흡')}</td><td>${sum(r.map(x=>x.major))}</td><td>${sum(r.map(x=>x.work))}</td></tr>`});
+      h+=`<tr><td><b>${q}</b></td><td>${r.length}</td><td>${f1(sysConvQ[i])}</td><td>${f1(fldConvQ[i])}</td><td><b style="color:${pctColor(qAvg[i])}">${f1(qAvg[i])}</b></td><td>${gc('양호')}</td><td>${gc('보통')}</td><td>${gc('미흡')}</td><td>${sum(r.map(x=>x.major))}</td><td>${sum(r.map(x=>x.work))}</td></tr>`});
     h+=`</table>`;
-    if(legacyN)h+=`<div class="note">※ 구버전 형식으로 저장된 점검 ${legacyN}건은 통합 점수만 저장되어 있어 시스템·현장 환산 구성은 표시하지 않고 통합 점수만 반영했습니다.</div>`;
     if(noField)h+=`<div class="warnbox">현장 안전점검 결과가 서버에 없는 점검 건(현장·분기 기준)이 ${noField}건 있어 해당 건의 현장 환산 점수는 0점으로 반영되었습니다.</div>`;
     h+=lineChart([{name:'통합 점검 점수(시스템+현장)',color:'#7f2b2f',data:qAvg}],QS,{min:40,max:100,step:10});
 
@@ -325,8 +322,8 @@ function render(year,shm,weeks,weeklyErr){
   // 5. 재해·사고
   h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">4</span>재해·사고·아차사고 현황</h3><p class="sub">시스템점검에 입력된 건수를 기본값으로 채웠습니다. 안전보건팀 제출 서식이 확정되면 해당 양식에 맞춰 입력·보완합니다.</p>
   <table class="t"><tr><th>구분</th>${QS.map(q=>`<th>${q}</th>`).join('')}<th>합계</th></tr>
-    <tr><td><b>중대재해</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-auto="1" data-edit="acc-major-${i}">${shm[i].length?sum(shm[i].map(x=>x.major)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-auto="1" data-edit="acc-major-t">${major}</td></tr>
-    <tr><td><b>업무상 사고(재해)</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-auto="1" data-edit="acc-work-${i}">${shm[i].length?sum(shm[i].map(x=>x.work)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-auto="1" data-edit="acc-work-t">${work}</td></tr>
+    <tr><td><b>중대재해</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-major-${i}">${shm[i].length?sum(shm[i].map(x=>x.major)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-major-t">${major}</td></tr>
+    <tr><td><b>업무상 사고(재해)</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-work-${i}">${shm[i].length?sum(shm[i].map(x=>x.work)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-work-t">${work}</td></tr>
     <tr><td><b>아차사고</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-near-${i}"></td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-near-t"></td></tr>
   </table><div class="note no-print">표의 칸을 클릭해 직접 입력하세요. (이 브라우저에 저장)</div></div>`;
 
@@ -345,7 +342,7 @@ function render(year,shm,weeks,weeklyErr){
 
   // 8. 종합
   h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">7</span>종합 평가 및 차년도 추진 계획</h3>
-  <div class="grid2"><div><b>주요 성과 및 보완 과제</b><div class="edit" data-edit="eval" data-auto="1" contenteditable="true">${esc(draftEval(catYear))}</div></div>
+  <div class="grid2"><div><b>주요 성과 및 보완 과제</b><div class="edit" data-edit="eval" contenteditable="true">${esc(draftEval(catYear))}</div></div>
   <div><b>차년도 중점 추진 계획</b><div class="edit" data-edit="plan" contenteditable="true">1. \n2. \n3. </div></div></div>
   <div class="note">보고서 생성일 ${dateStr} · 데이터: SHM 시스템/현장 점검(Firestore), 주간 업무 검토</div></div>`;
 
@@ -377,22 +374,13 @@ function draftEval(catYear){
 function storeKey(y){return 'board-report-edits-'+y}
 function restoreEdits(year){
   let s={};try{s=JSON.parse(localStorage.getItem(storeKey(year))||'{}')}catch(e){}
-  let stale=0;
   document.querySelectorAll('[data-edit]').forEach(el=>{
-    const k=el.dataset.edit, base=el.innerText, v=s[k];
-    // 저장본은 {t:수정본, b:수정 당시의 자동 초안}. 데이터가 바뀌어 자동 초안(b)이 달라졌으면
-    // 옛 수치가 남지 않도록 저장본을 버리고 새 초안을 쓴다. (구버전 문자열 저장본도 같은 취급)
-    const val=v&&typeof v==='object'?v.t:v;
-    if(v==null){}
-    else if(!el.dataset.auto)el.innerText=val;
-    else if(v&&typeof v==='object'&&v.b===base)el.innerText=val;
-    else stale++;
+    const k=el.dataset.edit; if(s[k]!=null)el.innerText=s[k];
     el.addEventListener('input',()=>{
       let c={};try{c=JSON.parse(localStorage.getItem(storeKey(year))||'{}')}catch(e){}
-      c[k]={t:el.innerText,b:base};try{localStorage.setItem(storeKey(year),JSON.stringify(c))}catch(e){}
+      c[k]=el.innerText;try{localStorage.setItem(storeKey(year),JSON.stringify(c))}catch(e){}
     });
   });
-  if(stale){const n=document.createElement('div');n.className='warnbox no-print';n.textContent='점검 데이터가 바뀌어 이전에 수정해 둔 문안 '+stale+'곳을 최신 수치 기준 초안으로 새로 채웠습니다. 필요하면 다시 수정하세요.';$('report').insertBefore(n,$('report').children[1]||null)}
 }
 
 // ───────── 실행 ─────────
