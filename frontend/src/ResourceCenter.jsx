@@ -453,6 +453,7 @@ const ResourceCenter = () => {
                                 { title: "SH CHECK", sub: "Inspection", icon: <AlertTriangle />, link: "/sh_check/index.html" },
                                 { title: "SHM RESULT", sub: "종합결과표", icon: <LayoutDashboard />, link: "/shm_result/index.html" },
                                 { title: "SHM REPORT", sub: "전사 분기 보고서", icon: <BarChart3 />, link: "/shm_report/index.html" },
+                                { title: "BOARD REPORT", sub: "이사회 안전보건경영 보고", icon: <FileText />, link: "/board_report/index.html" },
                                 { title: "PRE CHECK", sub: "Checklist", icon: <CheckSquare />, link: "/pre_check/index.html" },
                                 { title: "DAILY ARCH", sub: "Architecture", icon: <ClipboardCheck />, link: "/daily_arch/index.html" },
                                 { title: "DAILY CE", sub: "Civil Eng.", icon: <ClipboardCheck />, link: "/daily_ce/index.html" },

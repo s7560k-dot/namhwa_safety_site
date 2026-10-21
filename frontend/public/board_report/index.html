@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이사회 안전보건경영 보고 | 남화토건</title>
+<script src="/auth-guard.js"></script>
+<style>
+:root{
+  --brand:#7f2b2f; --brand-soft:#f6ecec; --ink:#0f172a; --mute:#64748b; --line:#e2e8f0; --bg:#f1f5f9;
+  --good:#059669; --mid:#2563eb; --bad:#dc2626; --warn:#d97706;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+.toolbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar h1{font-size:16px;margin:0 12px 0 0;color:var(--brand)}
+.toolbar select,.toolbar button,.toolbar a.btn{font:inherit;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;color:var(--ink);text-decoration:none}
+.toolbar button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.toolbar .status{color:var(--mute);font-size:12px;margin-left:auto}
+.page{max-width:900px;margin:18px auto;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:36px 44px}
+.cover{min-height:900px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-top:10px solid var(--brand)}
+.cover img{height:64px;margin-bottom:28px}
+.cover .eyebrow{letter-spacing:.3em;font-size:12px;color:var(--mute)}
+.cover h2{font-size:34px;margin:14px 0 6px;color:var(--brand);line-height:1.3}
+.cover .slogan{font-size:15px;color:var(--mute);margin-bottom:46px}
+.cover table{border-collapse:collapse;margin-top:10px}
+.cover td{border:1px solid var(--line);padding:8px 22px;font-size:13px}
+.cover td.k{background:var(--brand-soft);color:var(--brand);font-weight:700}
+h3.sec{font-size:18px;margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid var(--brand);color:var(--ink)}
+h3.sec .no{color:var(--brand);margin-right:6px}
+.sub{color:var(--mute);font-size:12px;margin:0 0 14px}
+.sec-wrap{margin-bottom:30px;break-inside:auto}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:12px 14px;border-top:3px solid var(--brand)}
+.kpi .l{font-size:11px;color:var(--mute)}
+.kpi .v{font-size:24px;font-weight:800;margin-top:2px}
+.kpi .n{font-size:11px;color:var(--mute)}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+table.t th{background:var(--brand-soft);color:var(--brand);border:1px solid var(--line);padding:6px 8px;font-weight:700;text-align:center}
+table.t td{border:1px solid var(--line);padding:6px 8px;text-align:center;vertical-align:middle}
+table.t td.l{text-align:left}
+.chip{display:inline-block;padding:1px 9px;border-radius:999px;font-size:11px;font-weight:700;color:#fff}
+.c-good{background:var(--good)}.c-mid{background:var(--mid)}.c-bad{background:var(--bad)}.c-na{background:#94a3b8}.c-att{background:var(--warn)}
+.tx-good{color:var(--good)}.tx-mid{color:var(--mid)}.tx-bad{color:var(--bad)}
+.bar{height:12px;background:#e2e8f0;border-radius:6px;overflow:hidden;min-width:90px}
+.bar>i{display:block;height:100%}
+.note{font-size:11.5px;color:var(--mute);margin-top:6px}
+.warnbox{border:1px solid #fcd34d;background:#fffbeb;color:#92400e;padding:8px 12px;border-radius:8px;font-size:12.5px;margin:8px 0}
+.errbox{border:1px solid #fecaca;background:#fef2f2;color:#991b1b;padding:8px 12px;border-radius:8px;font-size:12.5px;margin:8px 0}
+.edit{border:1px dashed #cbd5e1;border-radius:8px;padding:10px 12px;min-height:70px;background:#fcfcfd;white-space:pre-wrap;outline:none}
+.edit:focus{border-color:var(--brand);background:#fff}
+td.edit-c{outline:none;background:#fcfcfd}
+td.edit-c:focus{background:#fff;box-shadow:inset 0 0 0 2px var(--brand)}
+.slot{border:2px dashed #cbd5e1;border-radius:10px;padding:22px;text-align:center;color:var(--mute);background:#fafafa}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--mute);margin:4px 0}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;background:var(--c)}
+.empty{color:var(--mute);padding:30px;text-align:center}
+@media (max-width:700px){.page{padding:20px 16px}.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.cover h2{font-size:26px}}
+@media print{
+  @page{size:A4 portrait;margin:14mm 12mm}
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11pt}
+  .toolbar,.no-print{display:none!important}
+  .page{box-shadow:none;margin:0;max-width:none;padding:0}
+  .cover{min-height:250mm;page-break-after:always}
+  .page.body-page{page-break-before:auto}
+  .sec-wrap{break-inside:avoid-page}
+  .edit{border:none;background:none;padding:2px 0}
+  .slot{border-color:#999}
+  .empty-print-hide{display:none}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <h1>📘 이사회 안전보건경영 보고</h1>
+  <label>대상 연도 <select id="year"></select></label>
+  <button class="primary" id="load">불러오기</button>
+  <button id="print">🖨 인쇄 / PDF</button>
+  <a class="btn" href="/">← 자료실</a>
+  <span class="status" id="status">로그인 확인 중…</span>
+</div>
+
+<div id="report"><div class="page"><div class="empty">연도를 선택하고 <b>불러오기</b>를 누르세요.</div></div></div>
+
+<script>
+(function(){
+'use strict';
+const FN_BASE='https://asia-northeast3-safety-report-ai.cloudfunctions.net';
+const QS=['1분기','2분기','3분기','4분기'];
+const CAT=['1. 안전보건경영 방침 및 목표관리 절차','2. 안전보건관리책임자 등 업무수행 평가 절차','3. 종사자 의견 청취 절차','4. 비상사태 대비·대응 절차','5. 협력사 수준관리 절차','6. 안전보건관계 법령 등 이행관리 절차','7. 시스템 평가 및 개선 절차'];
+const CAT_SHORT=['방침·목표','책임자 평가','의견 청취','비상대응','협력사','법령 이행','평가·개선'];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+const f1=v=>v==null?'-':(Math.round(v*10)/10).toString();
+const sum=a=>a.reduce((x,y)=>x+y,0);
+
+// ───────── SHM 등급(점검 점수) / AI 주간검토 등급 / 달성률 색상 ─────────
+function shmGradeCls(g){return g==='양호'?'c-good':g==='보통'?'c-mid':g==='미흡'?'c-bad':'c-na'}
+function pctCls(p){return p==null?'c-na':p>=85?'c-good':p>=70?'c-mid':'c-bad'}
+function pctColor(p){return p==null?'#94a3b8':p>=85?'var(--good)':p>=70?'var(--mid)':'var(--bad)'}
+function pctLabel(p){return p==null?'-':p>=85?'우수':p>=70?'보통':'미흡'}
+
+// ───────── 인증 ─────────
+function whenAuth(cb){
+  const t=setInterval(()=>{
+    if(window.firebase&&firebase.apps&&firebase.apps.length&&firebase.auth){
+      clearInterval(t);
+      firebase.auth().onAuthStateChanged(u=>{if(u)cb(u)});
+    }
+  },150);
+}
+async function authFetch(url){
+  const u=firebase.auth().currentUser;
+  if(!u)throw new Error('로그인이 필요합니다.');
+  const token=await u.getIdToken();
+  return fetch(url,{headers:{Authorization:'Bearer '+token}});
+}
+
+// ───────── SHM 점검 결과 (shm_report와 동일한 산식) ─────────
+function phaseWeights(p){if(p>=100)return{s:100,f:0};if(p<30)return{s:70,f:30};if(p<80)return{s:50,f:50};return{s:60,f:40}}
+const tms=d=>d.createdAt&&d.createdAt.seconds?d.createdAt.seconds:0;
+async function latestBySite(coll,year,q,yearOf){
+  const snap=await firebase.firestore().collection(coll).where('headerInfo.quarter','==',q).get();
+  const by={};
+  snap.forEach(d=>{
+    const x=d.data();
+    if(yearOf(x)!==year)return;
+    const n=x.headerInfo&&x.headerInfo.siteName; if(!n)return;
+    if(!by[n]||tms(x)>tms(by[n]))by[n]=x;
+  });
+  return by;
+}
+async function siteResults(year,q){
+  const [sys,fld]=await Promise.all([
+    latestBySite('shm_checks',year,q,x=>((x.headerInfo&&x.headerInfo.checkDate)||'').slice(0,4)),
+    latestBySite('field_checks',year,q,x=>(x.headerInfo&&x.headerInfo.year)||'')
+  ]);
+  const out=[];
+  for(const [name,d] of Object.entries(sys)){
+    const major=parseInt((d.deductions&&d.deductions.majorAccident)||'0',10)||0;
+    const work=parseInt((d.deductions&&d.deductions.workAccident)||'0',10)||0;
+    const base={siteName:name,major,work,region:(d.headerInfo&&d.headerInfo.region)||'',checkDate:(d.headerInfo&&d.headerInfo.checkDate)||'',sb:d.sectionBreakdown||null};
+    if(d.finalScores&&d.finalScores.totalScore!==undefined){
+      out.push({...base,score:parseFloat(d.finalScores.totalScore)||0,grade:(d.finalScores.finalGrade||'-').replace('우수','양호'),fieldRaw:parseFloat(d.deductions&&d.deductions.fieldScore)||null});
+      continue;
+    }
+    const prog=parseFloat(d.headerInfo&&d.headerInfo.progress)||0, w=phaseWeights(prog);
+    const sysRaw=Math.max(0,parseFloat(d.finalScores&&d.finalScores.systemConverted)||0);
+    let fieldRaw=null,fc=0;
+    const fd=fld[name];
+    if(fd){fieldRaw=Math.min(100,Math.max(0,parseFloat(fd.result&&fd.result.totalScore)||0));fc=fieldRaw/100*w.f}
+    const total=Math.max(0,sysRaw/100*w.s+fc);
+    out.push({...base,score:total,grade:total>=90?'양호':total>=60?'보통':'미흡',fieldRaw});
+  }
+  return out;
+}
+function categoryPct(results){
+  return CAT.map(n=>{
+    const v=[];
+    results.forEach(r=>{const cs=r.sb&&(r.sb.categoryScores||[]).find(c=>c.category===n);if(cs&&cs.possible>0)v.push(cs.obtained/cs.possible*100)});
+    return avg(v);
+  });
+}
+
+// ───────── 주간 AI 검토 (safety-report-ai) ─────────
+function startDate(period){
+  if(!period)return null;
+  const re=/(\d{4}|\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/g;let m;const ds=[];
+  while((m=re.exec(String(period)))){
+    const y=m[1].length===2?'20'+m[1]:m[1],mo=+m[2],d=+m[3];
+    if(mo<1||mo>12||d<1||d>31)continue;
+    ds.push(y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  }
+  return ds.length?ds.sort()[0]:null;
+}
+async function loadWeekly(year){
+  const r=await authFetch(FN_BASE+'/listSites');
+  if(r.status===403)throw new Error('주간 검토 서버 접근 권한이 없습니다. (이 계정의 이메일이 허용 목록(ALLOWED_EMAILS)에 등록되어야 합니다)');
+  if(!r.ok)throw new Error('주간 검토 서버 오류('+r.status+')');
+  const sites=(await r.json()).sites||[];
+  const weeks=[];
+  await Promise.all(sites.map(async s=>{
+    const rr=await authFetch(FN_BASE+'/getSiteData?key='+encodeURIComponent(s.key));
+    if(!rr.ok)return;
+    const j=await rr.json();
+    (j.weekly||[]).forEach(w=>{
+      const d=startDate(w.reportPeriod); if(!d||d.slice(0,4)!==year)return;
+      weeks.push({site:s.displayName,date:d,q:Math.ceil(+d.slice(5,7)/3),score:typeof w.score==='number'?w.score:null,
+        ncr:(w.ncrItems||[]).length,codes:w.ncrCodes||[],wp:(w.workPlanItems||[]).length,ra:(w.riskAssessmentItems||[]).length,
+        edu:(w.educationItems||[]).length,trainees:sum((w.educationItems||[]).map(i=>i.traineeCount||0))});
+    });
+  }));
+  return weeks;
+}
+
+// ───────── SVG 차트 ─────────
+function lineChart(series,labels,opt){
+  const W=640,H=220,L=40,R=16,T=14,B=30,max=opt.max;
+  const lo=Math.min(...series.flatMap(s=>s.data.filter(v=>v!=null)),opt.min);
+  const min=Math.max(0,Math.floor(lo/10)*10);
+  const x=i=>L+(W-L-R)*(labels.length===1?0.5:i/(labels.length-1));
+  const y=v=>T+(H-T-B)*(1-(v-min)/(max-min));
+  let g='';
+  for(let v=min;v<=max;v+=opt.step){g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e2e8f0"/><text x="${L-6}" y="${y(v)+4}" font-size="10" text-anchor="end" fill="#64748b">${v}</text>`}
+  labels.forEach((l,i)=>{g+=`<text x="${x(i)}" y="${H-10}" font-size="11" text-anchor="middle" fill="#64748b">${l}</text>`});
+  series.forEach(s=>{
+    const pts=s.data.map((v,i)=>v==null?null:[x(i),y(v)]);
+    let d='',pen=false;pts.forEach(p=>{if(!p){pen=false;return}d+=(pen?'L':'M')+p[0]+','+p[1]+' ';pen=true});
+    g+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.5"/>`;
+    pts.forEach((p,i)=>{if(p)g+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${s.color}"/><text x="${p[0]}" y="${p[1]-8}" font-size="11" font-weight="700" text-anchor="middle" fill="${s.color}">${f1(s.data[i])}</text>`});
+  });
+  const lg=series.map(s=>`<span style="--c:${s.color}">${esc(s.name)}</span>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg><div class="legend">${lg}</div>`;
+}
+
+// ───────── 렌더링 ─────────
+const MAP9=[
+  ['1호','안전보건 목표와 경영방침 설정',[0],'시스템점검 카테고리 1'],
+  ['2호','안전·보건 업무 총괄 전담조직(해당 시)',null,'조직도·인력 현황 별첨'],
+  ['3호','유해·위험요인 확인·개선 절차 마련 및 점검','FIELD','현장점검표 평균'],
+  ['4호','재해예방에 필요한 예산 편성·집행',null,'산업안전보건관리비 집행 현황 별첨'],
+  ['5호','안전보건관리책임자 등의 권한·책임 부여 및 평가',[1],'시스템점검 카테고리 2'],
+  ['6호','안전관리자·보건관리자 등 전문인력 배치',null,'선임·배치 현황 별첨'],
+  ['7호','종사자 의견 청취 절차',[2],'시스템점검 카테고리 3'],
+  ['8호','중대산업재해 발생 시 조치 매뉴얼(비상대응)',[3],'시스템점검 카테고리 4'],
+  ['9호','도급·용역·위탁 시 평가기준·절차(협력사)',[4],'시스템점검 카테고리 5'],
+  ['제5조','안전보건관계 법령 의무이행 점검·개선',[5,6],'시스템점검 카테고리 6·7'],
+];
+
+function render(year,shm,weeks,weeklyErr){
+  const quartersWithData=QS.map((q,i)=>({q,i,res:shm[i]})).filter(x=>x.res.length);
+  const lastQ=quartersWithData.length?quartersWithData[quartersWithData.length-1]:null;
+  const allRes=[].concat(...shm);
+  const qAvg=shm.map(r=>r.length?avg(r.map(x=>x.score)):null);
+  const yearAvg=avg(qAvg.filter(v=>v!=null));
+  const catByQ=shm.map(categoryPct);
+  const catYear=CAT.map((_,c)=>avg(catByQ.map(a=>a[c]).filter(v=>v!=null)));
+  const fieldAll=allRes.map(r=>r.fieldRaw).filter(v=>v!=null);
+  const fieldAvg=avg(fieldAll);
+  const siteCnt=new Set(allRes.map(r=>r.siteName)).size;
+  const major=sum(allRes.map(r=>r.major)), work=sum(allRes.map(r=>r.work));
+  const today=new Date();const dateStr=today.getFullYear()+'. '+(today.getMonth()+1)+'. '+today.getDate();
+
+  // 주간 AI
+  const wq=QS.map((_,i)=>weeks.filter(w=>w.q===i+1));
+  const wScoreQ=wq.map(a=>avg(a.map(w=>w.score).filter(v=>v!=null)));
+  const wYearAvg=avg(weeks.map(w=>w.score).filter(v=>v!=null));
+  const siteMap={};weeks.forEach(w=>{(siteMap[w.site]=siteMap[w.site]||[]).push(w)});
+  const codeCnt={};weeks.forEach(w=>w.codes.forEach(c=>codeCnt[c]=(codeCnt[c]||0)+1));
+  const topCodes=Object.entries(codeCnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  let h='';
+  // 표지
+  h+=`<div class="page cover">
+    <img src="/namhwa_logo.png" alt="남화토건" onerror="this.style.display='none'">
+    <div class="eyebrow">NAMHWA CONSTRUCTION · SAFETY &amp; HEALTH MANAGEMENT</div>
+    <h2>${year}년<br>안전보건경영 성과 보고</h2>
+    <div class="slogan">남화의 미래를 켜다 · Safety ON</div>
+    <table><tr><td class="k">보고 대상</td><td>이사회</td></tr><tr><td class="k">보고 주관</td><td>안전보건팀</td></tr><tr><td class="k">보고 기준일</td><td>${dateStr}</td></tr><tr><td class="k">점검 대상</td><td>${siteCnt}개 현장 · ${quartersWithData.length}개 분기</td></tr></table>
+  </div>`;
+
+  h+=`<div class="page body-page">`;
+  // 1. 요약
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">1</span>경영진 요약</h3><p class="sub">분기별 안전보건경영시스템 점검 결과와 주간 AI 검토 결과를 종합한 연간 성과입니다.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="l">연평균 점검 점수</div><div class="v" style="color:${pctColor(yearAvg)}">${f1(yearAvg)}<small style="font-size:12px">점</small></div><div class="n">${quartersWithData.length}개 분기 평균</div></div>
+    <div class="kpi"><div class="l">${lastQ?lastQ.q:'최근 분기'} 점검 점수</div><div class="v" style="color:${pctColor(lastQ?qAvg[lastQ.i]:null)}">${f1(lastQ?qAvg[lastQ.i]:null)}<small style="font-size:12px">점</small></div><div class="n">${lastQ?lastQ.res.length+'개 현장':'데이터 없음'}</div></div>
+    <div class="kpi"><div class="l">중대재해·업무상 사고(점검 반영)</div><div class="v">${major} · ${work}<small style="font-size:12px">건</small></div><div class="n">시스템점검 감점 입력 합계</div></div>
+    <div class="kpi"><div class="l">주간 AI 검토 평균</div><div class="v" style="color:${pctColor(wYearAvg)}">${f1(wYearAvg)}<small style="font-size:12px">점</small></div><div class="n">${weeks.length}주차 · ${Object.keys(siteMap).length}개 현장</div></div>
+  </div>
+  <div class="edit" data-edit="summary" contenteditable="true">${esc(draftSummary(year,qAvg,yearAvg,lastQ,catYear,wYearAvg,weeks.length,major,work))}</div>
+  <div class="note no-print">※ 위 문안은 수치를 바탕으로 자동 작성된 초안입니다. 클릭해서 직접 수정할 수 있으며 수정 내용은 이 브라우저에 저장됩니다.</div></div>`;
+
+  // 2. 분기별 점검 성과
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">2</span>분기별 안전보건경영시스템 점검 성과</h3><p class="sub">출처: 안전보건팀 자료실 분기별 점검(시스템점검 + 현장점검). 양호 ≥90 / 보통 60~89 / 미흡 &lt;60 (SHM 등급 기준).</p>`;
+  if(!quartersWithData.length){h+=`<div class="empty">${year}년 점검 결과가 없습니다.</div>`}
+  else{
+    h+=`<table class="t"><tr><th>구분</th><th>점검 현장</th><th>평균 점수</th><th>양호</th><th>보통</th><th>미흡</th><th>현장점검 평균</th><th>중대재해</th><th>업무상 사고</th></tr>`;
+    QS.forEach((q,i)=>{const r=shm[i];
+      if(!r.length){h+=`<tr><td>${q}</td><td colspan="8" style="color:#94a3b8">점검 결과 없음</td></tr>`;return}
+      const gc=g=>r.filter(x=>x.grade===g).length;
+      h+=`<tr><td><b>${q}</b></td><td>${r.length}</td><td><b style="color:${pctColor(qAvg[i])}">${f1(qAvg[i])}</b></td><td>${gc('양호')}</td><td>${gc('보통')}</td><td>${gc('미흡')}</td><td>${f1(avg(r.map(x=>x.fieldRaw).filter(v=>v!=null)))}</td><td>${sum(r.map(x=>x.major))}</td><td>${sum(r.map(x=>x.work))}</td></tr>`});
+    h+=`</table>`;
+    h+=lineChart([{name:'시스템+현장 점검 점수',color:'#7f2b2f',data:qAvg}],QS,{min:40,max:100,step:10});
+
+    h+=`<h4 style="margin:18px 0 4px">② 7개 카테고리 달성률 (분기별)</h4><table class="t"><tr><th style="width:28%">카테고리</th>${QS.map(q=>`<th>${q}</th>`).join('')}<th>연평균</th><th style="width:20%">연평균 그래프</th></tr>`;
+    CAT.forEach((n,c)=>{
+      h+=`<tr><td class="l">${esc(n)}</td>${QS.map((_,i)=>{const v=catByQ[i][c];return `<td style="color:${pctColor(v)};font-weight:700">${v==null?'-':f1(v)+'%'}</td>`}).join('')}<td><b style="color:${pctColor(catYear[c])}">${catYear[c]==null?'-':f1(catYear[c])+'%'}</b></td><td><div class="bar"><i style="width:${catYear[c]||0}%;background:${pctColor(catYear[c])}"></i></div></td></tr>`});
+    h+=`</table><div class="note">달성률 = 항목별 획득점수/배점의 현장 평균. 항목별 점수가 저장되지 않은 과거 점검은 제외됩니다. 색상: 우수(≥85) 녹색 · 보통(70~84) 파랑 · 미흡(≤69) 적색.</div>`;
+
+    if(lastQ){
+      const rs=[...lastQ.res].sort((a,b)=>b.score-a.score);
+      h+=`<h4 style="margin:18px 0 4px">③ ${lastQ.q} 현장별 결과</h4><table class="t"><tr><th>현장</th><th>지역</th><th>점검일</th><th>점수</th><th>등급</th><th style="width:26%">점수 그래프</th></tr>`;
+      rs.forEach(r=>{h+=`<tr><td class="l">${esc(r.siteName)}</td><td>${esc(r.region)}</td><td>${esc(r.checkDate)}</td><td><b>${f1(r.score)}</b></td><td><span class="chip ${shmGradeCls(r.grade)}">${esc(r.grade)}</span></td><td><div class="bar"><i style="width:${Math.min(100,r.score)}%;background:${r.grade==='양호'?'var(--good)':r.grade==='보통'?'var(--mid)':'var(--bad)'}"></i></div></td></tr>`});
+      h+=`</table>`;
+    }
+  }
+  h+=`</div>`;
+
+  // 3. 중처법 시행령 제4조
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">3</span>중대재해처벌법 시행령 제4조 이행 현황</h3><p class="sub">경영책임자의 안전보건관리체계 구축·이행 의무 항목별로 연간 점검 결과를 대응시켰습니다.</p>
+  <table class="t"><tr><th style="width:9%">조항</th><th style="width:36%">의무 내용(요약)</th><th style="width:22%">근거 자료</th><th>연간 달성률</th><th>판정</th></tr>`;
+  MAP9.forEach(m=>{
+    let v=null,basis=m[3];
+    if(m[2]==='FIELD'){v=fieldAvg}
+    else if(Array.isArray(m[2])){v=avg(m[2].map(c=>catYear[c]).filter(x=>x!=null))}
+    if(m[2]==null){h+=`<tr><td>${m[0]}</td><td class="l">${esc(m[1])}</td><td class="l">${esc(basis)}</td><td colspan="2"><span class="chip c-att">별첨 확인</span></td></tr>`}
+    else{h+=`<tr><td>${m[0]}</td><td class="l">${esc(m[1])}</td><td class="l">${esc(basis)}</td><td><b style="color:${pctColor(v)}">${v==null?'-':f1(v)+'%'}</b></td><td><span class="chip ${pctCls(v)}">${pctLabel(v)}</span></td></tr>`}
+  });
+  h+=`</table><div class="warnbox">※ 조문 내용은 요약본이며, 보고 전 <b>법령 원문 및 법무 검토</b>로 확인이 필요합니다. 「별첨 확인」 항목은 점검표 데이터로 판정할 수 없어 조직도·선임현황·산안비 집행 자료로 증빙합니다.</div></div>`;
+
+  // 4. 주간 AI 점검
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">4</span>현장 주간 안전보건 업무 운영 성과 (AI 검토)</h3><p class="sub">출처: 주간 업무보고서 AI 검토(법정 기재사항 대조). 우수 ≥85 / 보통 70~84 / 미흡 ≤69.</p>`;
+  if(weeklyErr){h+=`<div class="errbox">⚠ ${esc(weeklyErr)}</div>`}
+  else if(!weeks.length){h+=`<div class="empty">${year}년 주간 검토 이력이 없습니다.</div>`}
+  else{
+    h+=`<table class="t"><tr><th>구분</th><th>검토 주차</th><th>평균 점수</th><th>지적(NCR)</th><th>주당 지적</th><th>작업계획</th><th>위험성평가</th><th>안전교육</th><th>이수 인원</th></tr>`;
+    QS.forEach((q,i)=>{const a=wq[i];
+      if(!a.length){h+=`<tr><td>${q}</td><td colspan="8" style="color:#94a3b8">이력 없음</td></tr>`;return}
+      const nc=sum(a.map(w=>w.ncr));
+      h+=`<tr><td><b>${q}</b></td><td>${a.length}</td><td><b style="color:${pctColor(wScoreQ[i])}">${f1(wScoreQ[i])}</b></td><td>${nc}</td><td>${f1(nc/a.length)}</td><td>${sum(a.map(w=>w.wp))}</td><td>${sum(a.map(w=>w.ra))}</td><td>${sum(a.map(w=>w.edu))}</td><td>${sum(a.map(w=>w.trainees))}</td></tr>`});
+    h+=`</table>`;
+    h+=lineChart([{name:'주간 검토 평균 점수',color:'#2563eb',data:wScoreQ}],QS,{min:40,max:100,step:10});
+    h+=`<h4 style="margin:16px 0 4px">현장별 연간 평균</h4><table class="t"><tr><th>현장</th><th>검토 주차</th><th>평균 점수</th><th>등급</th><th>지적(NCR)</th><th style="width:26%">점수 그래프</th></tr>`;
+    Object.entries(siteMap).map(([s,a])=>({s,n:a.length,v:avg(a.map(w=>w.score).filter(x=>x!=null)),nc:sum(a.map(w=>w.ncr))})).sort((a,b)=>(b.v||0)-(a.v||0)).forEach(r=>{
+      h+=`<tr><td class="l">${esc(r.s)}</td><td>${r.n}</td><td><b>${f1(r.v)}</b></td><td><span class="chip ${pctCls(r.v)}">${pctLabel(r.v)}</span></td><td>${r.nc}</td><td><div class="bar"><i style="width:${r.v||0}%;background:${pctColor(r.v)}"></i></div></td></tr>`});
+    h+=`</table>`;
+    if(topCodes.length){
+      h+=`<h4 style="margin:16px 0 4px">연간 다빈도 지적 유형</h4><table class="t"><tr><th>지적 코드</th><th>발생 주차 수</th><th style="width:40%">비중</th></tr>`;
+      const mx=topCodes[0][1];
+      topCodes.forEach(([c,n])=>{h+=`<tr><td class="l">${esc(c)}</td><td>${n}</td><td><div class="bar"><i style="width:${n/mx*100}%;background:var(--brand)"></i></div></td></tr>`});
+      h+=`</table>`;
+    }
+  }
+  h+=`</div>`;
+
+  // 5. 재해·사고
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">5</span>재해·사고·아차사고 현황</h3><p class="sub">시스템점검에 입력된 건수를 기본값으로 채웠습니다. 안전보건팀 제출 서식이 확정되면 해당 양식에 맞춰 입력·보완합니다.</p>
+  <table class="t"><tr><th>구분</th>${QS.map(q=>`<th>${q}</th>`).join('')}<th>합계</th></tr>
+    <tr><td><b>중대재해</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-major-${i}">${shm[i].length?sum(shm[i].map(x=>x.major)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-major-t">${major}</td></tr>
+    <tr><td><b>업무상 사고(재해)</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-work-${i}">${shm[i].length?sum(shm[i].map(x=>x.work)):''}</td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-work-t">${work}</td></tr>
+    <tr><td><b>아차사고</b></td>${QS.map((_,i)=>`<td class="edit-c" contenteditable="true" data-edit="acc-near-${i}"></td>`).join('')}<td class="edit-c" contenteditable="true" data-edit="acc-near-t"></td></tr>
+  </table><div class="note no-print">표의 칸을 클릭해 직접 입력하세요. (이 브라우저에 저장)</div></div>`;
+
+  // 6. 목표 대비 실적
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">6</span>연간 안전보건 목표 대비 실적</h3><p class="sub">목표 지표는 협의 후 확정 예정입니다. 점검 데이터로 산출 가능한 후보 지표를 참고값으로 제시합니다.</p>
+  <table class="t"><tr><th style="width:30%">지표</th><th>목표</th><th>실적(참고)</th><th>달성</th></tr>
+    <tr><td class="l">연평균 점검 점수</td><td class="edit-c" contenteditable="true" data-edit="goal-0-t"></td><td>${f1(yearAvg)}점</td><td class="edit-c" contenteditable="true" data-edit="goal-0-a"></td></tr>
+    <tr><td class="l">중대재해 발생 건수</td><td class="edit-c" contenteditable="true" data-edit="goal-1-t"></td><td>${major}건</td><td class="edit-c" contenteditable="true" data-edit="goal-1-a"></td></tr>
+    <tr><td class="l">주간 AI 검토 평균 점수</td><td class="edit-c" contenteditable="true" data-edit="goal-2-t"></td><td>${f1(wYearAvg)}점</td><td class="edit-c" contenteditable="true" data-edit="goal-2-a"></td></tr>
+    <tr><td class="l edit-c" contenteditable="true" data-edit="goal-3-n">(지표 추가)</td><td class="edit-c" contenteditable="true" data-edit="goal-3-t"></td><td class="edit-c" contenteditable="true" data-edit="goal-3-r"></td><td class="edit-c" contenteditable="true" data-edit="goal-3-a"></td></tr>
+  </table></div>`;
+
+  // 7. 산안비
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">7</span>산업안전보건관리비 집행 현황</h3><p class="sub">집행 내역은 별첨 PDF로 첨부합니다.</p>
+  <div class="slot">📎 산업안전보건관리비 집행 현황 (PDF 별첨) — 인쇄 후 이 면 뒤에 철합니다.</div></div>`;
+
+  // 8. 종합
+  h+=`<div class="sec-wrap"><h3 class="sec"><span class="no">8</span>종합 평가 및 차년도 추진 계획</h3>
+  <div class="grid2"><div><b>주요 성과 및 보완 과제</b><div class="edit" data-edit="eval" contenteditable="true">${esc(draftEval(catYear))}</div></div>
+  <div><b>차년도 중점 추진 계획</b><div class="edit" data-edit="plan" contenteditable="true">1. \n2. \n3. </div></div></div>
+  <div class="note">보고서 생성일 ${dateStr} · 데이터: SHM 시스템/현장 점검(Firestore), 주간 AI 검토(safety-report-ai)</div></div>`;
+
+  h+=`</div>`;
+  $('report').innerHTML=h;
+  restoreEdits(year);
+}
+
+function draftSummary(year,qAvg,yearAvg,lastQ,catYear,wAvg,wn,major,work){
+  const parts=[];
+  if(yearAvg!=null){
+    const tr=qAvg.map((v,i)=>v==null?null:QS[i]+' '+f1(v)+'점').filter(Boolean).join(' → ');
+    parts.push(`${year}년 안전보건경영시스템 점검 연평균은 ${f1(yearAvg)}점(${tr})입니다.`);
+  } else parts.push(`${year}년 안전보건경영시스템 점검 결과가 아직 없습니다.`);
+  const ok=catYear.map((v,i)=>({v,i})).filter(x=>x.v!=null);
+  if(ok.length){const hi=ok.reduce((a,b)=>b.v>a.v?b:a),lo=ok.reduce((a,b)=>b.v<a.v?b:a);
+    parts.push(`7개 절차 중 달성률이 가장 높은 항목은 「${CAT_SHORT[hi.i]}」(${f1(hi.v)}%), 가장 낮은 항목은 「${CAT_SHORT[lo.i]}」(${f1(lo.v)}%)입니다.`)}
+  parts.push(`점검에 반영된 중대재해 ${major}건, 업무상 사고 ${work}건입니다.`);
+  if(wn)parts.push(`주간 업무보고 AI 검토 ${wn}주차 평균은 ${f1(wAvg)}점입니다.`);
+  return parts.join(' ');
+}
+function draftEval(catYear){
+  const lows=catYear.map((v,i)=>({v,i})).filter(x=>x.v!=null&&x.v<70).sort((a,b)=>a.v-b.v);
+  if(!lows.length)return '[성과]\n\n[보완 과제]\n';
+  return '[성과]\n\n[보완 과제]\n'+lows.map(x=>`- ${CAT[x.i]} (달성률 ${f1(x.v)}%): `).join('\n');
+}
+
+// ───────── 편집 내용 저장 ─────────
+function storeKey(y){return 'board-report-edits-'+y}
+function restoreEdits(year){
+  let s={};try{s=JSON.parse(localStorage.getItem(storeKey(year))||'{}')}catch(e){}
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    const k=el.dataset.edit; if(s[k]!=null)el.innerText=s[k];
+    el.addEventListener('input',()=>{
+      let c={};try{c=JSON.parse(localStorage.getItem(storeKey(year))||'{}')}catch(e){}
+      c[k]=el.innerText;try{localStorage.setItem(storeKey(year),JSON.stringify(c))}catch(e){}
+    });
+  });
+}
+
+// ───────── 실행 ─────────
+async function run(){
+  const year=$('year').value, btn=$('load');
+  btn.disabled=true;$('status').textContent='점검 결과를 불러오는 중…';
+  try{
+    const shm=await Promise.all(QS.map(q=>siteResults(year,q)));
+    $('status').textContent='주간 검토 이력을 불러오는 중…';
+    let weeks=[],werr=null;
+    try{weeks=await loadWeekly(year)}catch(e){werr=e.message||String(e)}
+    render(year,shm,weeks,werr);
+    $('status').textContent=year+'년 보고서 생성 완료'+(werr?' (주간 검토 제외)':'');
+  }catch(e){
+    console.error(e);
+    $('report').innerHTML=`<div class="page"><div class="errbox">불러오기 실패: ${esc(e.message||e)}</div></div>`;
+    $('status').textContent='오류';
+  }finally{btn.disabled=false}
+}
+const ys=$('year'),cy=new Date().getFullYear();
+for(let y=cy;y>=cy-3;y--){const o=document.createElement('option');o.value=o.textContent=String(y);ys.appendChild(o)}
+$('load').addEventListener('click',run);
+$('print').addEventListener('click',()=>window.print());
+whenAuth(u=>{$('status').textContent=(u.email||'')+' 로그인됨'});
+})();
+</script>
+</body>
+</html>
